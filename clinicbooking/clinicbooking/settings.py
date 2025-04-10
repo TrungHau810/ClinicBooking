@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+from django.conf.global_settings import AUTH_USER_MODEL
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -36,7 +38,24 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'clinic.apps.ClinicConfig',
+    'rest_framework',
+    'drf_yasg',
+    # 'oauth2_provider',
 ]
+
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
+
+# Configuration
+cloudinary.config(
+    cloud_name="tthau2004",
+    api_key="372274126191375",
+    api_secret="Abk-RA6C6MUKDV34nOuFDhpLFjs",  # Click 'View API Keys' above to copy your API secret
+    secure=True
+)
+
+AUTH_USER_MODEL= 'clinic.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
