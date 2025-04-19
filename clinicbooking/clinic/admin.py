@@ -6,7 +6,7 @@ from django.utils.html import mark_safe
 
 
 class MyUserAdmin(admin.ModelAdmin):
-    list_display = ['id', 'username', 'first_name', 'last_name', 'email', 'number_phone']
+    list_display = ['id', 'username', 'first_name', 'last_name', 'gender', 'email', 'number_phone', 'is_active', 'created_date']
     search_fields = ['username', 'first_name', 'last_name']
     list_filter = ['id']
     readonly_fields = ['avatar_view']
@@ -19,15 +19,19 @@ class MyUserAdmin(admin.ModelAdmin):
     )
 
     def avatar_view(self, user):
-        return mark_safe(f"<img src='https://res.cloudinary.com/tthau2004/{user.avatar}' width=200 />")
+        if user.avatar:
+            return mark_safe(f"<img src='{user.avatar.url}' width=200 />")
+        return "Không có ảnh đại diện"
 
-    def save_model(self, request, user, form, change):
-        if form.cleaned_data.get('password'):
-            raw_password = form.cleaned_data['password']
-            if not raw_password.startswith('pbkdf2_'):  # chỉ set nếu là mật khẩu mới
-                user.set_password(raw_password)
+    avatar_view.short_description = "Ảnh đại diện"
 
-            super().save_model(request, user, form, change)
+    # def save_model(self, request, user, form, change):
+    #     if form.cleaned_data.get('password'):
+    #         raw_password = form.cleaned_data['password']
+    #         if not raw_password.startswith('pbkdf2_'):  # chỉ set nếu là mật khẩu mới
+    #             user.set_password(raw_password)
+    #
+    #         super().save_model(request, user, form, change)
 
 
 class MyDoctorAdmin(MyUserAdmin):
@@ -42,7 +46,9 @@ class MyDoctorAdmin(MyUserAdmin):
         return {'user_type': 'Dr'}
 
     def license_view(self, doctor):
-        return mark_safe(f"<img src='https://res.cloudinary.com/tthau2004/{doctor.license_image}' width=500 />")
+        if doctor.license_image:
+            return mark_safe(f"<img src='https://res.cloudinary.com/tthau2004/{doctor.license_image}' width=500 />")
+        return "Không có giấy phép hành nghề"
 
 
 class MyPatientAdmin(MyUserAdmin):
@@ -88,8 +94,12 @@ class MyHealthRecordAdmin(admin.ModelAdmin):
     patient_username.short_description = 'Tên tài khoản bệnh nhân'
 
 
-class MyTestReusultAdmin(admin.ModelAdmin):
-    list_display = ['id', 'health_record', 'test_name', 'created_date', 'updated_date']
+class MyTestResultAdmin(admin.ModelAdmin):
+    list_display = ['id', 'test_name', 'created_date', 'updated_date']
+
+
+class MyMessageAdmin(admin.ModelAdmin):
+    list_display = ['id', 'sender_id', 'receiver_id']
 
 
 class ClinicAdminSite(admin.AdminSite):
@@ -105,7 +115,7 @@ admin_site.register(Doctor, MyDoctorAdmin)
 admin_site.register(Patient, MyPatientAdmin)
 admin_site.register(HealthRecord, MyHealthRecordAdmin)
 admin_site.register(Schedule, MyScheduleAdmin)
-admin_site.register(TestResult, MyTestReusultAdmin)
+admin_site.register(TestResult, MyTestResultAdmin)
 admin_site.register(Message)
 admin_site.register(Appointment, MyAppointmentAdmin)
 admin_site.register(Review)
