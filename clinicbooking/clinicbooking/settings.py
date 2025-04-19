@@ -97,7 +97,7 @@ WSGI_APPLICATION = 'clinicbooking.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'clinicdb',
+        'NAME': 'clinic_db',
         'USER': 'root',
         'PASSWORD': 'Admin@123',
         'HOST': ''  # mặc định localhost
