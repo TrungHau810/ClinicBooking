@@ -40,8 +40,14 @@ INSTALLED_APPS = [
     'clinic.apps.ClinicConfig',
     'rest_framework',
     'drf_yasg',
-    # 'oauth2_provider',
+    'oauth2_provider',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    )
+}
 
 import cloudinary
 import cloudinary.uploader
@@ -55,7 +61,7 @@ cloudinary.config(
     secure=True
 )
 
-AUTH_USER_MODEL= 'clinic.User'
+AUTH_USER_MODEL = 'clinic.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -142,3 +148,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CLIENT_ID = 'ybh8hiGZamHxR5vzlvFunJS4QyuGObeDngPZv7z8'
+CLIENT_SECRET = '8TRb5eNq8N1zLkrozdD32kqljCeKc9Hf9xahFDu95VQBftfEnnH8bP6nYZZMnO0JVy8sVPvl0CTvcuYrlpONnbkgtOHcHsIbiz8ViK5rYGIuYj8mpkG8U5C83ymF1hwf'

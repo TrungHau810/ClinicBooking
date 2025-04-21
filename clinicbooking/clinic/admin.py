@@ -25,13 +25,13 @@ class MyUserAdmin(admin.ModelAdmin):
 
     avatar_view.short_description = "Ảnh đại diện"
 
-    # def save_model(self, request, user, form, change):
-    #     if form.cleaned_data.get('password'):
-    #         raw_password = form.cleaned_data['password']
-    #         if not raw_password.startswith('pbkdf2_'):  # chỉ set nếu là mật khẩu mới
-    #             user.set_password(raw_password)
-    #
-    #         super().save_model(request, user, form, change)
+    def save_model(self, request, user, form, change):
+        if form.cleaned_data.get('password'):
+            raw_password = form.cleaned_data['password']
+            if not raw_password.startswith('pbkdf2_'):  # chỉ set nếu là mật khẩu mới
+                user.set_password(raw_password)
+
+            super().save_model(request, user, form, change)
 
 
 class MyDoctorAdmin(MyUserAdmin):

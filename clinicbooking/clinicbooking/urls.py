@@ -24,7 +24,7 @@ from clinic.admin import admin_site
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Course API",
+        title="Clinic Booking API",
         default_version='v1',
         description="APIs for Clinic Booking",
         contact=openapi.Contact(email="tthau2004@gmail.com"),
@@ -46,4 +46,5 @@ urlpatterns = [
     re_path(r'^redoc/$',
             schema_view.with_ui('redoc', cache_timeout=0),
             name='schema-redoc'),
+    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 ]
