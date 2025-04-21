@@ -19,6 +19,8 @@ class UserSerializer(ModelSerializer):
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'avatar']
 
 
+
+
 class DoctorSerializer(UserSerializer):
 
     def create(self, validated_data):
@@ -77,15 +79,15 @@ class ScheduleSerializer(ModelSerializer):
     class Meta:
         model = Schedule
         fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity']
-
-
-class ReviewSerializer(ModelSerializer):
-    class Meta:
-        model = Review
-        fields = ['id', 'rating', 'comment', 'reply', 'doctor_id', 'patient_id']
-
-
-class PaymentSerializer(ModelSerializer):
-    class Meta:
-        model = Payment
-        fields = ['id','amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']
+#
+#
+# class ReviewSerializer(ModelSerializer):
+#     class Meta:
+#         model = Review
+#         fields = ['id', 'rating', 'comment', 'reply', 'doctor_id', 'patient_id']
+#
+#
+# class PaymentSerializer(ModelSerializer):
+#     class Meta:
+#         model = Payment
+#         fields = ['id','amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']

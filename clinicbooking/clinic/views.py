@@ -1,17 +1,32 @@
 from django.shortcuts import get_object_or_404
+from oauthlib.uri_validate import query
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from clinic import serializers, paginators
 from rest_framework import viewsets, generics, status, parsers, permissions
 from clinic.models import (User, Doctor, Patient, Payment, Appointment, Review,
                            Schedule, Notification, HealthRecord, Message, TestResult)
+from django.db.models import Q
 
-
-class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.UpdateAPIView,
-                  generics.DestroyAPIView):
+class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.UpdateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
-    pagination_class = paginators.UserPagination
+    parser_classes = [parsers.MultiPartParser]
+
+    @action(methods=['get', 'patch'], url_path='current-user', detail=False,
+            permission_classes=[permissions.IsAuthenticated])
+    def get_current_user(self, request):
+        u = request.user
+        if request.method.__eq__('PATCH'):
+            for k, v in request.data.items():
+                if k in ['first_name', 'last_name']:
+                    setattr(u, k, v)
+                elif k.__eq__('password'):
+                    u.set_password(v)
+
+            u.save()
+
+        return Response(serializers.UserSerializer(u).data)
 
 
 class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
@@ -19,6 +34,16 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIVi
     queryset = Doctor.objects.filter(is_verified=True)
     serializer_class = serializers.DoctorSerializer
     parser_classes = [parsers.MultiPartParser]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        q = self.request.query_params.get('q')
+
+        if q:
+            queryset =queryset.filter(Q(first_name__icontains=q) |
+                                      Q(last_name__icontains=q))
+
+        return queryset
 
     @action(methods=['get'], detail=True, url_path='schedules')
     def get_schedules(self, request, pk):
@@ -50,6 +75,16 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
     serializer_class = serializers.PatientSerializer
     parser_classes = [parsers.MultiPartParser]
 
+    def get_queryset(self):
+        queryset = self.queryset
+        q = self.request.query_params.get('q')
+
+        if q:
+            queryset =queryset.filter(Q(first_name__icontains=q) |
+                                      Q(last_name__icontains=q))
+
+        return queryset
+
     @action(methods=['get'], detail=True, url_path="appointments")
     def get_appointment(self, request, pk):
         patient = get_object_or_404(Patient, pk=pk)
@@ -77,23 +112,35 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView,
                 return Response({'error': f'Payment not found for {payment.pk}'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
-
-
+#
+#
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
                       generics.CreateAPIView, generics.UpdateAPIView):
     queryset = Schedule.objects.filter(active=True)
     serializer_class = serializers.ScheduleSerializer
     parser_classes = [parsers.MultiPartParser]
 
+    def get_queryset(self):
+        queryset = self.queryset
+        doctor_id = self.request.query_params.get('doctor_id')
+        print(doctor_id)
+        if doctor_id:
+            queryset = queryset.filter(doctor_id=doctor_id)
 
-class ReviewViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView,
-                    generics.DestroyAPIView, generics.UpdateAPIView):
-    queryset = Review.objects.filter().all()
-    serializer_class = serializers.ReviewSerializer
-    parser_classes = [parsers.MultiPartParser]
+
+        return queryset
 
 
-class PaymentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView):
-    queryset = Payment.objects.filter(active=True)
-    serializer_class = serializers.PaymentSerializer
-    parser_classes = [parsers.MultiPartParser]
+
+#
+# class ReviewViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView,
+#                     generics.DestroyAPIView, generics.UpdateAPIView):
+#     queryset = Review.objects.filter().all()
+#     serializer_class = serializers.ReviewSerializer
+#     parser_classes = [parsers.MultiPartParser]
+#
+#
+# class PaymentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView):
+#     queryset = Payment.objects.filter(active=True)
+#     serializer_class = serializers.PaymentSerializer
+#     parser_classes = [parsers.MultiPartParser]
