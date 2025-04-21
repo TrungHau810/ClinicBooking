@@ -1,3 +1,146 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404
+from oauthlib.uri_validate import query
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from clinic import serializers, paginators
+from rest_framework import viewsets, generics, status, parsers, permissions
+from clinic.models import (User, Doctor, Patient, Payment, Appointment, Review,
+                           Schedule, Notification, HealthRecord, Message, TestResult)
+from django.db.models import Q
 
-# Create your views here.
+class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.UpdateAPIView):
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = serializers.UserSerializer
+    parser_classes = [parsers.MultiPartParser]
+
+    @action(methods=['get', 'patch'], url_path='current-user', detail=False,
+            permission_classes=[permissions.IsAuthenticated])
+    def get_current_user(self, request):
+        u = request.user
+        if request.method.__eq__('PATCH'):
+            for k, v in request.data.items():
+                if k in ['first_name', 'last_name']:
+                    setattr(u, k, v)
+                elif k.__eq__('password'):
+                    u.set_password(v)
+
+            u.save()
+
+        return Response(serializers.UserSerializer(u).data)
+
+
+class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
+                    generics.RetrieveAPIView, generics.UpdateAPIView):
+    queryset = Doctor.objects.filter(is_verified=True)
+    serializer_class = serializers.DoctorSerializer
+    parser_classes = [parsers.MultiPartParser]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        q = self.request.query_params.get('q')
+
+        if q:
+            queryset =queryset.filter(Q(first_name__icontains=q) |
+                                      Q(last_name__icontains=q))
+
+        return queryset
+
+    @action(methods=['get'], detail=True, url_path='schedules')
+    def get_schedules(self, request, pk):
+        doctor = Doctor.objects.filter(pk=pk)
+
+        if doctor:
+            schedules = Schedule.objects.filter(doctor_id=pk)
+            return Response(serializers.ScheduleSerializer(schedules, many=True).data, status=status.HTTP_200_OK)
+
+        return Response({'error': "Doctor not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(methods=['post'], detail=True, url_path='schedules', serializer_class=serializers.ScheduleSerializer)
+    def create_schedule(self, request, pk):
+        doctor = get_object_or_404(Doctor, pk=pk)
+        data = request.data.copy()
+        data['doctor'] = doctor.id
+
+        schedule = ScheduleViewSet(data=data)
+        if schedule.is_valid():
+            schedule.save()
+            return Response(schedule.data, status=status.HTTP_201_CREATED)
+
+        return Response(schedule.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
+                     generics.RetrieveAPIView, generics.UpdateAPIView):
+    queryset = Patient.objects.filter(is_active=True)
+    serializer_class = serializers.PatientSerializer
+    parser_classes = [parsers.MultiPartParser]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        q = self.request.query_params.get('q')
+
+        if q:
+            queryset =queryset.filter(Q(first_name__icontains=q) |
+                                      Q(last_name__icontains=q))
+
+        return queryset
+
+    @action(methods=['get'], detail=True, url_path="appointments")
+    def get_appointment(self, request, pk):
+        patient = get_object_or_404(Patient, pk=pk)
+        if patient:
+            appointments = patient.appointment_set.all()
+            return Response(serializers.AppointmentSerializer(appointments, many=True).data,
+                            status=status.HTTP_404_NOT_FOUND)
+
+        return Response({'error': "Patient not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView,
+                         generics.UpdateAPIView, generics.DestroyAPIView):
+    queryset = Appointment.objects.filter().all()
+    serializer_class = serializers.AppointmentSerializer
+
+    @action(methods=['get'], detail=True, url_path="payment")
+    def get_payment(self, request, pk):
+        appointment = get_object_or_404(Appointment, pk=pk)
+        if appointment:
+            payment = appointment.payment
+            if payment:
+                return Response(serializers.PaymentSerializer(payment).data, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': f'Payment not found for {payment.pk}'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
+#
+#
+class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
+                      generics.CreateAPIView, generics.UpdateAPIView):
+    queryset = Schedule.objects.filter(active=True)
+    serializer_class = serializers.ScheduleSerializer
+    parser_classes = [parsers.MultiPartParser]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        doctor_id = self.request.query_params.get('doctor_id')
+        print(doctor_id)
+        if doctor_id:
+            queryset = queryset.filter(doctor_id=doctor_id)
+
+
+        return queryset
+
+
+
+#
+# class ReviewViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView,
+#                     generics.DestroyAPIView, generics.UpdateAPIView):
+#     queryset = Review.objects.filter().all()
+#     serializer_class = serializers.ReviewSerializer
+#     parser_classes = [parsers.MultiPartParser]
+#
+#
+# class PaymentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView):
+#     queryset = Payment.objects.filter(active=True)
+#     serializer_class = serializers.PaymentSerializer
+#     parser_classes = [parsers.MultiPartParser]
