@@ -1,3 +1,5 @@
+from threading import activeCount
+
 from django.shortcuts import get_object_or_404
 from oauthlib.uri_validate import query
 from rest_framework.decorators import action
@@ -7,6 +9,7 @@ from rest_framework import viewsets, generics, status, parsers, permissions
 from clinic.models import (User, Doctor, Patient, Payment, Appointment, Review,
                            Schedule, Notification, HealthRecord, Message, TestResult)
 from django.db.models import Q
+
 
 class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.UpdateAPIView):
     queryset = User.objects.filter(is_active=True)
@@ -40,8 +43,8 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIVi
         q = self.request.query_params.get('q')
 
         if q:
-            queryset =queryset.filter(Q(first_name__icontains=q) |
-                                      Q(last_name__icontains=q))
+            queryset = queryset.filter(Q(first_name__icontains=q) |
+                                       Q(last_name__icontains=q))
 
         return queryset
 
@@ -80,8 +83,8 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
         q = self.request.query_params.get('q')
 
         if q:
-            queryset =queryset.filter(Q(first_name__icontains=q) |
-                                      Q(last_name__icontains=q))
+            queryset = queryset.filter(Q(first_name__icontains=q) |
+                                       Q(last_name__icontains=q))
 
         return queryset
 
@@ -94,6 +97,19 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
                             status=status.HTTP_404_NOT_FOUND)
 
         return Response({'error': "Patient not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
+    queryset = HealthRecord.objects.filter(active=True).prefetch_related('testresult_set')
+    serializer_class = serializers.HealthRecordSerializer
+
+    def create(self, request, *args, **kwargs):
+        pass
+
+
+class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = TestResult.objects.filter(active=True)
+    serializer_class = serializers.TestResultSerializer
 
 
 class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView,
@@ -112,8 +128,8 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView,
                 return Response({'error': f'Payment not found for {payment.pk}'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
-#
-#
+
+
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
                       generics.CreateAPIView, generics.UpdateAPIView):
     queryset = Schedule.objects.filter(active=True)
@@ -127,10 +143,7 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
         if doctor_id:
             queryset = queryset.filter(doctor_id=doctor_id)
 
-
         return queryset
-
-
 
 #
 # class ReviewViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView,
