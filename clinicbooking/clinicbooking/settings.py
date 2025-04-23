@@ -17,6 +17,16 @@ from django.conf.global_settings import AUTH_USER_MODEL
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'  # Ví dụ sử dụng Gmail
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your_email@gmail.com'  # Thay thế bằng email của bạn
+# EMAIL_HOST_PASSWORD = 'your_email_password'  # Thay thế bằng mật khẩu email của bạn
+# DEFAULT_FROM_EMAIL = 'your_email@gmail.com'  # Địa chỉ email từ đó gửi đi thông báo
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 

@@ -79,15 +79,15 @@ class ScheduleSerializer(ModelSerializer):
     class Meta:
         model = Schedule
         fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity']
-#
-#
-# class ReviewSerializer(ModelSerializer):
-#     class Meta:
-#         model = Review
-#         fields = ['id', 'rating', 'comment', 'reply', 'doctor_id', 'patient_id']
-#
-#
-# class PaymentSerializer(ModelSerializer):
-#     class Meta:
-#         model = Payment
-#         fields = ['id','amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']
+
+
+class MessageSerializer(ModelSerializer):
+    class Meta:
+        model = Message
+        fields = ['id', 'content', 'is_read', 'sender', 'receiver', 'test_result', 'created_date']
+
+
+class PaymentSerializer(ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ['id', 'method', 'amount', 'status', 'transaction_id', 'appointment']

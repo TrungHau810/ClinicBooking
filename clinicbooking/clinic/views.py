@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from oauthlib.uri_validate import query
 from rest_framework.decorators import action
@@ -7,6 +9,9 @@ from rest_framework import viewsets, generics, status, parsers, permissions
 from clinic.models import (User, Doctor, Patient, Payment, Appointment, Review,
                            Schedule, Notification, HealthRecord, Message, TestResult)
 from django.db.models import Q
+
+from clinic.serializers import PaymentSerializer
+
 
 class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.UpdateAPIView):
     queryset = User.objects.filter(is_active=True)
@@ -130,17 +135,50 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
 
         return queryset
 
+class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView, generics.UpdateAPIView):
+    queryset = Message.objects.all().order_by('created_date')
+    serializer_class = serializers.MessageSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        appointment_id = self.request.query_params.get('appointment')
+        if appointment_id:
+            return queryset.filter(test_result__appointment_id=appointment_id)
+
+        sender_id = self.request.query_params.get('sender')
+        receiver_id = self.request.query_params.get('receiver')
+        if sender_id and receiver_id:
+            return queryset.filter(
+                Q(sender_id=sender_id, receiver_id=receiver_id) |
+                Q(sender_id=receiver_id, receiver_id=sender_id)
+            ).order_by('created_date')
+
+        return queryset.none()
 
 
+# class PaymentViewSet(viewsets.ViewSet):
+#     queryset = Payment.objects.all()
+#     serializer_class = PaymentSerializer
 #
-# class ReviewViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView,
-#                     generics.DestroyAPIView, generics.UpdateAPIView):
-#     queryset = Review.objects.filter().all()
-#     serializer_class = serializers.ReviewSerializer
-#     parser_classes = [parsers.MultiPartParser]
+#     @action(detail=True, methods=['post'])
+#     def process_payment(self, request, pk=None):
+#         payment = get_object_or_404(Payment, pk=pk)
+#         payment.status = Payment.PaymentStatus.PAID
+#         payment.transaction_id = request.data.get('transaction_id', '')
+#         payment.save()
 #
+#         self.send_payment_success_email(payment)
 #
-# class PaymentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView):
-#     queryset = Payment.objects.filter(active=True)
-#     serializer_class = serializers.PaymentSerializer
-#     parser_classes = [parsers.MultiPartParser]
+#         return Response({'message': 'Thanh toán thành công'}, status=status.HTTP_200_OK)
+#
+#     def send_payment_success_email(self, payment):
+#         subject = "Thanh toán thành công"
+#         message = f"Chào {payment.appointment.patient.first_name},\n\n" \
+#                   f"Thanh toán cho dịch vụ khám bệnh của bạn đã được hoàn tất.\n" \
+#                   f"Chi tiết:\n" \
+#                   f"Phương thức thanh toán: {payment.method}\n" \
+#                   f"Số tiền: {payment.amount} VND\n" \
+#                   f"Hoá đơn số: {payment.invoice_number}\n\n" \
+#                   f"Chúc bạn sức khỏe!"
+#         recipient_email = payment.appointment.patient.email
+#         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [recipient_email])
