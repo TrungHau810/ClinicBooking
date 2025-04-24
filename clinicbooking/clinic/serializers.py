@@ -1,7 +1,8 @@
+from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from clinic.models import (User, Doctor, Patient, HealthRecord, Schedule,
                            Appointment, Review, Message,
-                           Payment, TestResult, Notification)
+                           Payment, TestResult, Notification, UserType)
 
 
 class UserSerializer(ModelSerializer):
@@ -9,7 +10,7 @@ class UserSerializer(ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if instance.avatar:
-            data['avatar'] = f"https://res.cloudinary.com/tthau2004/{instance.avatar}"
+            data['avatar'] = f"{instance.avatar.url}"
         else:
             data['avatar'] = None
         return data
@@ -17,8 +18,6 @@ class UserSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'avatar']
-
-
 
 
 class DoctorSerializer(UserSerializer):
@@ -41,6 +40,14 @@ class DoctorSerializer(UserSerializer):
             }
         }
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.license_image:
+            data['license_image'] = f"{instance.license_image.url}"
+        else:
+            data['license_image'] = None
+        return data
+
 
 class PatientSerializer(UserSerializer):
 
@@ -60,6 +67,28 @@ class PatientSerializer(UserSerializer):
                 'write_only': True
             }
         }
+
+
+class TestResultSerializer(ModelSerializer):
+    class Meta:
+        model = TestResult
+        fields = ['id', 'test_name', 'description', 'image', 'health_record_id']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.image:
+            data['image'] = f"{instance.image.url}"
+        else:
+            data['image'] = None
+        return data
+
+
+class HealthRecordSerializer(ModelSerializer):
+    test_results = TestResultSerializer(source='testresult_set', many=True, read_only=True)
+
+    class Meta:
+        model = HealthRecord
+        fields = ['id', 'medical_history', 'test_results', 'patient_id']
 
 
 class AppointmentSerializer(ModelSerializer):
@@ -91,3 +120,16 @@ class PaymentSerializer(ModelSerializer):
     class Meta:
         model = Payment
         fields = ['id', 'method', 'amount', 'status', 'transaction_id', 'appointment']
+#
+#
+# class ReviewSerializer(ModelSerializer):
+#     class Meta:
+#         model = Review
+#         fields = ['id', 'rating', 'comment', 'reply', 'doctor_id', 'patient_id']
+#
+#
+# class PaymentSerializer(ModelSerializer):
+#     class Meta:
+#         model = Payment
+#         fields = ['id','amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']
+
