@@ -97,7 +97,7 @@ class TestResult(BaseModel):
     test_name = models.CharField(max_length=255, null=False)
     description = models.CharField(max_length=255, null=True)
     image = CloudinaryField(null=False)
-    file = CloudinaryField(null=False)
+    health_record = models.ForeignKey(HealthRecord, on_delete=models.PROTECT, null=False)
 
     def __str__(self):
         return self.test_name
