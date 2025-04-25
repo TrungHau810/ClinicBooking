@@ -1,12 +1,12 @@
 from django.contrib import admin
 from clinic.models import (User, Doctor, Patient, HealthRecord, Schedule,
                            Appointment, Review, Message,
-                           Payment, TestResult, Notification)
+                           Payment, TestResult, Notification, Hospital, Specialization)
 from django.utils.html import mark_safe
 
 
 class MyUserAdmin(admin.ModelAdmin):
-    list_display = ['id', 'username', 'first_name', 'last_name', 'gender', 'email', 'number_phone', 'is_active', 'created_date']
+    list_display = ['id', 'username', 'first_name', 'last_name', 'gender', 'email', 'number_phone', 'is_active']
     search_fields = ['username', 'first_name', 'last_name']
     list_filter = ['id']
     readonly_fields = ['avatar_view']
@@ -39,7 +39,7 @@ class MyDoctorAdmin(MyUserAdmin):
     readonly_fields = ['avatar_view', 'license_view']
     fieldsets = MyUserAdmin.fieldsets + (
         ("Giấy phép hành nghề", {'fields': ('license_number', 'license_image', 'license_view', 'is_verified')}),
-        ("Nơi làm việc", {'fields': ('hospital', 'specialty')}),
+        ("Nơi làm việc", {'fields': ('hospital', 'specialization')}),
     )
 
     def get_changeform_initial_data(self, request):
@@ -47,7 +47,7 @@ class MyDoctorAdmin(MyUserAdmin):
 
     def license_view(self, doctor):
         if doctor.license_image:
-            return mark_safe(f"<img src='https://res.cloudinary.com/tthau2004/{doctor.license_image}' width=500 />")
+            return mark_safe(f"<img src='{doctor.license_image.url}' width=500 />")
         return "Không có giấy phép hành nghề"
 
 
@@ -69,7 +69,7 @@ class MyAppointmentAdmin(admin.ModelAdmin):
 
 
 class MyScheduleAdmin(admin.ModelAdmin):
-    list_display = ['id', 'date', 'start_time', 'end_time', 'is_available', 'doctor_id']
+    list_display = ['id', 'date', 'start_time', 'end_time', 'capacity', 'is_available', 'doctor_id']
 
 
 class MyPaymentAdmin(admin.ModelAdmin):
@@ -88,7 +88,7 @@ class MyHealthRecordAdmin(admin.ModelAdmin):
     def patient_username(self, patient):
         first_name = patient.patient.first_name
         last_name = patient.patient.last_name
-        return (f"{first_name} {last_name}")
+        return (f"{last_name} {first_name}")
 
     id_patient.short_description = 'ID bệnh nhân'
     patient_username.short_description = 'Tên tài khoản bệnh nhân'
@@ -100,6 +100,14 @@ class MyTestResultAdmin(admin.ModelAdmin):
 
 class MyMessageAdmin(admin.ModelAdmin):
     list_display = ['id', 'sender_id', 'receiver_id']
+
+
+class MySpecializationAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'active']
+
+
+class MyHospitalAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'address', 'active', 'phone']
 
 
 class ClinicAdminSite(admin.AdminSite):
@@ -121,3 +129,5 @@ admin_site.register(Appointment, MyAppointmentAdmin)
 admin_site.register(Review)
 admin_site.register(Payment, MyPaymentAdmin)
 admin_site.register(Notification)
+admin_site.register(Hospital, MyHospitalAdmin)
+admin_site.register(Specialization, MySpecializationAdmin)
