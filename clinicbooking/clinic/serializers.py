@@ -2,7 +2,19 @@ from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from clinic.models import (User, Doctor, Patient, HealthRecord, Schedule,
                            Appointment, Review, Message,
-                           Payment, TestResult, Notification, UserType)
+                           Payment, TestResult, Notification, Hospital, Specialization, UserType)
+
+
+class HospitalSerializer(ModelSerializer):
+    class Meta:
+        model = Hospital
+        fields = '__all__'
+
+
+class SpecializationSerializer(ModelSerializer):
+    class Meta:
+        model = Specialization
+        fields = ['id', 'active', 'created_date', 'updated_date', 'name', 'description']
 
 
 class UserSerializer(ModelSerializer):

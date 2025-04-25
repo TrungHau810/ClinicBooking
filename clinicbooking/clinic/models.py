@@ -56,12 +56,30 @@ class Patient(User):
         verbose_name = "Patient"
 
 
+class Hospital(BaseModel):
+    name = models.CharField(max_length=255)
+    address = models.TextField(max_length=200)
+    phone = models.CharField(max_length=10)
+
+    def __str__(self):
+        return self.name
+
+
+class Specialization(BaseModel):
+    name = models.CharField(max_length=50, null=False, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Doctor(User):
     license_number = models.CharField(max_length=20, unique=True, null=False)
     license_image = CloudinaryField(null=False)
+    biography = models.CharField(max_length=255, null=True)
     is_verified = models.BooleanField(default=False)
-    hospital = models.CharField(max_length=255, null=False)
-    specialty = models.CharField(max_length=100, null=False)
+    hospital = models.ForeignKey(Hospital, on_delete=models.PROTECT)
+    specialization = models.ForeignKey(Specialization, on_delete=models.PROTECT)
     user_type = UserType.DOCTOR
 
     class Meta:
