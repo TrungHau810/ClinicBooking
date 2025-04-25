@@ -164,7 +164,28 @@ class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
                 Q(sender_id=receiver_id, receiver_id=sender_id)
             ).order_by('created_date')
 
-        return queryset.none()
+        return queryset
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all().order_by('created_date')
+    serializer_class = serializers.ReviewSerializer
+
+    def get_queryset(self):
+        doctor_id = self.request.query_params.get('doctor')
+        if doctor_id:
+            return self.queryset.filter(doctor_id=doctor_id)
+        return self.queryset
+
+    @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAuthenticated])
+    def reply(self, request, pk=None):
+        review = self.get_object()
+        reply_text = request.data.get('reply')
+        if reply_text:
+            review.reply = reply_text
+            review.save()
+            return Response(self.get_serializer(review).data, status=status.HTTP_200_OK)
+        return Response({"detail": "Thiếu nội dung phản hồi"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # class PaymentViewSet(viewsets.ViewSet):
