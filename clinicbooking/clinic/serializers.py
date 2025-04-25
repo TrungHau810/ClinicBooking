@@ -116,16 +116,16 @@ class MessageSerializer(ModelSerializer):
         fields = ['id', 'content', 'is_read', 'sender', 'receiver', 'test_result', 'created_date']
 
 
-class PaymentSerializer(ModelSerializer):
+class ReviewSerializer(ModelSerializer):
     class Meta:
-        model = Payment
-        fields = ['id', 'method', 'amount', 'status', 'transaction_id', 'appointment']
-#
-#
-# class ReviewSerializer(ModelSerializer):
+        model = Review
+        fields = ['id', 'rating', 'comment', 'reply', 'doctor', 'patient']
+# class PaymentSerializer(ModelSerializer):
 #     class Meta:
-#         model = Review
-#         fields = ['id', 'rating', 'comment', 'reply', 'doctor_id', 'patient_id']
+#         model = Payment
+#         fields = ['id', 'method', 'amount', 'status', 'transaction_id', 'appointment']
+#
+#
 #
 #
 # class PaymentSerializer(ModelSerializer):
