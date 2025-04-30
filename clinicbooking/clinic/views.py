@@ -166,14 +166,16 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
     serializer_class = serializers.HealthRecordSerializer
 
     def get_queryset(self):
+        # 👇 Nếu là request từ Swagger để sinh schema thì trả về queryset rỗng
+        if getattr(self, 'swagger_fake_view', False):
+            return HealthRecord.objects.none()
+
         user = self.request.user
-        # Nếu chưa đăng nhập/ chưa chứng thực thì trả về "Cần phải đăng nhập"
         if not user or not user.is_authenticated:
             raise PermissionDenied(detail="Cần phải đăng nhập để xem hồ sơ sức khoẻ")
-        # User là bác sĩ/admin -> Sẽ được xem tất cả hồ sơ của bệnh nhân
+
         if user.user_type == UserType.DOCTOR or user.user_type == UserType.ADMIN:
             return HealthRecord.objects.filter(active=True).select_related('patient')
-        # User là bệnh nhân -> Chỉ được xem hồ sơ của chính mình
         elif user.user_type == UserType.PATIENT:
             return HealthRecord.objects.filter(patient__pk=user.pk, active=True)
 
@@ -243,6 +245,72 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
                          generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = Appointment.objects.filter().all()
     serializer_class = serializers.AppointmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
+    def cancel(self, request, pk=None):
+        # Lấy đối tượng hẹn của bệnh nhân
+        old_appointment = self.get_object()
+
+        # Kiểm tra chứng thực: Chỉ bệnh nhân đã đặt lịch mới có thể hủy lịch của mình
+        if old_appointment.patient != request.user.patient:
+            return Response({"detail": "Bạn không có quyền hủy lịch này."}, status=403)
+
+        if not old_appointment.can_cancel_or_reschedule:
+            return Response({"detail": "Không thể hủy lịch trong vòng 24 giờ."}, status=400)
+
+        # Hủy lịch
+        old_appointment.status = Appointment.Status.CANCELED
+        old_appointment.cancel_reason = request.data.get("cancel_reason", "Không có lý do")
+        old_appointment.save()
+
+        # Cập nhật lại trạng thái lịch trống
+        old_appointment.schedule.is_available = True
+        old_appointment.schedule.save()
+
+        return Response({"detail": "Lịch hẹn đã được hủy thành công."}, status=200)
+
+    @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
+    def reschedule(self, request, pk=None):
+        old_appointment = self.get_object()
+
+        # Kiểm tra chứng thực: Chỉ bệnh nhân đã đặt lịch mới có thể đổi lịch của mình
+        if old_appointment.patient != request.user.patient:
+            return Response({"detail": "Bạn không có quyền đổi lịch này."}, status=403)
+
+        # Kiểm tra xem có thể đổi lịch hay không (có thời gian còn hơn 24h không)
+        if not old_appointment.can_cancel_or_reschedule:
+            return Response({"detail": "Không thể đổi lịch trong vòng 24 giờ."}, status=400)
+
+        # Kiểm tra lịch mới
+        new_schedule_id = request.data.get("new_schedule")
+        try:
+            new_schedule = Schedule.objects.get(pk=new_schedule_id, is_available=True)
+        except Schedule.DoesNotExist:
+            return Response({"detail": "Lịch mới không hợp lệ."}, status=400)
+
+        # Hủy lịch cũ
+        old_appointment.status = Appointment.Status.CANCELED
+        old_appointment.cancel_reason = "Người dùng đổi lịch hẹn"
+        old_appointment.save()
+
+        # Tạo lịch mới
+        new_appointment = Appointment.objects.create(
+            patient=old_appointment.patient,
+            doctor=old_appointment.doctor,
+            schedule=new_schedule,
+            disease_type=old_appointment.disease_type,
+            symptoms=old_appointment.symptoms,
+            status=Appointment.Status.PENDING,
+            rescheduled_from=old_appointment,
+        )
+
+        # Đánh dấu lịch mới đã được đặt
+        new_schedule.is_available = False
+        new_schedule.save()
+
+        # Trả về thông tin lịch mới
+        return Response(serializers.AppointmentSerializer(new_appointment).data, status=201)
 
     @action(methods=['get'], detail=True, url_path="payment")
     def get_payment(self, request, pk):
@@ -276,22 +344,51 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
 class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView, generics.UpdateAPIView):
     queryset = Message.objects.all().order_by('created_date')
     serializer_class = serializers.MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        user = self.request.user
         queryset = self.queryset
+
         appointment_id = self.request.query_params.get('appointment')
         if appointment_id:
-            return queryset.filter(test_result__appointment_id=appointment_id)
+            return queryset.filter(test_result__appointment__patient=user) | queryset.filter(test_result__appointment__doctor=user)
 
         sender_id = self.request.query_params.get('sender')
         receiver_id = self.request.query_params.get('receiver')
         if sender_id and receiver_id:
+            if str(user.id) != sender_id and str(user.id) != receiver_id:
+                raise PermissionDenied("Bạn không có quyền xem tin nhắn này.")
             return queryset.filter(
                 Q(sender_id=sender_id, receiver_id=receiver_id) |
                 Q(sender_id=receiver_id, receiver_id=sender_id)
             ).order_by('created_date')
 
-        return queryset
+        return queryset.none()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        receiver = serializer.validated_data.get('receiver')
+
+        if not receiver:
+            raise PermissionDenied("Bạn phải chọn người nhận tin nhắn.")
+
+        if not hasattr(user, 'user_type') or user.user_type not in [UserType.PATIENT, UserType.DOCTOR]:
+            raise PermissionDenied("Bạn không có quyền gửi tin nhắn.")
+
+        if not hasattr(receiver, 'user_type') or receiver.user_type not in [UserType.PATIENT, UserType.DOCTOR]:
+            raise PermissionDenied("Người nhận phải là bệnh nhân hoặc bác sĩ.")
+
+        # Bệnh nhân chỉ được phép nhắn với bác sĩ
+        if user.user_type == UserType.PATIENT and receiver.user_type != UserType.DOCTOR:
+            raise PermissionDenied("Bệnh nhân chỉ được phép nhắn tin cho bác sĩ.")
+
+        # Bác sĩ chỉ được phép nhắn với bệnh nhân
+        if user.user_type == UserType.DOCTOR and receiver.user_type != UserType.PATIENT:
+            raise PermissionDenied("Bác sĩ chỉ được phép nhắn tin cho bệnh nhân.")
+
+        # Nếu đúng thì lưu tin nhắn
+        serializer.save(sender=user)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -308,12 +405,18 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def reply(self, request, pk=None):
         review = self.get_object()
         reply_text = request.data.get('reply')
-        if reply_text:
-            review.reply = reply_text
-            review.save()
-            return Response(self.get_serializer(review).data, status=status.HTTP_200_OK)
-        return Response({"detail": "Thiếu nội dung phản hồi"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Kiểm tra quyền bác sĩ phản hồi
+        user = request.user
+        if not (user.user_type == UserType.DOCTOR and review.doctor_id == user.id):
+            raise PermissionDenied("Bạn không có quyền phản hồi đánh giá này.")
+
+        if not reply_text:
+            return Response({"detail": "Thiếu nội dung phản hồi"}, status=status.HTTP_400_BAD_REQUEST)
+
+        review.reply = reply_text
+        review.save()
+        return Response(self.get_serializer(review).data, status=status.HTTP_200_OK)
 
 # class PaymentViewSet(viewsets.ViewSet):
 #     queryset = Payment.objects.all()

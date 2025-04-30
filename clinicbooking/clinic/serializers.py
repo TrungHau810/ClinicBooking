@@ -45,7 +45,7 @@ class DoctorSerializer(UserSerializer):
     class Meta:
         model = Doctor
         fields = UserSerializer.Meta.fields + ['id', 'license_number', 'license_image', 'is_verified', 'hospital',
-                                               'specialty']
+                                               'specialization']
         extra_kwargs = {
             'password': {
                 'write_only': True
@@ -122,10 +122,13 @@ class ScheduleSerializer(ModelSerializer):
         fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity']
 
 
-class MessageSerializer(ModelSerializer):
+class MessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
+    receiver = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
     class Meta:
         model = Message
-        fields = ['id', 'content', 'is_read', 'sender', 'receiver', 'test_result', 'created_date']
+        fields = ['id', 'content', 'is_read', 'sender', 'receiver', 'test_result', 'created_date', 'parent_message']
 
 
 class ReviewSerializer(ModelSerializer):
