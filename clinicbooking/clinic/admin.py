@@ -35,7 +35,7 @@ class MyUserAdmin(admin.ModelAdmin):
 
 
 class MyDoctorAdmin(MyUserAdmin):
-    list_display = MyUserAdmin.list_display + ['license_number']
+    list_display = MyUserAdmin.list_display + ['license_number', 'is_verified']
     readonly_fields = ['avatar_view', 'license_view']
     fieldsets = MyUserAdmin.fieldsets + (
         ("Giấy phép hành nghề", {'fields': ('license_number', 'license_image', 'license_view', 'is_verified')}),
@@ -68,7 +68,7 @@ class MyAppointmentAdmin(admin.ModelAdmin):
     list_display = ['id', 'disease_type', 'booked_at']
 
 
-class MyScheduleAdmin(admin.ModelAdmin):
+class MyDoctorScheduleAdmin(admin.ModelAdmin):
     list_display = ['id', 'date', 'start_time', 'end_time', 'capacity', 'is_available', 'doctor_id']
 
 
@@ -122,7 +122,7 @@ admin_site.register(User, MyUserAdmin)
 admin_site.register(Doctor, MyDoctorAdmin)
 admin_site.register(Patient, MyPatientAdmin)
 admin_site.register(HealthRecord, MyHealthRecordAdmin)
-admin_site.register(Schedule, MyScheduleAdmin)
+admin_site.register(Schedule, MyDoctorScheduleAdmin)
 admin_site.register(TestResult, MyTestResultAdmin)
 admin_site.register(Message)
 admin_site.register(Appointment, MyAppointmentAdmin)

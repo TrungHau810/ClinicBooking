@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-bt%qm0ce=2wm6zwm+^!r+dd=ra-(*9)2o7+h*5ee-*ssw0h^4s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'drf_yasg',
     'oauth2_provider',
 ]
+
+OAUTH2_PROVIDER = {'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

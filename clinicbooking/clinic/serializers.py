@@ -42,10 +42,14 @@ class DoctorSerializer(UserSerializer):
         dr.save()
         return dr
 
+    hospital_name = serializers.CharField(source='hospital.name', read_only=True)
+    specialization_name = serializers.CharField(source='specialization.name', read_only=True)
+
     class Meta:
         model = Doctor
-        fields = UserSerializer.Meta.fields + ['id', 'license_number', 'license_image', 'is_verified', 'hospital',
-                                               'specialty']
+        fields = UserSerializer.Meta.fields + ['id', 'biography', 'license_number', 'license_image', 'is_verified',
+                                               'hospital_name',
+                                               'specialization', 'specialization_name']
         extra_kwargs = {
             'password': {
                 'write_only': True
@@ -106,7 +110,7 @@ class HealthRecordSerializer(ModelSerializer):
 class AppointmentSerializer(ModelSerializer):
     class Meta:
         model = Appointment
-        fields = ['id', 'doctor_id', 'patient_id', 'disease_type', 'symptoms', 'status', 'created_date', 'updated_date']
+        fields = '__all__'
 
 
 class ScheduleSerializer(ModelSerializer):
