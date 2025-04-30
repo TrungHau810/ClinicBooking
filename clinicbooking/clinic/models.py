@@ -154,8 +154,12 @@ class Schedule(BaseModel):
     is_available = models.BooleanField(default=True)
     capacity = models.IntegerField(default=1)
 
+    class Meta:
+        # Tránh bác sĩ bị trùng ngày và giờ bắt đầu
+        unique_together = ('doctor', 'date', 'start_time')
+
     def __str__(self):
-        return (f"Ngày {self.date.strftime('%d/%m/%Y')}: "
+        return (f"{self.doctor.username} - ngày {self.date.strftime('%d/%m/%Y')}: "
                 f"{self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}")
 
 
@@ -167,7 +171,6 @@ class Appointment(BaseModel):
         CANCELED = 'canceled', 'Đã hủy'
 
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT)
-    doctor = models.ForeignKey(Doctor, on_delete=models.PROTECT)
     schedule = models.OneToOneField(Schedule, on_delete=models.CASCADE)
     disease_type = models.CharField(max_length=255, null=False)
     symptoms = models.TextField(blank=True)
