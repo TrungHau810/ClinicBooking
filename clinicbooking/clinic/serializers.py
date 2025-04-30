@@ -124,15 +124,31 @@ class ScheduleSerializer(ModelSerializer):
     class Meta:
         model = Schedule
         fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity']
-#
-#
-# class ReviewSerializer(ModelSerializer):
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
+    receiver = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    class Meta:
+        model = Message
+        fields = ['id', 'content', 'is_read', 'sender', 'receiver', 'test_result', 'created_date', 'parent_message']
+
+
+class ReviewSerializer(ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['id', 'rating', 'comment', 'reply', 'doctor', 'patient']
+# class PaymentSerializer(ModelSerializer):
 #     class Meta:
-#         model = Review
-#         fields = ['id', 'rating', 'comment', 'reply', 'doctor_id', 'patient_id']
+#         model = Payment
+#         fields = ['id', 'method', 'amount', 'status', 'transaction_id', 'appointment']
+#
+#
 #
 #
 # class PaymentSerializer(ModelSerializer):
 #     class Meta:
 #         model = Payment
 #         fields = ['id','amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']
+
