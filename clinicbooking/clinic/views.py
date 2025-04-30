@@ -1,7 +1,8 @@
-
+from datetime import timedelta
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from django.utils import timezone
+from rest_framework.decorators import action, permission_classes
+from rest_framework.exceptions import PermissionDenied, AuthenticationFailed, ValidationError
 from clinic import serializers, paginators
 from rest_framework import viewsets, generics, status, parsers, permissions
 from clinic.models import (User, Doctor, Patient, Payment, Appointment, Review,
@@ -9,6 +10,8 @@ from clinic.models import (User, Doctor, Patient, Payment, Appointment, Review,
                            Hospital, Specialization, UserType)
 from django.db.models import Q
 from rest_framework.response import Response
+
+from clinic.serializers import AppointmentSerializer
 
 
 class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -22,41 +25,16 @@ class SpecializationViewSet(viewsets.ViewSet, generics.ListAPIView):
 
     def get_queryset(self):
         queryset = self.queryset
+        specialization_name = self.request.query_params.get('specialization')
+        # Lấy các chuyên khoa theo tên chuyên khoa
 
-        q = self.request.query_params.get('q')
-        if q:
-            queryset = queryset.filter(name__icontains=q)
-
-        hospital_id = self.request.query_params.get('hospital_id')
-        if hospital_id:
-            queryset = queryset.filter(hospital_id=hospital_id)
+        if specialization_name:
+            queryset = queryset.filter(name__icontains=specialization_name)
 
         return queryset
 
 
-# Lấy current_user để tạo api .../current-user/ dùng chung cho các User, Patient, Doctor
-class CurrentUserMixin:
-    @action(methods=['get', 'patch'], detail=False, url_path='current_user',
-            permission_classes=[permissions.IsAuthenticated])
-    def get_current_user(self, request):
-        user = request.user
-
-        if request.method == 'PATCH':
-            for k, v in request.data.items():
-                if k in ['first_name', 'last_name']:
-                    setattr(user, k, v)
-                elif k == 'password':
-                    user.set_password(v)
-
-            user.save()
-
-        # Gọi đúng serializer cho từng loại user
-        serializer_class = self.get_serializer_class()
-        return Response(serializer_class(user).data)
-
-
-class UserViewSet(CurrentUserMixin, viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView,
-                  generics.UpdateAPIView):
+class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
@@ -72,38 +50,58 @@ class UserViewSet(CurrentUserMixin, viewsets.ViewSet, generics.ListAPIView, gene
                     setattr(u, k, v)
                 elif k.__eq__('password'):
                     u.set_password(v)
-
             u.save()
 
         return Response(serializers.UserSerializer(u).data)
 
 
-class DoctorViewSet(CurrentUserMixin, viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
+class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
                     generics.RetrieveAPIView):
-    # Lấy những bác sĩ nào đã được admin xác nhận
     queryset = Doctor.objects.filter(is_verified=True)
     serializer_class = serializers.DoctorSerializer
     parser_classes = [parsers.MultiPartParser]
 
+    # Chứng thực bác sĩ để xem thông tin bác sĩ và chỉnh sửa 1 phần thông tin bác sĩ
+    @action(methods=['get', 'patch'], url_path='current-user', detail=False,
+            permission_classes=[permissions.IsAuthenticated])
+    def get_current_user(self, request):
+        doctor = Doctor.objects.get(user_ptr=request.user)
+        if request.method.__eq__('PATCH'):
+            for k, v in request.data.items():
+                if k in ['first_name', 'last_name']:
+                    setattr(doctor, k, v)
+                elif k.__eq__('password'):
+                    doctor.set_password(v)
+            doctor.save()
+
+        return Response(serializers.DoctorSerializer(doctor).data)
+
     def get_queryset(self):
         queryset = self.queryset
-        q = self.request.query_params.get('q')
+        name = self.request.query_params.get('name')
+        hospital_name = self.request.query_params.get('hospital_name')
+        specialization_name = self.request.query_params.get('specialization-name')
 
-        if q:
-            queryset = queryset.filter(Q(first_name__icontains=q) |
-                                       Q(last_name__icontains=q))
+        if name:
+            queryset = queryset.filter(Q(first_name__icontains=name) |
+                                       Q(last_name__icontains=name))
+
+        if hospital_name:
+            queryset = queryset.filter(hospital__name__icontains=hospital_name)
+
+        if specialization_name:
+            queryset = queryset.filter(specialization__name__icontains=specialization_name)
 
         return queryset
 
+    # Lấy lịch khám của bác sĩ
     @action(methods=['get'], detail=True, url_path='schedules')
-    def get_schedules(self, request, pk):
-        doctor = Doctor.objects.filter(pk=pk)
-
-        if doctor:
-            schedules = Schedule.objects.filter(doctor_id=pk)
+    def get_schedules(self, request, pk=None):
+        schedules = Schedule.objects.filter(doctor_id=pk)
+        if schedules:
             return Response(serializers.ScheduleSerializer(schedules, many=True).data, status=status.HTTP_200_OK)
 
-        return Response({'error': "Doctor not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': "No schedules found for this doctor."}, status=status.HTTP_404_NOT_FOUND)
 
     @action(methods=['post'], detail=True, url_path='schedules', serializer_class=serializers.ScheduleSerializer)
     def create_schedule(self, request, pk):
@@ -119,11 +117,26 @@ class DoctorViewSet(CurrentUserMixin, viewsets.ViewSet, generics.ListAPIView, ge
         return Response(schedule.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PatientViewSet(CurrentUserMixin, viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
+class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
                      generics.RetrieveAPIView):
     queryset = Patient.objects.filter(is_active=True)
     serializer_class = serializers.PatientSerializer
     parser_classes = [parsers.MultiPartParser]
+
+    # Chứng thực bệnh nhân để xem thông tin bệnh nhân và chỉnh sửa 1 phần thông tin bệnh nhân
+    @action(methods=['get', 'patch'], url_path='current-user', detail=False,
+            permission_classes=[permissions.IsAuthenticated])
+    def get_current_user(self, request):
+        patient = Patient.objects.get(user_ptr=request.user)
+        if request.method.__eq__('PATCH'):
+            for k, v in request.data.items():
+                if k in ['first_name', 'last_name']:
+                    setattr(patient, k, v)
+                elif k.__eq__('password'):
+                    patient.set_password(v)
+            patient.save()
+
+        return Response(serializers.PatientSerializer(patient).data)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -135,38 +148,23 @@ class PatientViewSet(CurrentUserMixin, viewsets.ViewSet, generics.ListAPIView, g
 
         return queryset
 
-    @action(methods=['get'], detail=True, url_path="appointments")
+    @action(methods=['get'], detail=True, url_path="appointments/history",
+            permission_classes=[permissions.IsAuthenticated])
     def get_appointment(self, request, pk):
         patient = get_object_or_404(Patient, pk=pk)
         if patient:
-            appointments = patient.appointment_set.all()
+            appointments = patient.appointment_set.all().order_by('-created_date')
             return Response(serializers.AppointmentSerializer(appointments, many=True).data,
-                            status=status.HTTP_404_NOT_FOUND)
+                            status=status.HTTP_200_OK)
 
         return Response({'error': "Patient not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    @action(methods=['post'], detail=True, url_path='appointments', permission_classes=[permissions.IsAuthenticated])
-    def create_appointment(self, request, pk=None):
-        patient = get_object_or_404(Patient, pk=pk)
 
-        # Thêm thông tin patient vào request.data
-        data = request.data.copy()
-        data['patient'] = patient.id
-
-        serializer = serializers.AppointmentSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
+class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = HealthRecord.objects.filter(active=True).prefetch_related('testresult_set')
     serializer_class = serializers.HealthRecordSerializer
 
     def get_queryset(self):
-        # 👇 Nếu là request từ Swagger để sinh schema thì trả về queryset rỗng
         if getattr(self, 'swagger_fake_view', False):
             return HealthRecord.objects.none()
 
@@ -242,7 +240,7 @@ class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView):
 
 
 class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
-                         generics.UpdateAPIView, generics.DestroyAPIView):
+                         generics.UpdateAPIView):
     queryset = Appointment.objects.filter().all()
     serializer_class = serializers.AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -311,6 +309,51 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
 
         # Trả về thông tin lịch mới
         return Response(serializers.AppointmentSerializer(new_appointment).data, status=201)
+      
+#     def validate_time_before_change(self, appointment):
+#         """ Kiểm tra xem còn ít nhất 24h trước lịch khám không """
+#         now = timezone.now()
+#         schedule_time = appointment.schedule.start_time
+
+#         if schedule_time - now < timedelta(hours=24):
+#             raise ValidationError({'detail': 'Không thể hủy hoặc đổi lịch khi còn dưới 24 giờ.'})
+
+#     def create(self, request, *args, **kwargs):
+#         """ Cho phép bệnh nhân tạo lịch hẹn và tránh bệnh nhận đặt trùng lịch """
+#         user = request.user
+#         if user.user_type != 'Pa':  # User là 'Pa' (bệnh nhân)
+#             raise AuthenticationFailed('Chỉ có bệnh nhân được đặt lịch khám bệnh')
+
+#         # Lấy ID của bệnh nhân từ người dùng đã chứng thực
+#         patient_id = user.id
+#         data = request.data.copy()
+#         data['patient'] = patient_id
+
+#         is_exist = Appointment.objects.filter(patient_id=patient_id, schedule_id=data.get('schedule')).exists()
+#         if is_exist:
+#             return Response({'detail': 'Bạn đã đặt lịch khám này rồi'}, status.HTTP_400_BAD_REQUEST)
+
+#         serializer = AppointmentSerializer(data=data)
+#         if serializer.is_valid():
+#             # Lưu lịch hẹn
+#             appointment = serializer.save()
+#             return Response(AppointmentSerializer(appointment).data, status=status.HTTP_201_CREATED)
+
+#         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+#     @action(detail=True, methods=['patch'], url_path='cancel', permission_classes=[permissions.IsAuthenticated])
+#     def cancel_appointment(self, request, pk=None):
+#         """Cập nhật trạng thái lịch hẹn thành canceled"""
+#         appointment = self.get_object()
+
+#         # Kiểm tra thời gian trước khi hủy
+#         self.validate_time_before_change(appointment)
+
+#         # Chỉ update status
+#         appointment.status = 'canceled'
+#         appointment.save()
+
+#         return Response({'detail': 'Lịch hẹn đã được hủy thành công.'}, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=True, url_path="payment")
     def get_payment(self, request, pk):
