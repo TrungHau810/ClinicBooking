@@ -139,16 +139,10 @@ class ReviewSerializer(ModelSerializer):
     class Meta:
         model = Review
         fields = ['id', 'rating', 'comment', 'reply', 'doctor', 'patient']
-# class PaymentSerializer(ModelSerializer):
-#     class Meta:
-#         model = Payment
-#         fields = ['id', 'method', 'amount', 'status', 'transaction_id', 'appointment']
-#
-#
-#
-#
-# class PaymentSerializer(ModelSerializer):
-#     class Meta:
-#         model = Payment
-#         fields = ['id','amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']
+
+
+class PaymentSerializer(ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ['id','amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']
 
