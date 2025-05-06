@@ -1,3 +1,5 @@
+from django.utils import timezone
+from datetime import datetime, timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -127,6 +129,7 @@ class Message(BaseModel):
     sender = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='sent_messages', null=True)
     receiver = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='received_messages', null=True)
     test_result = models.OneToOneField(TestResult, on_delete=models.SET_NULL, null=True)
+    parent_message = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
 
     def __str__(self):
         return (f"{self.sender} - {self.receiver}")
@@ -173,9 +176,17 @@ class Appointment(BaseModel):
     symptoms = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=Status, default=Status.PENDING)
     booked_at = models.DateTimeField(auto_now_add=True)
+    cancel_reason = models.TextField(blank=True, null=True)
+    rescheduled_from = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return (f"{self.patient} - {self.schedule}")
+        return f"{self.patient} - {self.schedule}"
+
+    @property
+    def can_cancel_or_reschedule(self):
+        appointment_datetime = datetime.combine(self.schedule.date, self.schedule.start_time)
+        appointment_datetime = timezone.make_aware(appointment_datetime)  # 👈 make it timezone-aware
+        return appointment_datetime - timezone.now() >= timedelta(hours=24)
 
 
 class Payment(BaseModel):

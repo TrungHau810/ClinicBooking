@@ -17,6 +17,17 @@ from django.conf.global_settings import AUTH_USER_MODEL
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+# Cấu hình gửi email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Sử dụng SMTP để gửi email
+EMAIL_HOST = 'smtp.gmail.com'  # SMTP server của Gmail
+EMAIL_PORT = 587  # Cổng SMTP (587 cho TLS)
+EMAIL_USE_TLS = True  # Bật TLS (Transport Layer Security)
+EMAIL_HOST_USER = 'haopc1404@gmail.com'  # Email của bạn
+EMAIL_HOST_PASSWORD = 'qszggqyowrifachp'  # Mật khẩu của email (hoặc App password nếu dùng 2FA)
+DEFAULT_FROM_EMAIL = 'haopc1404@gmail.com'  # Email gửi đi mặc định
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -150,6 +161,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+OAUTH2_PROVIDER = { 'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore' }
 
 CLIENT_ID = 'NTWbn6Ws0BboQonlGDkgzDIB67CyBg7qrinoRt72'
 CLIENT_SECRET = 'u7IOJXTyVB69alsb1JgxYZNqyCGFwR4baCqpJRlbAOFa1XRpK3qpU05YJnN5EWruQebXHTQF6SywwcQtIFvukVBl4W058Gan9x3sj1j3LXIQ6XLiFRp6aI1zRGY8XPLC'
