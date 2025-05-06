@@ -18,13 +18,14 @@ from django.conf.global_settings import AUTH_USER_MODEL
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'  # Ví dụ sử dụng Gmail
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your_email@gmail.com'  # Thay thế bằng email của bạn
-# EMAIL_HOST_PASSWORD = 'your_email_password'  # Thay thế bằng mật khẩu email của bạn
-# DEFAULT_FROM_EMAIL = 'your_email@gmail.com'  # Địa chỉ email từ đó gửi đi thông báo
+# Cấu hình gửi email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Sử dụng SMTP để gửi email
+EMAIL_HOST = 'smtp.gmail.com'  # SMTP server của Gmail
+EMAIL_PORT = 587  # Cổng SMTP (587 cho TLS)
+EMAIL_USE_TLS = True  # Bật TLS (Transport Layer Security)
+EMAIL_HOST_USER = 'haopc1404@gmail.com'  # Email của bạn
+EMAIL_HOST_PASSWORD = 'qszggqyowrifachp'  # Mật khẩu của email (hoặc App password nếu dùng 2FA)
+DEFAULT_FROM_EMAIL = 'haopc1404@gmail.com'  # Email gửi đi mặc định
 
 
 # Quick-start development settings - unsuitable for production
