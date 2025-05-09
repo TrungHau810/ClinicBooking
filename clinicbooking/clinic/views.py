@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from clinic.serializers import AppointmentSerializer, PaymentSerializer
 
 
-class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView):
+class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Hospital.objects.filter(active=True)
     serializer_class = serializers.HospitalSerializer
 
@@ -255,6 +255,9 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
         # Lấy đối tượng hẹn của bệnh nhân
         old_appointment = self.get_object()
 
+        if old_appointment.status.__contains__('canceled'):
+            return Response({'detail': 'Lịch này đã bị huỷ'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Kiểm tra chứng thực: Chỉ bệnh nhân đã đặt lịch mới có thể hủy lịch của mình
         if old_appointment.patient != request.user.patient:
             return Response({"detail": "Bạn không có quyền hủy lịch này."}, status=403)
@@ -360,7 +363,8 @@ class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
 
         appointment_id = self.request.query_params.get('appointment')
         if appointment_id:
-            return queryset.filter(test_result__appointment__patient=user) | queryset.filter(test_result__appointment__doctor=user)
+            return queryset.filter(test_result__appointment__patient=user) | queryset.filter(
+                test_result__appointment__doctor=user)
 
         sender_id = self.request.query_params.get('sender')
         receiver_id = self.request.query_params.get('receiver')
@@ -425,6 +429,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         review.reply = reply_text
         review.save()
         return Response(self.get_serializer(review).data, status=status.HTTP_200_OK)
+
 
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
@@ -501,7 +506,7 @@ class DoctorReportView(APIView):
         })
 
 
-class AdminReportView(APIView):
+class AdminReportViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -517,12 +522,16 @@ class AdminReportView(APIView):
 
         if month and year:
             appt_queryset = appt_queryset.filter(schedule__date__year=year, schedule__date__month=month)
-            payment_queryset = payment_queryset.filter(appointment__schedule__date__year=year, appointment__schedule__date__month=month)
+            payment_queryset = payment_queryset.filter(appointment__schedule__date__year=year,
+                                                       appointment__schedule__date__month=month)
         elif quarter and year:
             start_month = (int(quarter) - 1) * 3 + 1
             end_month = start_month + 2
-            appt_queryset = appt_queryset.filter(schedule__date__year=year, schedule__date__month__range=(start_month, end_month))
-            payment_queryset = payment_queryset.filter(appointment__schedule__date__year=year, appointment__schedule__date__month__range=(start_month, end_month))
+            appt_queryset = appt_queryset.filter(schedule__date__year=year,
+                                                 schedule__date__month__range=(start_month, end_month))
+            payment_queryset = payment_queryset.filter(appointment__schedule__date__year=year,
+                                                       appointment__schedule__date__month__range=(
+                                                       start_month, end_month))
 
         return Response({
             'appointment_count': appt_queryset.count(),
