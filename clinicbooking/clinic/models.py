@@ -1,3 +1,5 @@
+from ckeditor.fields import RichTextField
+from django.db.models.fields import TextField
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -61,6 +63,8 @@ class Patient(User):
 class Hospital(BaseModel):
     name = models.CharField(max_length=255)
     address = models.TextField(max_length=200)
+    image = CloudinaryField(null=False)
+    description = RichTextField()
     phone = models.CharField(max_length=10)
 
     def __str__(self):
@@ -154,6 +158,7 @@ class Schedule(BaseModel):
     is_available = models.BooleanField(default=True)
     capacity = models.IntegerField(default=1)
 
+
     class Meta:
         # Tránh bác sĩ bị trùng ngày và giờ bắt đầu
         unique_together = ('doctor', 'date', 'start_time')
@@ -185,7 +190,7 @@ class Appointment(BaseModel):
     @property
     def can_cancel_or_reschedule(self):
         appointment_datetime = datetime.combine(self.schedule.date, self.schedule.start_time)
-        appointment_datetime = timezone.make_aware(appointment_datetime)  # 👈 make it timezone-aware
+        appointment_datetime = timezone.make_aware(appointment_datetime)  # make it timezone-aware
         return appointment_datetime - timezone.now() >= timedelta(hours=24)
 
 

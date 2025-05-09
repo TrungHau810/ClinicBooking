@@ -17,7 +17,6 @@ from django.conf.global_settings import AUTH_USER_MODEL
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Cấu hình gửi email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Sử dụng SMTP để gửi email
 EMAIL_HOST = 'smtp.gmail.com'  # SMTP server của Gmail
@@ -26,7 +25,6 @@ EMAIL_USE_TLS = True  # Bật TLS (Transport Layer Security)
 EMAIL_HOST_USER = 'haopc1404@gmail.com'  # Email của bạn
 EMAIL_HOST_PASSWORD = 'qszggqyowrifachp'  # Mật khẩu của email (hoặc App password nếu dùng 2FA)
 DEFAULT_FROM_EMAIL = 'haopc1404@gmail.com'  # Email gửi đi mặc định
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -37,7 +35,7 @@ SECRET_KEY = 'django-insecure-bt%qm0ce=2wm6zwm+^!r+dd=ra-(*9)2o7+h*5ee-*ssw0h^4s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['10.17.66.120', '10.17.65.121', '*']
 
 # Application definition
 
@@ -52,6 +50,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'oauth2_provider',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 OAUTH2_PROVIDER = {'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'}
@@ -61,6 +61,8 @@ REST_FRAMEWORK = {
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     )
 }
+
+CKEDITOR_UPLOAD_PATH = "ckeditors/lessons/"
 
 import cloudinary
 import cloudinary.uploader
@@ -162,7 +164,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-OAUTH2_PROVIDER = { 'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore' }
+OAUTH2_PROVIDER = {'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'}
 
 CLIENT_ID = 'NTWbn6Ws0BboQonlGDkgzDIB67CyBg7qrinoRt72'
 CLIENT_SECRET = 'u7IOJXTyVB69alsb1JgxYZNqyCGFwR4baCqpJRlbAOFa1XRpK3qpU05YJnN5EWruQebXHTQF6SywwcQtIFvukVBl4W058Gan9x3sj1j3LXIQ6XLiFRp6aI1zRGY8XPLC'

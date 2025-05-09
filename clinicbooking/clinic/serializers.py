@@ -10,6 +10,14 @@ class HospitalSerializer(ModelSerializer):
         model = Hospital
         fields = '__all__'
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.image:
+            data['image'] = f"{instance.image.url}"
+        else:
+            data['image'] = None
+        return data
+
 
 class SpecializationSerializer(ModelSerializer):
     class Meta:
@@ -144,5 +152,4 @@ class ReviewSerializer(ModelSerializer):
 class PaymentSerializer(ModelSerializer):
     class Meta:
         model = Payment
-        fields = ['id','amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']
-
+        fields = ['id', 'amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']

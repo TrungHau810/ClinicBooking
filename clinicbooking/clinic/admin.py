@@ -3,6 +3,8 @@ from clinic.models import (User, Doctor, Patient, HealthRecord, Schedule,
                            Appointment, Review, Message,
                            Payment, TestResult, Notification, Hospital, Specialization)
 from django.utils.html import mark_safe
+from ckeditor_uploader.widgets import CKEditorUploadingWidget
+from django import forms
 
 
 class MyUserAdmin(admin.ModelAdmin):
@@ -106,7 +108,17 @@ class MySpecializationAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'active']
 
 
+class HospitalForm(forms.ModelForm):
+    description = forms.CharField(widget=CKEditorUploadingWidget)
+
+    class Meta:
+        model = Hospital
+        fields = '__all__'
+
+
 class MyHospitalAdmin(admin.ModelAdmin):
+    forms= HospitalForm
+
     list_display = ['id', 'name', 'address', 'active', 'phone']
 
 
