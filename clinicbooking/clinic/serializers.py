@@ -37,7 +37,7 @@ class UserSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'avatar']
+        fields = ['id', 'username', 'first_name', 'last_name', 'avatar', 'number_phone', 'email', 'gender']
 
 
 class DoctorSerializer(UserSerializer):
@@ -116,9 +116,15 @@ class HealthRecordSerializer(ModelSerializer):
 
 
 class AppointmentSerializer(ModelSerializer):
+    schedule_date = serializers.DateField(source='schedule.date', read_only=True)
+    schedule_start = serializers.TimeField(source='schedule.start_time', read_only=True)
+    schedule_end = serializers.TimeField(source='schedule.end_time', read_only=True)
     class Meta:
         model = Appointment
-        fields = '__all__'
+        fields = ['id', 'active', 'created_date', 'updated_date',
+                  'disease_type', 'symptoms', 'status', 'booked_at',
+                  'schedule_date','schedule_start','schedule_end', 'patient_id', 'cancel_reason',
+                  'rescheduled_from_id']
 
 
 class ScheduleSerializer(ModelSerializer):
