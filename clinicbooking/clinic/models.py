@@ -115,6 +115,10 @@ class Notification(BaseModel):
     type = models.CharField(max_length=20, choices=NotifyType, default=NotifyType.NHAC_NHO)
     form = models.CharField(max_length=20, choices=NotifyForm, default=NotifyForm.EMAIL)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, default='pending')  # Thêm trạng thái thông báo
+
+    def __str__(self):
+        return f"Notification for {self.patient.username} - {self.type}"
 
 
 class TestResult(BaseModel):
