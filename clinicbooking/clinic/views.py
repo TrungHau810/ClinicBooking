@@ -16,7 +16,7 @@ from clinic.models import (User, Doctor, Patient, Payment, Appointment, Review,
 from django.db.models import Q, Count, Sum
 from rest_framework.response import Response
 
-from clinic.serializers import AppointmentSerializer, PaymentSerializer
+from clinic.serializers import AppointmentSerializer, PaymentSerializer, NotificationSerializer
 
 
 class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -537,3 +537,24 @@ class AdminReportViewSet(APIView):
             'appointment_count': appt_queryset.count(),
             'revenue': payment_queryset.aggregate(total=Sum('amount'))['total'] or 0
         })
+
+class ScheduleAvailableDatesView(APIView):
+    def get(self, request):
+        doctor_id = request.query_params.get('doctor_id')
+
+        if not doctor_id:
+            return Response({"error": "Missing doctor_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+        dates = (
+            Schedule.objects.filter(doctor_id=doctor_id, is_available=True)
+            .values_list('date', flat=True)
+            .distinct()
+            .order_by('date')
+        )
+
+        return Response(dates)
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer

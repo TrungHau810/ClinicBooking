@@ -153,3 +153,11 @@ class PaymentSerializer(ModelSerializer):
     class Meta:
         model = Payment
         fields = ['id', 'amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'
+
+

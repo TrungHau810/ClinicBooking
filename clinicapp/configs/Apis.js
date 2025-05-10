@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://10.17.66.120:8000/";
+const BASE_URL = "http://10.17.66.21:8000/";
 
 export const endpoints = {
     'hospitals': '/hospitals/',
