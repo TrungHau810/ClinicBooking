@@ -10,6 +10,7 @@ export const endpoints = {
     'doctors': '/doctors/',
     'login': '/o/token/',
     'current-user': '/users/current-user/',
+    'appointments': "/appointments/",
 }
 
 export const authApis = (token) => {
