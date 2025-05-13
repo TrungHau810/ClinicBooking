@@ -11,8 +11,8 @@ const StackNavigator = () => {
     return (
         <Stack.Navigator>
             {/* <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} /> */}
-            <Stack.Screen name="Đăng nhập" component={Login} />
-            <Stack.Screen name="Đăng ký" component={Register} />
+            <Stack.Screen name="login" component={Login} />
+            <Stack.Screen name="register" component={Register} />
             <Stack.Screen name="Patient" component={PatientNavigator} options={{ headerShown: false }} />
         </Stack.Navigator>
     );

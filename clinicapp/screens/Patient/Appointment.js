@@ -35,14 +35,14 @@ import { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const statusList = [
-    { label: "Đang chờ xác nhận", value: "pending" },
-    { label: "Đã xác nhận", value: "confirmed" },
-    { label: "Đã hoàn thành", value: "completed" },
+    { label: "Chưa thanh toán", value: "unpaid" },
+    { label: "Đã thanh toán", value: "paid" },
+    { label: "Đã khám", value: "completed" },
     { label: "Đã huỷ", value: "canceled" },
 ];
 
 const Appointment = () => {
-    const [selectedStatus, setSelectedStatus] = useState("pending");
+    const [selectedStatus, setSelectedStatus] = useState("unpaid");
     const [appointments, setAppointments] = useState([]);
 
     const user = useContext(MyUserContext);
@@ -50,6 +50,7 @@ const Appointment = () => {
     const loadAppointments = async () => {
         const token = await AsyncStorage.getItem('token');
         const res = await authApis(token).get(endpoints['appointments']);
+        console.log(res.data);
         setAppointments(res.data);
     };
 
@@ -59,14 +60,15 @@ const Appointment = () => {
 
     const renderStatus = (status) => {
         switch (status) {
-            case "pending":
-                return <Chip style={styles.pendingChip}>Đang chờ</Chip>;
-            case "confirmed":
-                return <Chip style={styles.confirmedChip}>Đã xác nhận</Chip>;
+            case "unpaid":
+                return <Chip style={styles.pendingChip}>Chưa thanh toán</Chip>;
+            case "paid":
+                return <Chip style={styles.confirmedChip}>Đã thanh toán</Chip>;
             case "completed":
-                return <Chip style={styles.completedChip}>Đã hoàn thành</Chip>;
-            case "canceled":
-                return <Chip style={styles.canceledChip}>Đã huỷ</Chip>;
+                return <Chip style={styles.canceledChip}>Đã khám</Chip>;
+            case "cancelled":
+                return <Chip style={styles.completedChip}>Đã huỷ</Chip>;
+            
             default:
                 return <Chip>{status}</Chip>;
         }
@@ -77,7 +79,7 @@ const Appointment = () => {
             <Card.Content>
                 <Text variant="titleMedium">Bệnh lý: {item.disease_type}</Text>
                 <Text>Ngày: {new Date(item.schedule_date).toLocaleDateString()}</Text>
-                <Text>Thời gian: {item.schedule_start} - {item.schedule_end}</Text>
+                <Text>Thời gian: {item.schedule_start.slice(0, 5)} - {item.schedule_end.slice(0, 5)}</Text>
             </Card.Content>
             <Card.Content>
                 {renderStatus(item.status)}
