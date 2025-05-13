@@ -113,6 +113,7 @@ class HealthRecordSerializer(ModelSerializer):
     class Meta:
         model = HealthRecord
         fields = ['id', 'medical_history', 'test_results', 'patient_id']
+        read_only_fields = ['patient_id', 'test_results']
 
 
 class AppointmentSerializer(ModelSerializer):
