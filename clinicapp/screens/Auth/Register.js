@@ -176,7 +176,7 @@ const Register = ({ navigation }) => {
                     </Button>
                 </TouchableOpacity>
                 <TouchableOpacity>
-                    <Button onPress={() => { navigation.navigate('Đăng nhập') }}>Đã có tài khoản? Đăng nhập</Button>
+                    <Button onPress={() => { navigation.navigate('login') }}>Đã có tài khoản? Đăng nhập</Button>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
