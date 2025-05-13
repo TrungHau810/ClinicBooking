@@ -23,7 +23,7 @@
 //     },{
 //         label:"Địa chỉ (Số nhà/Tên đường/Ấp thôn xóm)",
 //     },]
-    
+
 
 //     const renderForm =(healthField)=>{
 //         return(
@@ -51,31 +51,138 @@
 // export default HealthRecord;
 
 
-import { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Button, RadioButton, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Apis, { authApis, endpoints } from "../../configs/Apis";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HealthRecord = () => {
   const [gender, setGender] = useState("male");
+  const [user, setUser] = useState({});
+
+  const setState = (value, field) => {
+    setUser({ ...user, [field]: value });
+  };
+
+  const createHealthRecord = async () => {
+    let token = await AsyncStorage.getItem('token');
+
+    let form = new FormData();
+    for (let key in user) {
+      form.append(key, user[key]);
+    }
+    try {
+      let res = await Apis.post(endpoints['healthrecords'], form, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      console.log(res.status);
+      console.log(res.data);
+    } catch (error) {
+      Alert.alert(error.response.data.detail);
+      // console.log(error);
+    }
+
+
+
+  };
+
+  // const createHealthRecord = async () => {
+  //   try {
+  //     const token = await AsyncStorage.getItem('token');
+  //     if (!token) {
+  //       console.error("❌ Token không tồn tại trong AsyncStorage");
+  //       return;
+  //     }
+
+  //     const form = new FormData();
+  //     for (let key in user) {
+  //       if (user[key] !== undefined && user[key] !== null) {
+  //         form.append(key, user[key]);
+  //       }
+  //     }
+
+  //     const res = await Apis.post(endpoints['healthrecords'], form, {
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`,
+  //         'Content-Type': 'multipart/form-data',
+  //       }
+  //     });
+
+  //     console.log("✅ Status:", res.status);
+  //     console.log("📦 Response:", res.data);
+
+  //   } catch (error) {
+  //     console.error("❌ Error khi gửi form:", error.response?.data || error.message);
+  //   }
+  // };
+
+
+
+
+  const occupation = [
+    { value: 'doctor', label: 'Bác sĩ' },
+    { value: 'nurse', label: 'Y tá' },
+    { value: 'teacher', label: 'Giáo viên' },
+    { value: 'engineer', label: 'Kỹ sư' },
+    { value: 'student', label: 'Học sinh/Sinh viên' },
+    { value: 'worker', label: 'Công nhân' },
+    { value: 'freelancer', label: 'Làm tự do' },
+    { value: 'office_staff', label: 'Nhân viên văn phòng' },
+    { value: 'business', label: 'Kinh doanh' },
+    { value: 'driver', label: 'Tài xế' },
+    { value: 'farmer', label: 'Nông dân' },
+    { value: 'police', label: 'Công an' },
+    { value: 'other', label: 'Khác' },
+  ];
 
   const healthFields = [
-    { label: "Họ tên (có dấu)", key: "name" },
-    { label: "Ngày sinh", key: "dob" },
-    { label: "Mã bảo hiểm y tế", key: "insurance" },
-    { label: "Số CCCD", key: "cccd" },
-    { label: "Email (Dùng để nhận phiếu khám bệnh)", key: "email" },
-    { label: "Số điện thoại", key: "phone" },
-    { label: "Địa chỉ (Số nhà/Tên đường/Ấp thôn xóm)", key: "address" },
+    { label: "Họ tên (có dấu)", field: "full_name" },
+    { label: "Ngày sinh", field: "day_of_birth" },
+    { label: "Mã bảo hiểm y tế", field: "BHYT" },
+    { label: "Số CCCD", field: "CCCD" },
+    { label: "Email (Dùng để nhận phiếu khám bệnh)", field: "email" },
+    { label: "Số điện thoại", field: "number_phone" },
+    { label: "Địa chỉ (Số nhà/Tên đường/Ấp thôn xóm)", field: "address" },
+    { label: "Tiền sử bệnh án", field: "medical_history" },
+
   ];
+
+  const renderOccupation = () => {
+    return (
+      <View>
+        <Text style={styles.label}>Nghề nghiệp</Text>
+        <RadioButton.Group
+          onValueChange={(value) => setState(value, "occupation")}
+          value={user.occupation}
+        >
+          <View>
+            {occupation.map((item) => (
+              <RadioButton.Item
+                key={item.value}
+                label={item.label}
+                value={item.value}
+              />
+            ))}
+          </View>
+        </RadioButton.Group>
+      </View>
+    );
+  };
+
 
   const renderForm = (fields) =>
     fields.map((field) => (
       <TextInput
-        key={field.key}
+        key={field.field}
         label={field.label}
         mode="outlined"
         style={styles.input}
+        onChangeText={t => setState(t, field.field)}
       />
     ));
 
@@ -93,15 +200,19 @@ const HealthRecord = () => {
         {renderForm(healthFields.slice(0, 1))}
 
         <Text style={styles.label}>Giới tính</Text>
-        <RadioButton.Group onValueChange={setGender} value={gender}>
+        <RadioButton.Group
+          onValueChange={(value) => setState(value, "gender")}
+          value={user.gender}
+        >
           <View style={styles.radioGroup}>
             <RadioButton.Item label="Nam" value="male" />
             <RadioButton.Item label="Nữ" value="female" />
-            <RadioButton.Item label="Khác" value="other" />
           </View>
         </RadioButton.Group>
 
         {renderForm(healthFields.slice(1))}
+        {renderOccupation(occupation)}
+        <TouchableOpacity><Button mode="contained" onPress={createHealthRecord}>Tạo hồ sơ</Button></TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

@@ -44,50 +44,64 @@ const Profile = ({ navigation }) => {
     const dispatch = useContext(MyDispatchContext);
 
     const logout = () => {
-        // dispatch({ type: 'logout' });
-        // navigation.navigate('home');
+        dispatch({ type: 'logout' });
+        navigation.navigate('home');
     };
 
-    const { avatar, username, first_name, last_name, gender, email, number_phone } = user.payload;
+    // const { avatar, username, full_name, email} = user.payload;
+    const { avatar, username, full_name, number_phone, email } = user?.payload || {};
+    console.log(user.payload);
+    let content;
+
+    if (user.payload !== undefined) {
+        content = (
+            <SafeAreaView>
+                <Text style={styles.header}>Thông tin cá nhân</Text>
+
+                <View style={styles.avatarContainer}>
+                    <Image style={styles.avatar} source={{ uri: avatar }} />
+                    <Text style={styles.name}>{full_name}</Text>
+                </View>
+
+                <Divider style={styles.divider} />
+
+                <View style={styles.infoSection}>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Tên đăng nhập: </Text>
+                        <Text style={styles.value}>{username}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Số điện thoại: </Text>
+                        <Text style={styles.value}>{number_phone}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Email: </Text>
+                        <Text style={styles.value}>{email || "Chưa cập nhật"}</Text>
+                    </View>
+                </View>
+
+                <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+                    <Button mode="contained-tonal">Đăng xuất</Button>
+                </TouchableOpacity>
+            </SafeAreaView>
+        );
+    } else {
+        content = (
+            <SafeAreaView>
+                <Text>Vui lòng đăng nhập để sử dụng</Text>
+                <TouchableOpacity onPress={() => navigation.navigate("login")}>
+                    <Button>Đăng nhập</Button>
+                </TouchableOpacity>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.header}>Thông tin cá nhân</Text>
-
-            <View style={styles.avatarContainer}>
-                <Image style={styles.avatar} source={{ uri: avatar }} />
-                <Text style={styles.name}>{`${last_name} ${first_name}`}</Text>
-            </View>
-
-            <Divider style={styles.divider} />
-
-            <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Tên đăng nhập: </Text>
-                    <Text style={styles.value}>{username}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Giới tính: </Text>
-                    <Text style={styles.value}>{gender === "Male" ? "Nam" : "Nữ"}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Email: </Text>
-                    <Text style={styles.value}>{email || "Chưa cập nhật"}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Số điện thoại: </Text>
-                    <Text style={styles.value}>{number_phone || "Chưa cập nhật"}</Text>
-                </View>
-            </View>
-
-            <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-                <Button mode="contained-tonal">Đăng xuất</Button>
-            </TouchableOpacity>
+            {content}
         </SafeAreaView>
     );
+
 };
 
 const styles = StyleSheet.create({

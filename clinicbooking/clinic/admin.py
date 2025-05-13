@@ -1,24 +1,78 @@
 from django.contrib import admin
-from clinic.models import (User, Doctor, Patient, HealthRecord, Schedule,
+from clinic.models import (User, DoctorInfo, HealthRecord, Schedule,
                            Appointment, Review, Message,
                            Payment, TestResult, Notification, Hospital, Specialization)
+from oauth2_provider.models import Application, AccessToken
 from django.utils.html import mark_safe
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from django import forms
 
 
+class MyAppointmentAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'schedule', 'disease_type', 'status']
+
+
+class MyDoctorInfoAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'doctor_fullname', 'license_number', 'hospital_name', 'specialization', 'active']
+    search_fields = ['id', 'doctor_fullname', 'license_number']
+    list_filter = ['hospital', 'specialization']
+    readonly_fields = ['license_image_view']
+
+    # Lọc user có role là doctor
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if db_field.name == "user":
+            kwargs["queryset"] = User.objects.filter(role="doctor")
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
+    def doctor_fullname(self, user):
+        return user.user.full_name
+
+    def hospital_name(self, hospital):
+        return hospital.hospital.name
+
+    def license_image_view(self, doctorinfo):
+        if doctorinfo.license_image:
+            return mark_safe(f"<img src='{doctorinfo.license_image.url}' width=250 />")
+        return "Không có ảnh đại diện"
+
+    # avatar_view.short_description = "Ảnh đại diện"
+
+
+class MyHealthRecordAdmin(admin.ModelAdmin):
+    list_display = ['id', 'full_name', 'gender', 'day_of_birth', 'address', 'CCCD', 'email', 'user', 'medical_history',
+                    'created_date', 'active']
+    search_fields = ['id', 'full_name', 'CCCD']
+
+    # Lọc user có role là patient (BN)
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if db_field.name == "user":
+            kwargs["queryset"] = User.objects.filter(role="patient")
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
+
+class HospitalForm(forms.ModelForm):
+    description = forms.CharField(widget=CKEditorUploadingWidget)
+
+    class Meta:
+        model = Hospital
+        fields = '__all__'
+
+
+class MyHospitalAdmin(admin.ModelAdmin):
+    forms = HospitalForm
+
+    list_display = ['id', 'name', 'address', 'phone', 'active']
+
+
+class MyMessageAdmin(admin.ModelAdmin):
+    list_display = ['id', 'sender_id', 'receiver_id']
+
+
 class MyUserAdmin(admin.ModelAdmin):
-    list_display = ['id', 'username', 'first_name', 'last_name', 'gender', 'email', 'number_phone', 'is_active']
-    search_fields = ['username', 'first_name', 'last_name']
+    list_display = ['id', 'username', 'full_name', 'email', 'number_phone', 'is_active']
+    search_fields = ['username', 'full_name']
     list_filter = ['id']
     readonly_fields = ['avatar_view']
-
-    # Gỡ bỏ các field không mong muốn, chỉ hiển thị các fied cần thiết
-    fieldsets = (
-        ("Thông tin tài khoản", {'fields': ('username', 'password')}),
-        ('Thông tin cá nhân', {'fields': ('first_name', 'last_name', 'gender', 'number_phone', 'email')}),
-        ('Thông tin khác', {'fields': ('avatar', 'avatar_view', 'user_type')}),
-    )
 
     def avatar_view(self, user):
         if user.avatar:
@@ -36,42 +90,11 @@ class MyUserAdmin(admin.ModelAdmin):
             super().save_model(request, user, form, change)
 
 
-class MyDoctorAdmin(MyUserAdmin):
-    list_display = MyUserAdmin.list_display + ['license_number', 'is_verified']
-    readonly_fields = ['avatar_view', 'license_view']
-    fieldsets = MyUserAdmin.fieldsets + (
-        ("Giấy phép hành nghề", {'fields': ('license_number', 'license_image', 'license_view', 'is_verified')}),
-        ("Nơi làm việc", {'fields': ('hospital', 'specialization')}),
-    )
-
-    def get_changeform_initial_data(self, request):
-        return {'user_type': 'Dr'}
-
-    def license_view(self, doctor):
-        if doctor.license_image:
-            return mark_safe(f"<img src='{doctor.license_image.url}' width=500 />")
-        return "Không có giấy phép hành nghề"
-
-
-class MyPatientAdmin(MyUserAdmin):
-    fieldsets = (
-        ("Thông tin tài khoản", {'fields': ('username', 'password')}),
-        ('Thông tin cá nhân', {
-            'fields': ('first_name', 'last_name', 'gender', 'day_of_birth', 'number_phone', 'address', 'email')
-            # thêm ở đây
-        }),
-        ('Thông tin khác', {
-            'fields': ('avatar', 'avatar_view', 'user_type')
-        }),
-    )
-
-
-class MyAppointmentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'disease_type', 'booked_at']
-
-
 class MyDoctorScheduleAdmin(admin.ModelAdmin):
-    list_display = ['id', 'date', 'start_time', 'end_time', 'capacity', 'is_available', 'doctor_id']
+    list_display = ['id', 'doctor_id', 'doctor_name', 'date', 'start_time', 'end_time', 'capacity', 'is_available']
+
+    def doctor_name(self, doctor):
+        return doctor.doctor.full_name
 
 
 class MyPaymentAdmin(admin.ModelAdmin):
@@ -81,45 +104,12 @@ class MyPaymentAdmin(admin.ModelAdmin):
         return f"{obj.amount:,.0f} ₫"
 
 
-class MyHealthRecordAdmin(admin.ModelAdmin):
-    list_display = ['id', 'id_patient', 'patient_username', 'medical_history', 'active', 'created_date', 'updated_date']
-
-    def id_patient(self, patient):
-        return patient.patient_id
-
-    def patient_username(self, patient):
-        first_name = patient.patient.first_name
-        last_name = patient.patient.last_name
-        return (f"{last_name} {first_name}")
-
-    id_patient.short_description = 'ID bệnh nhân'
-    patient_username.short_description = 'Tên tài khoản bệnh nhân'
-
-
 class MyTestResultAdmin(admin.ModelAdmin):
     list_display = ['id', 'test_name', 'created_date', 'updated_date']
 
 
-class MyMessageAdmin(admin.ModelAdmin):
-    list_display = ['id', 'sender_id', 'receiver_id']
-
-
 class MySpecializationAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'active']
-
-
-class HospitalForm(forms.ModelForm):
-    description = forms.CharField(widget=CKEditorUploadingWidget)
-
-    class Meta:
-        model = Hospital
-        fields = '__all__'
-
-
-class MyHospitalAdmin(admin.ModelAdmin):
-    forms= HospitalForm
-
-    list_display = ['id', 'name', 'address', 'active', 'phone']
 
 
 class ClinicAdminSite(admin.AdminSite):
@@ -131,8 +121,7 @@ class ClinicAdminSite(admin.AdminSite):
 admin_site = ClinicAdminSite(name='myadmin')
 
 admin_site.register(User, MyUserAdmin)
-admin_site.register(Doctor, MyDoctorAdmin)
-admin_site.register(Patient, MyPatientAdmin)
+admin_site.register(DoctorInfo, MyDoctorInfoAdmin)
 admin_site.register(HealthRecord, MyHealthRecordAdmin)
 admin_site.register(Schedule, MyDoctorScheduleAdmin)
 admin_site.register(TestResult, MyTestResultAdmin)
@@ -143,3 +132,6 @@ admin_site.register(Payment, MyPaymentAdmin)
 admin_site.register(Notification)
 admin_site.register(Hospital, MyHospitalAdmin)
 admin_site.register(Specialization, MySpecializationAdmin)
+
+admin_site.register(Application)
+admin_site.register(AccessToken)

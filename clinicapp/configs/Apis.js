@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://10.17.66.120:8000/";
+const BASE_URL = "http://192.168.1.37:8000/";
 
 export const endpoints = {
     'hospitals': '/hospitals/',
@@ -11,11 +11,12 @@ export const endpoints = {
     'login': '/o/token/',
     'current-user': '/users/current-user/',
     'appointments': "/appointments/",
+    'healthrecords':'/healthrecords/me/'
 }
 
 export const authApis = (token) => {
     return axios.create({
-        baseURL: BASE_URL,
+        baseURL: BASE_URL, 
         headers: {
             'Authorization': `Bearer ${token}`
         }

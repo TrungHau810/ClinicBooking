@@ -240,7 +240,7 @@ const Login = ({ navigation }) => {
         </Button>
 
         <Button
-          onPress={() => navigation.navigate("Đăng ký")}
+          onPress={() => navigation.navigate("register")}
           labelStyle={{ color: "#6200ee" }}
         >
           Chưa có tài khoản? Đăng ký

@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from clinic.models import (User, Doctor, Patient, HealthRecord, Schedule,
+from clinic.models import (User, DoctorInfo, HealthRecord, Schedule,
                            Appointment, Review, Message,
-                           Payment, TestResult, Notification, Hospital, Specialization, UserType)
+                           Payment, TestResult, Notification, Hospital, Specialization)
 
 
 class HospitalSerializer(ModelSerializer):
@@ -12,10 +12,10 @@ class HospitalSerializer(ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        if instance.image:
-            data['image'] = f"{instance.image.url}"
+        if instance.logo:
+            data['logo'] = f"{instance.logo.url}"
         else:
-            data['image'] = None
+            data['logo'] = None
         return data
 
 
@@ -37,32 +37,30 @@ class UserSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'avatar', 'number_phone', 'email', 'gender']
+        fields = ['id', 'username', 'full_name', 'number_phone', 'avatar', 'email']
 
 
-class DoctorSerializer(UserSerializer):
+class PatientSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
 
-    def create(self, validated_data):
-        data = validated_data.copy()
-        dr = Doctor(**data)
-        dr.set_password(dr.password)
-        dr.user_type = 'Dr'
-        dr.save()
-        return dr
 
+class DoctorSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+
+
+class DoctorInfoSerializer(ModelSerializer):
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
     specialization_name = serializers.CharField(source='specialization.name', read_only=True)
 
     class Meta:
-        model = Doctor
-        fields = UserSerializer.Meta.fields + ['id', 'biography', 'license_number', 'license_image', 'is_verified',
-                                               'hospital_name',
-                                               'specialization', 'specialization_name']
-        extra_kwargs = {
-            'password': {
-                'write_only': True
-            }
-        }
+        model = DoctorInfo
+        fields = ['id', 'biography', 'license_number', 'license_image', 'active',
+                  'hospital_name',
+                  'specialization', 'specialization_name']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -73,26 +71,6 @@ class DoctorSerializer(UserSerializer):
         return data
 
 
-class PatientSerializer(UserSerializer):
-
-    def create(self, validated_data):
-        data = validated_data.copy()
-        patient = Patient(**data)
-        patient.set_password(patient.password)
-        patient.user_type = 'Pa'
-        patient.save()
-        return patient
-
-    class Meta:
-        model = Patient
-        fields = UserSerializer.Meta.fields + ['gender', 'day_of_birth', 'address', 'email', 'number_phone']
-        extra_kwargs = {
-            'password': {
-                'write_only': True
-            }
-        }
-
-
 class TestResultSerializer(ModelSerializer):
     class Meta:
         model = TestResult
@@ -100,8 +78,8 @@ class TestResultSerializer(ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        if instance.image:
-            data['image'] = f"{instance.image.url}"
+        if instance.iamge:
+            data['image'] = f"{instance.iamge.url}"
         else:
             data['image'] = None
         return data
@@ -109,21 +87,26 @@ class TestResultSerializer(ModelSerializer):
 
 class HealthRecordSerializer(ModelSerializer):
     test_results = TestResultSerializer(source='testresult_set', many=True, read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    # day_of_birth = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'])
 
     class Meta:
         model = HealthRecord
-        fields = ['id', 'medical_history', 'test_results', 'patient_id']
+        fields = '__all__'
+        # fields = ['user', 'full_name', 'gender', 'day_of_birth', 'BHYT', 'CCCD',
+        #           'email', 'number_phone', 'address', 'occupation', 'medical_history']
 
 
 class AppointmentSerializer(ModelSerializer):
     schedule_date = serializers.DateField(source='schedule.date', read_only=True)
     schedule_start = serializers.TimeField(source='schedule.start_time', read_only=True)
     schedule_end = serializers.TimeField(source='schedule.end_time', read_only=True)
+
     class Meta:
         model = Appointment
         fields = ['id', 'active', 'created_date', 'updated_date',
-                  'disease_type', 'symptoms', 'status', 'booked_at',
-                  'schedule_date','schedule_start','schedule_end', 'patient_id', 'cancel_reason',
+                  'disease_type', 'symptoms', 'status', 'created_date',
+                  'schedule_date', 'schedule_start', 'schedule_end', 'user_id', 'cancel_reason',
                   'rescheduled_from_id']
 
 
