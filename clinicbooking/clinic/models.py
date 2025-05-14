@@ -124,6 +124,7 @@ class Notification(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
+
 class TestResult(BaseModel):
     test_name = models.CharField(max_length=255, null=False)
     description = models.CharField(max_length=255, null=True)

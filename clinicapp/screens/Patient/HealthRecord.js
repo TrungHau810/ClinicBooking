@@ -58,15 +58,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const HealthRecord = () => {
+const HealthRecord = ({navigation}) => {
   const [gender, setGender] = useState("male");
   const [user, setUser] = useState({});
+  const [loading, setLoading] = useState (false);
 
   const setState = (value, field) => {
     setUser({ ...user, [field]: value });
   };
 
   const createHealthRecord = async () => {
+    setLoading(true);
     let token = await AsyncStorage.getItem('token');
 
     let form = new FormData();
@@ -80,12 +82,25 @@ const HealthRecord = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      console.log(res.status);
-      console.log(res.data);
-    } catch (error) {
-      Alert.alert(error.response.data.detail);
-      // console.log(error);
+
+      if (res.status === 201) {
+      Alert.alert("Thành công", "Tạo hồ sơ thành công!");
+      navigation.navigate("HealthRecordList"); // 👉 Chuyển màn hình
     }
+  } catch (error) {
+    console.error(error);
+    console.error(error.response.data);
+    Alert.alert("Lỗi", error?.response?.data?.detail || "Đã có lỗi xảy ra.");
+  } finally {
+    setLoading(false); // Kết thúc loading
+  }
+
+    //   console.log(res.status);
+    //   console.log(res.data);
+    // } catch (error) {
+    //   Alert.alert(error.response.data.detail);
+    //   // console.log(error);
+    // }
 
 
 
@@ -188,12 +203,6 @@ const HealthRecord = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Hồ sơ bệnh nhân</Text>
-
-      <Button mode="contained" style={styles.createButton}>
-        Tạo mới
-      </Button>
-
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.sectionTitle}>Thông tin chung</Text>
 
@@ -212,7 +221,7 @@ const HealthRecord = () => {
 
         {renderForm(healthFields.slice(1))}
         {renderOccupation(occupation)}
-        <TouchableOpacity><Button mode="contained" onPress={createHealthRecord}>Tạo hồ sơ</Button></TouchableOpacity>
+        <TouchableOpacity disabled={loading}><Button mode="contained" onPress={createHealthRecord} loading={loading} disabled={loading}>{loading ? "Đang tạo..." : "Tạo hồ sơ"}</Button></TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

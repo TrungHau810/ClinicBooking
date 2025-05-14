@@ -100,6 +100,7 @@ class HealthRecordSerializer(ModelSerializer):
         #           'email', 'number_phone', 'address', 'occupation', 'medical_history']
 
 
+
 class AppointmentSerializer(ModelSerializer):
     schedule_date = serializers.DateField(source='schedule.date', read_only=True)
     schedule_start = serializers.TimeField(source='schedule.start_time', read_only=True)
@@ -145,3 +146,11 @@ class PaymentSerializer(ModelSerializer):
     class Meta:
         model = Payment
         fields = ['id', 'amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'
+
+
