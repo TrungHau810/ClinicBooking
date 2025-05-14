@@ -1,0 +1,66 @@
+{% extends 'admin/base_site.html' %}
+{% block title %}Admin| Trang thống kê - báo cáo{% endblock %}
+{% block content %}
+
+<h1>THỐNG KÊ - BÁO CÁO</h1>
+
+<ul>
+    {% for s in stats %}
+    <li>{{ s.id }} - {{ s.disease_type }}: {{ s.appointment_count }}</li>
+    {% endfor %}
+</ul>
+
+<p><strong>Tổng số lượt khám:</strong> {{ total_appointments }}</p>
+<p><strong>Tổng doanh thu:</strong> {{ total_revenue }} VNĐ</p>
+
+<div style="width: 50%;">
+    <canvas id="myChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let data = [];
+    let labels = [];
+    {% for s in stats %}
+    data.push({{ s.appointment_count }})
+    labels.push('{{ s.disease_type }}')
+    {% endfor %}
+
+    window.onload = function () {
+        const ctx = document.getElementById('myChart');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '# Số lượng khám theo loại bệnh',
+                    data: data,
+                    borderWidth: 1,
+                    backgroundColor: ['red', 'green', 'blue']
+                }]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'BIỂU ĐỒ THỐNG KÊ LƯỢT KHÁM THEO LOẠI BỆNH',
+                        font: {
+                            size: 18
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 30
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

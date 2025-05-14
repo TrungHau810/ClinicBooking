@@ -70,7 +70,6 @@ class DoctorInfo(BaseModel):
         return (f"{self.user.full_name} - {self.hospital.name} - {self.specialization.name}")
 
 
-
 class HealthRecord(BaseModel):
     OCCUPATION_CHOICES = [
         ('doctor', 'Bác sĩ'),
@@ -133,7 +132,7 @@ class TestResult(BaseModel):
     health_record = models.ForeignKey(HealthRecord, on_delete=models.PROTECT, null=False)
 
     def __str__(self):
-        return(f'{self.health_record.full_name} - {self.test_name}')
+        return (f'{self.health_record.full_name} - {self.test_name}')
 
 
 class Message(BaseModel):
@@ -156,7 +155,7 @@ class Review(BaseModel):
     doctor = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='reviews_received', null=True)
 
     def __str__(self):
-        return (f"{self.rating - self.comment}")
+        return f"Review by {self.patient} for {self.doctor}: {self.rating}⭐ - {self.comment} - {self.reply if self.reply else 'None'}"
 
 
 class Schedule(BaseModel):
