@@ -15,7 +15,7 @@ from clinic.models import (User, DoctorInfo, Payment, Appointment, Review,
 from django.db.models import Q, Count, Sum
 from rest_framework.response import Response
 from clinic.permissions import IsDoctorOrSelf
-from clinic.serializers import AppointmentSerializer, PaymentSerializer
+from clinic.serializers import AppointmentSerializer, PaymentSerializer, NotificationSerializer
 
 
 class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -185,8 +185,11 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         # if user.role == 'doctor' or user.role == 'admin':
         #     return HealthRecord.objects.filter(active=True).select_related('patient')
         # elif user.role == 'patient':
+
+        return HealthRecord.objects.filter(user__pk=user.pk)
         # return HealthRecord.objects.filter(user__pk=user.pk, active=True)
-        return HealthRecord.objects.filter(active=True)
+        # return HealthRecord.objects.filter(active=True)
+
 
     # Cho phép bệnh nhân tự tạo hồ sơ sức khoẻ của chính mình
     @action(methods=['post'], detail=False, url_path='me', permission_classes=[permissions.IsAuthenticated])
@@ -200,6 +203,11 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
 
         except User.DoesNotExist:
             return Response({"detail": "Không tìm thấy thông tin bệnh nhân."}, status=status.HTTP_404_NOT_FOUND)
+
+
+        # Kiểm tra trùng hồ sơ khi mối quan hệ one to one
+        # if HealthRecord.objects.filter(user_id=user).exists():
+        #     return Response({"detail": "Hồ sơ đã tồn tại."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -544,3 +552,24 @@ class AdminReportViewSet(APIView):
             'appointment_count': appt_queryset.count(),
             'revenue': payment_queryset.aggregate(total=Sum('amount'))['total'] or 0
         })
+
+class ScheduleAvailableDatesView(APIView):
+    def get(self, request):
+        doctor_id = request.query_params.get('doctor_id')
+
+        if not doctor_id:
+            return Response({"error": "Missing doctor_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+        dates = (
+            Schedule.objects.filter(doctor_id=doctor_id, is_available=True)
+            .values_list('date', flat=True)
+            .distinct()
+            .order_by('date')
+        )
+
+        return Response(dates)
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer

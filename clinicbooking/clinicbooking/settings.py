@@ -26,6 +26,10 @@ EMAIL_HOST_USER = 'haopc1404@gmail.com'  # Email của bạn
 EMAIL_HOST_PASSWORD = 'qszggqyowrifachp'  # Mật khẩu của email (hoặc App password nếu dùng 2FA)
 DEFAULT_FROM_EMAIL = 'haopc1404@gmail.com'  # Email gửi đi mặc định
 
+#Cấu hình celery giúp gửi email và push notification theo lich hẹn
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
