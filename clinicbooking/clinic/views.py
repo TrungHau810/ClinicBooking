@@ -71,7 +71,7 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView):
 
 class DoctorInfoViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
                         generics.RetrieveAPIView):
-    queryset = DoctorInfo.objects.all()
+    queryset = DoctorInfo.objects.select_related('user', 'hospital', 'specialization').all()
     serializer_class = serializers.DoctorInfoSerializer
     parser_classes = [parsers.MultiPartParser]
 
@@ -88,22 +88,23 @@ class DoctorInfoViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateA
 
         return Response(serializers.DoctorInfoSerializer(doctor_info).data)
 
-    # def get_queryset(self):
-    #     queryset = self.queryset
-    #     name = self.request.query_params.get('name')
-    #     hospital_name = self.request.query_params.get('hospital_name')
-    #     specialization_name = self.request.query_params.get('specialization-name')
-    #
-    #     if name:
-    #         queryset = queryset.filter(Q(user__first_name__icontains=name) | Q(user__last_name__icontains=name))
-    #
-    #     if hospital_name:
-    #         queryset = queryset.filter(hospital__name__icontains=hospital_name)
-    #
-    #     if specialization_name:
-    #         queryset = queryset.filter(specialization__name__icontains=specialization_name)
-    #
-    #     return queryset
+    # Tìm kiếm bác sĩ theo tên, bệnh viện, chuyên khoa
+    def get_queryset(self):
+        queryset = self.queryset
+        name = self.request.query_params.get('name')
+        hospital_name = self.request.query_params.get('hospital_name')
+        specialization_name = self.request.query_params.get('specialization-name')
+
+        if name:
+            queryset = queryset.filter(user__full_name__icontains=name)
+        #
+        if hospital_name:
+            queryset = queryset.filter(hospital__name__icontains=hospital_name)
+
+        if specialization_name:
+            queryset = queryset.filter(specialization__name__icontains=specialization_name)
+
+        return queryset
 
     # Lấy lịch khám của bác sĩ
     # @action(methods=['get'], detail=True, url_path='schedules')
@@ -184,7 +185,8 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         # if user.role == 'doctor' or user.role == 'admin':
         #     return HealthRecord.objects.filter(active=True).select_related('patient')
         # elif user.role == 'patient':
-        return HealthRecord.objects.filter(user__pk=user.pk, active=True)
+        # return HealthRecord.objects.filter(user__pk=user.pk, active=True)
+        return HealthRecord.objects.filter(active=True)
 
     # Cho phép bệnh nhân tự tạo hồ sơ sức khoẻ của chính mình
     @action(methods=['post'], detail=False, url_path='me', permission_classes=[permissions.IsAuthenticated])
@@ -199,15 +201,16 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         except User.DoesNotExist:
             return Response({"detail": "Không tìm thấy thông tin bệnh nhân."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Kiểm tra trùng hồ sơ
-        if HealthRecord.objects.filter(user_id=user).exists():
-            return Response({"detail": "Hồ sơ đã tồn tại."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=request.data)
-        print(request.data)
         if serializer.is_valid():
-            serializer.save(user=user)  # Gán đúng đối tượng
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                serializer.save(user=user)  # Gán đúng đối tượng
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except InterruptedError as error:
+                return Response(error,
+                                status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # Bác sĩ update hồ sơ bệnh án của của bệnh nhân
     # Method: PATCH, URL: /healthrecords/{id}/

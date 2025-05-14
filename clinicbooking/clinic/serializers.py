@@ -55,10 +55,12 @@ class DoctorSerializer(ModelSerializer):
 class DoctorInfoSerializer(ModelSerializer):
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
     specialization_name = serializers.CharField(source='specialization.name', read_only=True)
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    doctor = serializers.CharField(source='user.full_name', read_only=True)
 
     class Meta:
         model = DoctorInfo
-        fields = ['id', 'biography', 'license_number', 'license_image', 'active',
+        fields = ['id', 'user_id', 'doctor', 'biography', 'license_number', 'license_image', 'active',
                   'hospital_name',
                   'specialization', 'specialization_name']
 
@@ -78,8 +80,8 @@ class TestResultSerializer(ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        if instance.iamge:
-            data['image'] = f"{instance.iamge.url}"
+        if instance.image:
+            data['image'] = f"{instance.image.url}"
         else:
             data['image'] = None
         return data
@@ -88,6 +90,7 @@ class TestResultSerializer(ModelSerializer):
 class HealthRecordSerializer(ModelSerializer):
     test_results = TestResultSerializer(source='testresult_set', many=True, read_only=True)
     user = serializers.PrimaryKeyRelatedField(read_only=True)
+
     # day_of_birth = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'])
 
     class Meta:
