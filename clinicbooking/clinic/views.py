@@ -184,7 +184,7 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         # if user.role == 'doctor' or user.role == 'admin':
         #     return HealthRecord.objects.filter(active=True).select_related('patient')
         # elif user.role == 'patient':
-        return HealthRecord.objects.filter(user__pk=user.pk, active=True)
+        return HealthRecord.objects.filter(user__pk=user.pk)
 
     # Cho phép bệnh nhân tự tạo hồ sơ sức khoẻ của chính mình
     @action(methods=['post'], detail=False, url_path='me', permission_classes=[permissions.IsAuthenticated])
@@ -199,9 +199,9 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         except User.DoesNotExist:
             return Response({"detail": "Không tìm thấy thông tin bệnh nhân."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Kiểm tra trùng hồ sơ
-        if HealthRecord.objects.filter(user_id=user).exists():
-            return Response({"detail": "Hồ sơ đã tồn tại."}, status=status.HTTP_400_BAD_REQUEST)
+        # Kiểm tra trùng hồ sơ khi mối quan hệ one to one
+        # if HealthRecord.objects.filter(user_id=user).exists():
+        #     return Response({"detail": "Hồ sơ đã tồn tại."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=request.data)
         print(request.data)
         if serializer.is_valid():

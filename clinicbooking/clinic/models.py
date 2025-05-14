@@ -102,7 +102,7 @@ class HealthRecord(BaseModel):
     occupation = models.CharField(max_length=50, choices=OCCUPATION_CHOICES, null=False)
     address = models.CharField(max_length=255, null=False)
     medical_history = models.TextField(null=True)
-    user = models.OneToOneField(User, on_delete=models.PROTECT)
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='health_records')
 
     def __str__(self):
         return self.user.username
