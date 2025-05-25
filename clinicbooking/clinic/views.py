@@ -16,6 +16,7 @@ from django.db.models import Q, Count, Sum
 from rest_framework.response import Response
 from clinic.permissions import IsDoctorOrSelf
 from clinic.serializers import AppointmentSerializer, PaymentSerializer, NotificationSerializer
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -74,6 +75,7 @@ class DoctorInfoViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateA
     queryset = DoctorInfo.objects.all()
     serializer_class = serializers.DoctorInfoSerializer
     parser_classes = [parsers.MultiPartParser]
+    filterset_fields = ['hospital', 'specialization']
 
     # Chứng thực bác sĩ để xem thông tin bác sĩ và chỉnh sửa 1 phần thông tin bác sĩ
     @action(methods=['get', 'patch'], url_path='current-user', detail=False,

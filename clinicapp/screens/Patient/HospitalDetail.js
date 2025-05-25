@@ -98,7 +98,7 @@ const HospitalDetail = ({ route }) => {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Card style={styles.card}>
           <Card.Title title={hospitalDetail.name} titleStyle={styles.title} />
-          <Card.Cover source={{ uri: hospitalDetail.image }} style={styles.image} />
+          <Card.Cover source={{ uri: hospitalDetail.logo }} style={styles.image} />
           <Card.Content style={styles.content}>
             <RenderHTML
               contentWidth={contentWidth - 32}

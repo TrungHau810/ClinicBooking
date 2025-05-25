@@ -43,7 +43,23 @@ export default StyleSheet.create({
     },
     row: {
         flexDirection: "row",
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    headerContainer: {
+        // flexDirection: "row",
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'relative',
+        width: '100%'
+        // backgroundColor: "#E0F7FA",
+    },
+    rightIcon: {
+        position: 'absolute',
+        right: 10,
+        top: '10%',
+        transform: [{ translateY: -10 }],
+        alignItems: 'center',
     },
     wrap: {
         flexWrap: "wrap"
