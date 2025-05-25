@@ -1,4 +1,7 @@
 from django.contrib import admin
+from django.db.models import Count, Sum
+from django.template.response import TemplateResponse
+from django.urls import path
 from clinic.models import (User, DoctorInfo, HealthRecord, Schedule,
                            Appointment, Review, Message,
                            Payment, TestResult, Notification, Hospital, Specialization)
@@ -98,10 +101,14 @@ class MyDoctorScheduleAdmin(admin.ModelAdmin):
 
 
 class MyPaymentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'formatted_amount', 'method', 'status', 'created_date', 'updated_date', 'appointment_id']
+    list_display = ['id', 'appointment_id', 'appointment', 'formatted_amount', 'method', 'status', 'created_date',
+                    'updated_date']
 
     def formatted_amount(self, obj):
         return f"{obj.amount:,.0f} ₫"
+
+    def appointment(self, appointment):
+        return appointment.appointment
 
 
 class MyTestResultAdmin(admin.ModelAdmin):
@@ -112,10 +119,53 @@ class MySpecializationAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'active']
 
 
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ['id', 'patient_id', 'patient_name', 'doctor_id', 'doctor_name', 'rating', 'comment', 'reply',
+                    'created_date']
+
+    def patient_name(self, patient):
+        return patient.patient.username
+
+    def doctor_name(self, doctor):
+        return doctor.doctor.full_name
+
+
+class MonthYearForm(forms.Form):
+    year = forms.IntegerField(
+        label='Năm',
+        initial=2025,  # Hoặc dùng datetime.now().year để lấy năm hiện tại
+        widget=forms.NumberInput(attrs={'min': 2000, 'max': 9999})
+    )
+    month = forms.IntegerField(
+        label='Tháng',
+        initial=5,  # Hoặc dùng datetime.now().month để lấy tháng hiện tại
+        widget=forms.NumberInput(attrs={'min': 1, 'max': 12})
+    )
+
+
 class ClinicAdminSite(admin.AdminSite):
     site_header = 'Hệ thống quản trị đặt lịch khám sức khoẻ trực tuyến'
     site_title = "Clinic Admin"
-    index_title = 'Trang quản trị'
+    index_title = 'Trang quản trị đặt lịch khám sức khoẻ'
+
+    def get_urls(self):
+        return [path('clinics-stats/', self.clinic_stats_view)] + super().get_urls()
+
+    def clinic_stats_view(self, request):
+        stats = Appointment.objects.values('disease_type').annotate(appointment_count=Count('id'))
+
+        # Tổng số lượt khám
+        total_appointments = Appointment.objects.count()
+
+        # Doanh thu: trong Payment
+        total_revenue = Payment.objects.aggregate(total=Sum('amount'))['total'] or 0
+        total_revenue = f"{total_revenue:,.0f}"
+
+        return TemplateResponse(request, 'admin/stats.html', {
+            'stats': stats,
+            'total_appointments': total_appointments,
+            'total_revenue': total_revenue,
+        })
 
 
 admin_site = ClinicAdminSite(name='myadmin')
@@ -127,7 +177,7 @@ admin_site.register(Schedule, MyDoctorScheduleAdmin)
 admin_site.register(TestResult, MyTestResultAdmin)
 admin_site.register(Message)
 admin_site.register(Appointment, MyAppointmentAdmin)
-admin_site.register(Review)
+admin_site.register(Review, ReviewAdmin)
 admin_site.register(Payment, MyPaymentAdmin)
 admin_site.register(Notification)
 admin_site.register(Hospital, MyHospitalAdmin)
