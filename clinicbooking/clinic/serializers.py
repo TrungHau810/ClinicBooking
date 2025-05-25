@@ -55,12 +55,13 @@ class DoctorSerializer(ModelSerializer):
 class DoctorInfoSerializer(ModelSerializer):
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
     specialization_name = serializers.CharField(source='specialization.name', read_only=True)
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = DoctorInfo
         fields = ['id', 'biography', 'license_number', 'license_image', 'active',
                   'hospital_name',
-                  'specialization', 'specialization_name']
+                  'specialization', 'specialization_name', 'user']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

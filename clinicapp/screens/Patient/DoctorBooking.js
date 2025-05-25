@@ -74,6 +74,9 @@ const DoctorBooking = () => {
   const [hospital, setHospital] = useState([]);
   const [doctor, setDoctor] = useState([]);
   const [selectedHospital, setSelectedHospital] = useState(null);
+  const [specializations, setSpecializations] = useState([]);
+  const [selectedSpecialization, setSelectedSpecialization] = useState(null);
+
 
   const loadHospital = async () => {
     try {
@@ -84,47 +87,62 @@ const DoctorBooking = () => {
     }
   };
 
-  const loadDoctor = async (hospitalId = null) => {
+  const loadDoctor = async (hospitalId = null, specializationId = null) => {
     try {
-      let res;
-      if (hospitalId) {
-        res = await Apis.get(endpoints["doctors"] + `?hospital_id=${hospitalId}`);
-      } else {
-        res = await Apis.get(endpoints["doctors"]);
-      }
+      let url = endpoints["doctorinfos"] + "?";
+
+      if (hospitalId) url += `hospital=${hospitalId}&`;
+      if (specializationId) url += `specialization=${specializationId}&`;
+
+      const res = await Apis.get(url);
       setDoctor(res.data);
     } catch (err) {
       console.error(err);
     }
   };
 
+
+  const loadSpecializations = async () => {
+    try {
+      let res = await Apis.get(endpoints["specializations"]);
+      setSpecializations(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
   useEffect(() => {
     loadHospital();
     loadDoctor();
+    loadSpecializations();
   }, []);
 
   useEffect(() => {
-    loadDoctor(selectedHospital);
-  }, [selectedHospital]);
+    loadDoctor(selectedHospital, selectedSpecialization);
+  }, [selectedHospital, selectedSpecialization]);
 
-  const renderDoctor = (dr) => (
-    <Card style={styles.card} key={dr.id}>
-      <Card.Title title={`Bác sĩ ${dr.last_name} ${dr.first_name}`} />
-      <Card.Content style={styles.cardContent}>
-        <Image
-          style={styles.avatar}
-          source={{ uri: dr.avatar }}
-        />
-        <View style={styles.doctorInfo}>
-          <Text>Chuyên khoa: {dr.specialization_name}</Text>
-          <Text>Cơ sở: {dr.hospital_name}</Text>
-        </View>
-      </Card.Content>
-      <Card.Actions>
-        <Button mode="contained">Đặt lịch khám</Button>
-      </Card.Actions>
-    </Card>
-  );
+  const renderDoctor = (dr) => {
+    console.log(dr)
+    return (
+      <Card style={styles.card} key={dr.id}>
+        <Card.Title title={`Bác sĩ ${dr.user.full_name}`} />
+        <Card.Content style={styles.cardContent}>
+          <Image
+            style={styles.avatar}
+            source={{ uri: dr.user.avatar }}
+          />
+          <View style={styles.doctorInfo}>
+            <Text>Chuyên khoa: {dr.specialization_name}</Text>
+            <Text>Cơ sở: {dr.hospital_name}</Text>
+          </View>
+        </Card.Content>
+        <Card.Actions>
+          <Button mode="contained">Đặt lịch khám</Button>
+        </Card.Actions>
+      </Card>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -143,6 +161,20 @@ const DoctorBooking = () => {
           ))}
         </Picker>
       </View>
+      <View style={styles.filterContainer}>
+        <Text style={styles.filterLabel}>Lọc theo chuyên khoa:</Text>
+        <Picker
+          selectedValue={selectedSpecialization}
+          onValueChange={(value) => setSelectedSpecialization(value)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Tất cả chuyên khoa" value={null} />
+          {specializations.map((s) => (
+            <Picker.Item key={s.id} label={s.name} value={s.id} />
+          ))}
+        </Picker>
+      </View>
+
 
       <FlatList
         data={doctor}
@@ -163,8 +195,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "bold",
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: 15,
+    marginBottom: 15,
     textAlign: "center",
   },
   filterContainer: {

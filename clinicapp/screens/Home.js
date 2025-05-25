@@ -67,6 +67,7 @@ const Home = ({ navigation }) => {
   const loadingHospital = async () => {
     try {
       const res = await Apis.get(endpoints['hospitals']);
+      console.log("Hospitals fetched:", res.data);
       setHospital(res.data);
     } catch (err) {
       console.error("Failed to load hospitals:", err);
@@ -81,12 +82,15 @@ const Home = ({ navigation }) => {
     loadSpecialization();
   },[])
 
-  const renderHospitalItem = ({ item }) => (
+  const renderHospitalItem = ({ item }) => {
+    console.log("Image URL:", item.logo); 
+
+    return (
     <TouchableOpacity
       style={styles.hospitalItem}
       onPress={() => navigation.navigate('hospitaldetails', { hospitalId: item.id })}
     >
-      <Image source={{ uri: item.image }} style={styles.hospitalImage} />
+      <Image source={{ uri: item.logo }} style={styles.hospitalImage} />
       <View style={styles.hospitalInfo}>
         <Text style={styles.hospitalName}>{item.name}</Text>
         <Text style={styles.hospitalDesc}>{`Địa chỉ: ${item.address}`}</Text>
@@ -94,6 +98,7 @@ const Home = ({ navigation }) => {
       </View>
     </TouchableOpacity>
   );
+};
 
   return (
     <SafeAreaView style={styles.container}>
