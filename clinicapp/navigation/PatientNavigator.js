@@ -9,6 +9,8 @@ import DoctorBooking from "../screens/Patient/DoctorBooking";
 import HospitalDetail from "../screens/Patient/HospitalDetail";
 import Profile from "../screens/Patient/Profile";
 import Home from "../screens/Home";
+import Schedule from "../screens/Patient/Schedule";
+import ScheduleBooking from "../screens/Patient/ScheduleBooking";
 
 const Stack = createNativeStackNavigator();
 // const StackNavigator = () => {
@@ -44,6 +46,8 @@ const PatientNavigator = () => {
             <Stack.Screen name="doctorbooking" component={DoctorBooking} options={{ headerShown: true, title: 'Danh sách bác sĩ' }} />
             <Stack.Screen name="hospitaldetails" component={HospitalDetail} options={{ headerShown: true, title: 'Chi tiết bệnh viện' }} />
             <Stack.Screen name="HealthRecord" component={HealthRecord} />
+            <Stack.Screen name="Schedule" component={Schedule} options={{headerShown: true, title:'Đặt lịch khám'}} />
+            <Stack.Screen name="ScheduleBooking" component={ScheduleBooking}/>
         </Stack.Navigator>
     );
 

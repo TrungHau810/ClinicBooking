@@ -106,16 +106,22 @@ class AppointmentSerializer(ModelSerializer):
     schedule_date = serializers.DateField(source='schedule.date', read_only=True)
     schedule_start = serializers.TimeField(source='schedule.start_time', read_only=True)
     schedule_end = serializers.TimeField(source='schedule.end_time', read_only=True)
+    schedule_id = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(),source='schedule',write_only=True)
 
     class Meta:
         model = Appointment
         fields = ['id', 'active', 'created_date', 'updated_date',
                   'disease_type', 'symptoms', 'status', 'created_date',
                   'schedule_date', 'schedule_start', 'schedule_end', 'user_id', 'cancel_reason',
-                  'rescheduled_from_id']
+                  'rescheduled_from_id', 'schedule_id']
 
 
 class ScheduleSerializer(ModelSerializer):
+    is_full = serializers.SerializerMethodField()
+
+    def get_is_full(self, schedule):
+        booked_count = Appointment.objects.filter(schedule=schedule).count()
+        return booked_count >= schedule.capacity
 
     def create(self, validated_data):
         data = validated_data.copy()
@@ -125,7 +131,7 @@ class ScheduleSerializer(ModelSerializer):
 
     class Meta:
         model = Schedule
-        fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity']
+        fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity', 'is_available', 'is_full']
 
 
 class MessageSerializer(serializers.ModelSerializer):

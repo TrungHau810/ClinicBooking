@@ -69,8 +69,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Apis, { endpoints } from "../../configs/Apis";
 import { Button, Card } from "react-native-paper";
 import { Picker } from "@react-native-picker/picker";
+import { useNavigation } from "@react-navigation/native";
 
 const DoctorBooking = () => {
+  const navigation = useNavigation();
   const [hospital, setHospital] = useState([]);
   const [doctor, setDoctor] = useState([]);
   const [selectedHospital, setSelectedHospital] = useState(null);
@@ -138,7 +140,7 @@ const DoctorBooking = () => {
           </View>
         </Card.Content>
         <Card.Actions>
-          <Button mode="contained">Đặt lịch khám</Button>
+          <Button mode="contained" onPress={() => navigation.navigate('Schedule', { doctor: dr })}>Đặt lịch khám</Button>
         </Card.Actions>
       </Card>
     );
