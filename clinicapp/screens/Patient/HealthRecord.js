@@ -58,10 +58,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const HealthRecord = ({navigation}) => {
+const HealthRecord = ({ navigation }) => {
   const [gender, setGender] = useState("male");
   const [user, setUser] = useState({});
-  const [loading, setLoading] = useState (false);
+  const [loading, setLoading] = useState(false);
 
   const setState = (value, field) => {
     setUser({ ...user, [field]: value });
@@ -84,60 +84,17 @@ const HealthRecord = ({navigation}) => {
       });
 
       if (res.status === 201) {
-      Alert.alert("Thành công", "Tạo hồ sơ thành công!");
-      navigation.navigate("HealthRecordList"); // 👉 Chuyển màn hình
+        Alert.alert("Thành công", "Tạo hồ sơ thành công!");
+        navigation.navigate("HealthRecordList"); // 👉 Chuyển màn hình
+      }
+    } catch (error) {
+      console.error(error);
+      console.error(error.response.data);
+      Alert.alert("Lỗi", error?.response?.data?.detail || "Đã có lỗi xảy ra.");
+    } finally {
+      setLoading(false); // Kết thúc loading
     }
-  } catch (error) {
-    console.error(error);
-    console.error(error.response.data);
-    Alert.alert("Lỗi", error?.response?.data?.detail || "Đã có lỗi xảy ra.");
-  } finally {
-    setLoading(false); // Kết thúc loading
-  }
-
-    //   console.log(res.status);
-    //   console.log(res.data);
-    // } catch (error) {
-    //   Alert.alert(error.response.data.detail);
-    //   // console.log(error);
-    // }
-
-
-
   };
-
-  // const createHealthRecord = async () => {
-  //   try {
-  //     const token = await AsyncStorage.getItem('token');
-  //     if (!token) {
-  //       console.error("❌ Token không tồn tại trong AsyncStorage");
-  //       return;
-  //     }
-
-  //     const form = new FormData();
-  //     for (let key in user) {
-  //       if (user[key] !== undefined && user[key] !== null) {
-  //         form.append(key, user[key]);
-  //       }
-  //     }
-
-  //     const res = await Apis.post(endpoints['healthrecords'], form, {
-  //       headers: {
-  //         'Authorization': `Bearer ${token}`,
-  //         'Content-Type': 'multipart/form-data',
-  //       }
-  //     });
-
-  //     console.log("✅ Status:", res.status);
-  //     console.log("📦 Response:", res.data);
-
-  //   } catch (error) {
-  //     console.error("❌ Error khi gửi form:", error.response?.data || error.message);
-  //   }
-  // };
-
-
-
 
   const occupation = [
     { value: 'doctor', label: 'Bác sĩ' },
