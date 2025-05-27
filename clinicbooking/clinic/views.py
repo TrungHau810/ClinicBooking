@@ -1,3 +1,4 @@
+from cloudinary.provisioning import users
 import os
 from datetime import datetime
 import random
@@ -73,6 +74,7 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIVi
     queryset = Doctor.objects.select_related('user', 'hospital', 'specialization').all()
     serializer_class = serializers.DoctorSerializer
     parser_classes = [parsers.MultiPartParser]
+    filterset_fields = ['hospital', 'specialization']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -314,7 +316,7 @@ def get_payment(self, request, pk):
 
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
                       generics.CreateAPIView, generics.UpdateAPIView):
-    queryset = Schedule.objects.filter(active=True)
+    queryset = Schedule.objects.filter(is_available=True)
     serializer_class = serializers.ScheduleSerializer
     parser_classes = [parsers.MultiPartParser]
 
@@ -333,7 +335,6 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
         # Lọc theo trạng thái còn trống
         if (is_available := params.get('is_available')) is not None:
             queryset = queryset.filter(is_available=is_available.lower() in ['true', '1'])
-
         return queryset
 
 
