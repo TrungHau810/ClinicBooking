@@ -4,6 +4,7 @@ import { View, FlatList, StyleSheet, Text, TouchableOpacity } from "react-native
 import { Button, Card } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { endpoints } from "../../configs/Apis";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const HealthRecordList = ({ navigation }) => {
   const [records, setRecords] = useState([]);
@@ -40,18 +41,20 @@ const HealthRecordList = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.navigate("HealthRecord")}>
-  <Button mode="contained">Tạo hồ sơ sức khỏe mới</Button>
-</TouchableOpacity>
+    <SafeAreaView>
+      <View style={styles.container}>
+        <TouchableOpacity onPress={() => navigation.navigate("HealthRecord")}>
+          <Button mode="contained">Tạo hồ sơ sức khỏe mới</Button>
+        </TouchableOpacity>
 
-      <Text style={styles.title}>Danh sách hồ sơ</Text>
-      <FlatList
-        data={records}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
-      />
-    </View>
+        <Text style={styles.title}>Danh sách hồ sơ</Text>
+        <FlatList
+          data={records}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 

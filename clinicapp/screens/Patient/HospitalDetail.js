@@ -99,11 +99,8 @@ const HospitalDetail = ({ route }) => {
         <Card style={styles.card}>
           <Card.Title title={hospitalDetail.name} titleStyle={styles.title} />
           <Card.Cover source={{ uri: hospitalDetail.image }} style={styles.image} />
-          <Card.Content style={styles.content}>
-            <RenderHTML
-              contentWidth={contentWidth - 32}
-              source={{ html: hospitalDetail.description || "<p>Không có mô tả</p>" }}
-            />
+          <Card.Content>
+            <RenderHTML source={{ html: hospitalDetail.description}} />
           </Card.Content>
         </Card>
       </ScrollView>

@@ -60,7 +60,6 @@ const Home = ({ navigation }) => {
 
   const loadSpecialization=async()=>{
     let res = await Apis.get(endpoints['specializations']);
-    console.log(res.data);
     setSpecialization(res.data);
   };
 
