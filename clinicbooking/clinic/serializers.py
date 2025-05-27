@@ -56,13 +56,7 @@ class PatientSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
-
-
-# class DoctorSerializer(ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = '__all__'
-
+        
 
 class DoctorSerializer(ModelSerializer):
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
@@ -146,7 +140,7 @@ class ScheduleSerializer(ModelSerializer):
 
     class Meta:
         model = Schedule
-        fields = ['id', 'date', 'start_time', 'end_time', 'doctorid', 'capacity']
+        fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity']
 
 
 class MessageSerializer(serializers.ModelSerializer):
