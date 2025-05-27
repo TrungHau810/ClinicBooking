@@ -88,14 +88,16 @@ const DoctorBooking = () => {
     try {
       let res;
       if (hospitalId) {
-        res = await Apis.get(endpoints["doctors"] + `?hospital_id=${hospitalId}`);
+        res = await Apis.get(endpoints["doctorinfos"] + `?hospital_id=${hospitalId}`);
       } else {
-        res = await Apis.get(endpoints["doctors"]);
+        res = await Apis.get(endpoints["doctorinfos"]);
       }
+      console.log(res);
       setDoctor(res.data);
     } catch (err) {
       console.error(err);
     }
+    console.log(res.data);
   };
 
   useEffect(() => {
@@ -109,7 +111,7 @@ const DoctorBooking = () => {
 
   const renderDoctor = (dr) => (
     <Card style={styles.card} key={dr.id}>
-      <Card.Title title={`Bác sĩ ${dr.last_name} ${dr.first_name}`} />
+      <Card.Title title={`Bác sĩ ${dr.doctor}`} />
       <Card.Content style={styles.cardContent}>
         <Image
           style={styles.avatar}

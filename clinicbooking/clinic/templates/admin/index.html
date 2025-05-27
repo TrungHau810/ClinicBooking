@@ -1,0 +1,28 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+{{ block.super }}
+
+<p><strong>Giờ server (UTC trễ 7 tiếng so với giờ hiện tại):</strong>
+    <span id="server-time" data-time="{{ server_time }}"></span>
+</p>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const serverTimeElem = document.getElementById("server-time");
+        let serverTime = new Date(serverTimeElem.dataset.time);
+
+        // Trừ đi 7 tiếng (7h * 3600s * 1000ms)
+        serverTime = new Date(serverTime.getTime() - 7 * 3600 * 1000);
+
+        function updateClock() {
+            serverTime.setSeconds(serverTime.getSeconds() + 1);
+            // Hiển thị theo locale (bạn có thể tuỳ chỉnh format ở đây)
+            serverTimeElem.innerText = serverTime.toLocaleString();
+        }
+
+        updateClock(); // Hiển thị ngay khi tải
+        setInterval(updateClock, 1000);  // Cập nhật mỗi giây
+    });
+</script>
+{% endblock %}
