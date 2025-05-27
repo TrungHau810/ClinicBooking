@@ -168,10 +168,14 @@ const Login = ({ navigation }) => {
         client_secret: "u7IOJXTyVB69alsb1JgxYZNqyCGFwR4baCqpJRlbAOFa1XRpK3qpU05YJnN5EWruQebXHTQF6SywwcQtIFvukVBl4W058Gan9x3sj1j3LXIQ6XLiFRp6aI1zRGY8XPLC",
         grant_type: "password",
       });
-
       await AsyncStorage.setItem("token", res.data.access_token);
 
       const userRes = await authApis(res.data.access_token).get(endpoints["current-user"]);
+<<<<<<< HEAD
+      await AsyncStorage.setItem("currentUser", JSON.stringify(userRes.data));
+
+=======
+>>>>>>> 81adef28e3bb0e197ec41fc79dfa58733d534cfb
       dispatch({
         type: "login",
         payload: userRes.data,
