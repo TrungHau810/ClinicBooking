@@ -1,3 +1,4 @@
+from cloudinary.provisioning import users
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from django.conf import settings
@@ -263,6 +264,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
     def get_queryset(self):
         # Lấy các lịch hẹn theo từng user
         return Appointment.objects.filter(user=self.request.user)
@@ -355,17 +359,15 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
                       generics.CreateAPIView, generics.UpdateAPIView):
-    queryset = Schedule.objects.filter(active=True)
+    queryset = Schedule.objects.filter(is_available=True)
     serializer_class = serializers.ScheduleSerializer
     parser_classes = [parsers.MultiPartParser]
 
     def get_queryset(self):
         queryset = self.queryset
         doctor_id = self.request.query_params.get('doctor_id')
-        print(doctor_id)
         if doctor_id:
             queryset = queryset.filter(doctor_id=doctor_id)
-
         return queryset
 
 
