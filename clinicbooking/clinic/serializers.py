@@ -56,13 +56,7 @@ class PatientSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
-
-
-# class DoctorSerializer(ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = '__all__'
-
+        
 
 class DoctorSerializer(ModelSerializer):
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
@@ -139,13 +133,8 @@ class AppointmentSerializer(ModelSerializer):
 
 
 class ScheduleSerializer(ModelSerializer):
-    is_full = serializers.SerializerMethodField()
-
-    def get_is_full(self, schedule):
-        booked_count = Appointment.objects.filter(schedule=schedule).count()
-        return booked_count >= schedule.capacity
-
-    def create(self, validated_data):
+  
+  def create(self, validated_data):
         data = validated_data.copy()
         schedule = Schedule(**data)
         schedule.save()
@@ -153,7 +142,7 @@ class ScheduleSerializer(ModelSerializer):
 
     class Meta:
         model = Schedule
-        fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity', 'is_available', 'is_full']
+        fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity']
 
 
 class MessageSerializer(serializers.ModelSerializer):
