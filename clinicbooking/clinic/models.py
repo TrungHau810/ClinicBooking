@@ -19,7 +19,7 @@ class BaseModel(models.Model):
 
 
 # ---------- User ---------- #
-class User(AbstractUser, BaseModel):
+class User(AbstractUser):
     """
     Model User: Lưu trữ thông tin tài khoản người dùng như:
      username, password, fullname, email và role
@@ -58,13 +58,15 @@ class Specialization(BaseModel):
         return self.name
 
 
-class DoctorInfo(BaseModel):
+class Doctor(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     license_number = models.CharField(max_length=20, unique=True, null=False)
     license_image = CloudinaryField(null=False)
     biography = models.CharField(max_length=255, null=True)
     hospital = models.ForeignKey(Hospital, on_delete=models.PROTECT)
     specialization = models.ForeignKey(Specialization, on_delete=models.PROTECT)
+    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=100000, help_text="Giá khám bệnh (VND)"
+                                           )
 
     def __str__(self):
         return (f"{self.user.full_name} - {self.hospital.name} - {self.specialization.name}")
@@ -94,7 +96,7 @@ class HealthRecord(BaseModel):
     full_name = models.CharField(max_length=100, null=False)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='male')
     number_phone = models.CharField(max_length=10, blank=False, null=False)
-    email = models.EmailField(unique=True, blank=False, null=False)
+    email = models.EmailField(blank=False, null=False)
     CCCD = models.CharField(max_length=12, unique=True, null=False)
     BHYT = models.CharField(max_length=10, null=False, unique=True)
     day_of_birth = models.DateField()
@@ -104,7 +106,7 @@ class HealthRecord(BaseModel):
     user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='health_records')
 
     def __str__(self):
-        return self.user.username
+        return (f'{self.full_name} - {self.user}')
 
 
 class Notification(BaseModel):
@@ -122,7 +124,6 @@ class Notification(BaseModel):
     type = models.CharField(max_length=20, choices=NotifyType, default=NotifyType.NHAC_NHO)
     form = models.CharField(max_length=20, choices=NotifyForm, default=NotifyForm.EMAIL)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-
 
 
 class TestResult(BaseModel):
@@ -163,15 +164,20 @@ class Schedule(BaseModel):
     date = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
-    is_available = models.BooleanField(default=True)
     capacity = models.IntegerField(default=1)
+    sum_booking = models.IntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        # Tự động cập nhật trạng thái is_available
+        self.active = self.sum_booking < self.capacity
+        super().save(*args, **kwargs)
 
     class Meta:
         # Tránh bác sĩ bị trùng ngày và giờ bắt đầu
         unique_together = ('doctor', 'date', 'start_time')
 
     def __str__(self):
-        return (f"{self.doctor.username} - ngày {self.date.strftime('%d/%m/%Y')}: "
+        return (f"ID {self.pk} - {self.doctor.username} - ngày {self.date.strftime('%d/%m/%Y')}: "
                 f"{self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}")
 
 
@@ -183,19 +189,19 @@ class Appointment(BaseModel):
         ('cancelled', 'Đã hủy'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.PROTECT)
-    schedule = models.OneToOneField(Schedule, on_delete=models.CASCADE)
+    healthrecord = models.ForeignKey(HealthRecord, on_delete=models.PROTECT)
+    schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE)
     disease_type = models.CharField(max_length=255, null=False)
     symptoms = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unpaid')
-    cancel_reason = models.TextField(blank=True, null=True)
-    rescheduled_from = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
+    cancel = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-id']
+        unique_together= ('healthrecord', 'schedule')
 
     def __str__(self):
-        return f"{self.user} - {self.schedule}"
+        return f"{self.healthrecord} - {self.schedule}"
 
     @property
     def can_cancel_or_reschedule(self):
@@ -219,3 +225,6 @@ class Payment(BaseModel):
     status = models.CharField(max_length=20, choices=PaymentStatus, default=PaymentStatus.PENDING)
     transaction_id = models.CharField(max_length=100, blank=True, null=True)
     appointment = models.OneToOneField(Appointment, on_delete=models.PROTECT, related_name='payment')
+
+    def __str__(self):
+        return(f'Payment_id {self.pk} - {self.appointment} - {self.status}')

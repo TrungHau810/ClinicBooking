@@ -91,16 +91,27 @@ const DoctorBooking = () => {
 
   const loadDoctor = async (hospitalId = null, specializationId = null) => {
     try {
+<<<<<<< HEAD
       let url = endpoints["doctorinfos"] + "?";
 
       if (hospitalId) url += `hospital=${hospitalId}&`;
       if (specializationId) url += `specialization=${specializationId}&`;
 
       const res = await Apis.get(url);
+=======
+      let res;
+      if (hospitalId) {
+        res = await Apis.get(endpoints["doctorinfos"] + `?hospital_id=${hospitalId}`);
+      } else {
+        res = await Apis.get(endpoints["doctorinfos"]);
+      }
+      console.log(res);
+>>>>>>> 81adef28e3bb0e197ec41fc79dfa58733d534cfb
       setDoctor(res.data);
     } catch (err) {
       console.error(err);
     }
+    console.log(res.data);
   };
 
 
@@ -124,6 +135,7 @@ const DoctorBooking = () => {
     loadDoctor(selectedHospital, selectedSpecialization);
   }, [selectedHospital, selectedSpecialization]);
 
+<<<<<<< HEAD
   const renderDoctor = (dr) => {
     console.log(dr)
     return (
@@ -145,6 +157,26 @@ const DoctorBooking = () => {
       </Card>
     );
   };
+=======
+  const renderDoctor = (dr) => (
+    <Card style={styles.card} key={dr.id}>
+      <Card.Title title={`Bác sĩ ${dr.doctor}`} />
+      <Card.Content style={styles.cardContent}>
+        <Image
+          style={styles.avatar}
+          source={{ uri: dr.avatar }}
+        />
+        <View style={styles.doctorInfo}>
+          <Text>Chuyên khoa: {dr.specialization_name}</Text>
+          <Text>Cơ sở: {dr.hospital_name}</Text>
+        </View>
+      </Card.Content>
+      <Card.Actions>
+        <Button mode="contained">Đặt lịch khám</Button>
+      </Card.Actions>
+    </Card>
+  );
+>>>>>>> 81adef28e3bb0e197ec41fc79dfa58733d534cfb
 
   return (
     <SafeAreaView style={styles.container}>

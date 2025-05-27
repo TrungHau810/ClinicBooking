@@ -1,8 +1,11 @@
+from django.utils import timezone
 from django.contrib import admin
 from django.db.models import Count, Sum
 from django.template.response import TemplateResponse
 from django.urls import path
-from clinic.models import (User, DoctorInfo, HealthRecord, Schedule,
+from django.utils.timezone import now, localtime
+
+from clinic.models import (User, Doctor, HealthRecord, Schedule,
                            Appointment, Review, Message,
                            Payment, TestResult, Notification, Hospital, Specialization)
 from oauth2_provider.models import Application, AccessToken
@@ -12,10 +15,10 @@ from django import forms
 
 
 class MyAppointmentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'schedule', 'disease_type', 'status']
+    list_display = ['id', 'healthrecord', 'schedule', 'disease_type', 'status', 'cancel']
 
 
-class MyDoctorInfoAdmin(admin.ModelAdmin):
+class MyDoctorAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'doctor_fullname', 'license_number', 'hospital_name', 'specialization', 'active']
     search_fields = ['id', 'doctor_fullname', 'license_number']
     list_filter = ['hospital', 'specialization']
@@ -72,9 +75,9 @@ class MyMessageAdmin(admin.ModelAdmin):
 
 
 class MyUserAdmin(admin.ModelAdmin):
-    list_display = ['id', 'username', 'full_name', 'email', 'number_phone', 'is_active']
+    list_display = ['id', 'username', 'full_name', 'email', 'number_phone', 'role', 'is_active']
     search_fields = ['username', 'full_name']
-    list_filter = ['id']
+    list_filter = ['id', 'role']
     readonly_fields = ['avatar_view']
 
     def avatar_view(self, user):
@@ -93,8 +96,9 @@ class MyUserAdmin(admin.ModelAdmin):
             super().save_model(request, user, form, change)
 
 
-class MyDoctorScheduleAdmin(admin.ModelAdmin):
-    list_display = ['id', 'doctor_id', 'doctor_name', 'date', 'start_time', 'end_time', 'capacity', 'is_available']
+class MyScheduleAdmin(admin.ModelAdmin):
+    list_display = ['id', 'doctor_id', 'doctor_name', 'date', 'start_time', 'end_time', 'capacity', 'sum_booking',
+                    'active']
 
     def doctor_name(self, doctor):
         return doctor.doctor.full_name
@@ -143,10 +147,19 @@ class MonthYearForm(forms.Form):
     )
 
 
+class MyAccessTokenAdmin(admin.ModelAdmin):
+    list_display = ['id', 'token', 'user']
+
+
 class ClinicAdminSite(admin.AdminSite):
     site_header = 'Hệ thống quản trị đặt lịch khám sức khoẻ trực tuyến'
     site_title = "Clinic Admin"
     index_title = 'Trang quản trị đặt lịch khám sức khoẻ'
+
+    def index(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['server_time'] = timezone.now().isoformat()
+        return super().index(request, extra_context=extra_context)
 
     def get_urls(self):
         return [path('clinics-stats/', self.clinic_stats_view)] + super().get_urls()
@@ -171,9 +184,9 @@ class ClinicAdminSite(admin.AdminSite):
 admin_site = ClinicAdminSite(name='myadmin')
 
 admin_site.register(User, MyUserAdmin)
-admin_site.register(DoctorInfo, MyDoctorInfoAdmin)
+admin_site.register(Doctor, MyDoctorAdmin)
 admin_site.register(HealthRecord, MyHealthRecordAdmin)
-admin_site.register(Schedule, MyDoctorScheduleAdmin)
+admin_site.register(Schedule, MyScheduleAdmin)
 admin_site.register(TestResult, MyTestResultAdmin)
 admin_site.register(Message)
 admin_site.register(Appointment, MyAppointmentAdmin)
@@ -184,4 +197,4 @@ admin_site.register(Hospital, MyHospitalAdmin)
 admin_site.register(Specialization, MySpecializationAdmin)
 
 admin_site.register(Application)
-admin_site.register(AccessToken)
+admin_site.register(AccessToken, MyAccessTokenAdmin)

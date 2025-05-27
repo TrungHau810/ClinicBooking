@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from clinic.models import (User, DoctorInfo, HealthRecord, Schedule,
+from clinic.models import (User, Doctor, HealthRecord, Schedule,
                            Appointment, Review, Message,
                            Payment, TestResult, Notification, Hospital, Specialization)
 
@@ -22,7 +22,7 @@ class HospitalSerializer(ModelSerializer):
 class SpecializationSerializer(ModelSerializer):
     class Meta:
         model = Specialization
-        fields = ['id', 'active', 'created_date', 'updated_date', 'name', 'description']
+        fields = '__all__'
 
 
 class UserSerializer(ModelSerializer):
@@ -37,7 +37,19 @@ class UserSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'full_name', 'number_phone', 'avatar', 'email']
+        fields = ['id', 'username', 'full_name', 'number_phone', 'avatar', 'email', 'role']
+        extra_kwargs = {
+            'password': {
+                'write_only': True
+            }
+        }
+
+    def create(self, validated_data):
+        data = validated_data.copy()
+        u = User(**data)
+        u.set_password(u.password)
+        u.save()
+        return u
 
 
 class PatientSerializer(ModelSerializer):
@@ -46,24 +58,26 @@ class PatientSerializer(ModelSerializer):
         fields = '__all__'
 
 
+# class DoctorSerializer(ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = '__all__'
+
+
 class DoctorSerializer(ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
-
-
-class DoctorInfoSerializer(ModelSerializer):
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
     specialization_name = serializers.CharField(source='specialization.name', read_only=True)
     user = UserSerializer(read_only=True)
     user_id = serializers.IntegerField(source='user.id', read_only=True)
     doctor = serializers.CharField(source='user.full_name', read_only=True)
+    avatar = serializers.CharField(source='user.avatar.url', read_only=True)
+    consultation_fee = serializers.SerializerMethodField()
 
     class Meta:
-        model = DoctorInfo
-        fields = ['id', 'user_id', 'doctor', 'biography', 'license_number', 'license_image', 'active',
-                  'hospital_name',
-                  'specialization', 'specialization_name', 'user']
+        model = Doctor
+        fields = ['id', 'user_id', 'doctor', 'avatar', 'biography', 'license_number', 'license_image', 'active',
+                  'hospital_id', 'hospital_name',
+                  'specialization', 'specialization_name', 'consultation_fee']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -72,6 +86,20 @@ class DoctorInfoSerializer(ModelSerializer):
         else:
             data['license_image'] = None
         return data
+
+    def get_consultation_fee(self, obj):
+        # Format tiền: ví dụ 200000 → "200,000 VNĐ"
+        return "{:,.0f} VNĐ".format(obj.consultation_fee)
+
+    def create(self, validated_data):
+        request = self.context['request']
+        user = request.user  # Người dùng hiện tại (đăng nhập)
+
+        # Gán user cho doctor (vì client không truyền user_id)
+        validated_data['user'] = user
+
+        doctor = Doctor.objects.create(**validated_data)
+        return doctor
 
 
 class TestResultSerializer(ModelSerializer):
@@ -89,17 +117,12 @@ class TestResultSerializer(ModelSerializer):
 
 
 class HealthRecordSerializer(ModelSerializer):
-    test_results = TestResultSerializer(source='testresult_set', many=True, read_only=True)
+    # test_results = TestResultSerializer(source='testresult_set', many=True, read_only=True)
     user = serializers.PrimaryKeyRelatedField(read_only=True)
-
-    # day_of_birth = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'])
 
     class Meta:
         model = HealthRecord
         fields = '__all__'
-        # fields = ['user', 'full_name', 'gender', 'day_of_birth', 'BHYT', 'CCCD',
-        #           'email', 'number_phone', 'address', 'occupation', 'medical_history']
-
 
 
 class AppointmentSerializer(ModelSerializer):
@@ -110,10 +133,9 @@ class AppointmentSerializer(ModelSerializer):
 
     class Meta:
         model = Appointment
-        fields = ['id', 'active', 'created_date', 'updated_date',
+        fields = ['id', 'healthrecord_id', 'created_date', 'updated_date',
                   'disease_type', 'symptoms', 'status', 'created_date',
-                  'schedule_date', 'schedule_start', 'schedule_end', 'user_id', 'cancel_reason',
-                  'rescheduled_from_id', 'schedule_id']
+                  'schedule_date', 'schedule_start', 'schedule_end', 'active', 'schedule_id']
 
 
 class ScheduleSerializer(ModelSerializer):
@@ -159,5 +181,3 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'
-
-
