@@ -106,7 +106,7 @@ const Home = ({ navigation }) => {
       <Button
         mode="contained"
         style={styles.actionButton}
-        onPress={() => navigation.navigate('doctorbooking')}
+        onPress={() => navigation.navigate('doctorList')}
       >
         Đặt khám bác sĩ
       </Button>
@@ -123,7 +123,7 @@ const Home = ({ navigation }) => {
       <Button
         mode="outlined"
         style={styles.bottomButton}
-        onPress={() => navigation.navigate('')}
+        onPress={() => navigation.navigate('scheduleBooking')}
       >
         Đặt lịch khám bệnh
       </Button>

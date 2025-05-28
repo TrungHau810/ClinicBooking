@@ -58,7 +58,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const HealthRecord = ({ navigation }) => {
+const CreateHealthRecord = ({ navigation }) => {
   const [gender, setGender] = useState("male");
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(false);
@@ -72,6 +72,7 @@ const HealthRecord = ({ navigation }) => {
     let token = await AsyncStorage.getItem('token');
 
     let form = new FormData();
+    form.append('active', true);
     for (let key in user) {
       form.append(key, user[key]);
     }
@@ -84,13 +85,33 @@ const HealthRecord = ({ navigation }) => {
       });
 
       if (res.status === 201) {
-        Alert.alert("Thành công", "Tạo hồ sơ thành công!");
-        navigation.navigate("HealthRecordList"); // 👉 Chuyển màn hình
+        Alert.alert("Thành công", "Tạo hồ sơ thành công!", [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.navigate("tabs", { screen: "healthrecordList" }); // hoặc "createHealthRecord" nếu đúng tên
+            }
+          }
+        ],
+          { cancelable: false }
+        );
       }
+
     } catch (error) {
       console.error(error);
-      console.error(error.response.data);
-      Alert.alert("Lỗi", error?.response?.data?.detail || "Đã có lỗi xảy ra.");
+      const data = error?.response?.data;
+
+      // Hiển thị lỗi chi tiết nếu BHYT hoặc CCCD trùng
+      if (data?.BHYT || data?.CCCD) {
+        const messages = [];
+        if (data.BHYT) messages.push(`Mã BHYT đã bị trùng`);
+        if (data.CCCD) messages.push(`CCCD đã bị trùng`);
+        messages.push('Vui lòng kiểm tra lại!')
+
+        Alert.alert("Lỗi dữ liệu", messages.join("\n"));
+      } else {
+        Alert.alert("Lỗi", data?.detail || "Đã có lỗi xảy ra.");
+      }
     } finally {
       setLoading(false); // Kết thúc loading
     }
@@ -226,4 +247,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HealthRecord;
+export default CreateHealthRecord;

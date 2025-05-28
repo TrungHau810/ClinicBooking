@@ -2,15 +2,15 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Icon } from "react-native-paper";
 import Notification from "../screens/Patient/Notification";
-import HealthRecord from "../screens/Patient/HealthRecord";
 import HealthRecordList from "../screens/Patient/HealthRecordList";
 import Appointment from "../screens/Patient/Appointment";
-import DoctorBooking from "../screens/Patient/DoctorBooking";
 import HospitalDetail from "../screens/Patient/HospitalDetail";
 import Profile from "../screens/Patient/Profile";
 import Home from "../screens/Home";
 import Schedule from "../screens/Patient/Schedule";
 import ScheduleBooking from "../screens/Patient/ScheduleBooking";
+import CreateHealthRecord from "../screens/Patient/CreateHealthRecord";
+import DoctorList from "../screens/Patient/DoctorList";
 
 const Stack = createNativeStackNavigator();
 // const StackNavigator = () => {
@@ -43,11 +43,11 @@ const PatientNavigator = () => {
     return (
         <Stack.Navigator>
             <Stack.Screen name="tabs" component={TabNavigator} options={{ headerShown: false }} />
-            <Stack.Screen name="doctorbooking" component={DoctorBooking} options={{ headerShown: true, title: 'Danh sách bác sĩ' }} />
+            <Stack.Screen name="doctorList" component={DoctorList} options={{ headerShown: true, title: 'Danh sách bác sĩ' }} />
             <Stack.Screen name="hospitaldetails" component={HospitalDetail} options={{ headerShown: true, title: 'Chi tiết bệnh viện' }} />
-            <Stack.Screen name="HealthRecord" component={HealthRecord} />
+            <Stack.Screen name="createHealthRecord" component={CreateHealthRecord} options={{title: "Tạo hồ sơ sức khoẻ"}} />
             <Stack.Screen name="Schedule" component={Schedule} options={{headerShown: true, title:'Đặt lịch khám'}} />
-            <Stack.Screen name="ScheduleBooking" component={ScheduleBooking}/>
+            <Stack.Screen name="scheduleBooking" component={ScheduleBooking}/>
         </Stack.Navigator>
     );
 
