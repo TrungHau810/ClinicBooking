@@ -58,26 +58,20 @@ class PatientSerializer(ModelSerializer):
         fields = '__all__'
 
 
-# class DoctorSerializer(ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = '__all__'
-
-
 class DoctorSerializer(ModelSerializer):
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
     specialization_name = serializers.CharField(source='specialization.name', read_only=True)
-    user = UserSerializer(read_only=True)
-    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    # user = UserSerializer(read_only=True)
+    doctor_id = serializers.IntegerField(source='user.id', read_only=True)
     doctor = serializers.CharField(source='user.full_name', read_only=True)
     avatar = serializers.CharField(source='user.avatar.url', read_only=True)
     consultation_fee = serializers.SerializerMethodField()
 
     class Meta:
         model = Doctor
-        fields = ['id', 'user_id', 'doctor', 'avatar', 'biography', 'license_number', 'license_image', 'active',
+        fields = ['id','doctor_id', 'doctor', 'avatar', 'biography', 'license_number', 'license_image', 'active',
                   'hospital_id', 'hospital_name',
-                  'specialization', 'specialization_name', 'consultation_fee', 'user']
+                  'specialization', 'specialization_name', 'consultation_fee']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -129,10 +123,8 @@ class AppointmentSerializer(ModelSerializer):
     schedule_date = serializers.DateField(source='schedule.date', read_only=True)
     schedule_start = serializers.TimeField(source='schedule.start_time', read_only=True)
     schedule_end = serializers.TimeField(source='schedule.end_time', read_only=True)
-    schedule_id = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(),source='schedule',write_only=True)
-    healthrecord_id = serializers.PrimaryKeyRelatedField(queryset=HealthRecord.objects.all(), source='healthrecord',
-                                                         write_only=True)
-
+    schedule_id = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(), source='schedule',
+                                                     write_only=True)
 
     class Meta:
         model = Appointment
@@ -142,11 +134,6 @@ class AppointmentSerializer(ModelSerializer):
 
 
 class ScheduleSerializer(ModelSerializer):
-    is_full = serializers.SerializerMethodField()
-
-    def get_is_full(self, schedule):
-        booked_count = Appointment.objects.filter(schedule=schedule).count()
-        return booked_count >= schedule.capacity
 
     def create(self, validated_data):
         data = validated_data.copy()
@@ -156,7 +143,7 @@ class ScheduleSerializer(ModelSerializer):
 
     class Meta:
         model = Schedule
-        fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity', 'active', 'healthrecord']
+        fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity']
 
 
 class MessageSerializer(serializers.ModelSerializer):

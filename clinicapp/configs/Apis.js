@@ -8,12 +8,14 @@ export const endpoints = {
     'specializations': '/specializations/',
     'patients': '/patients/',
     'doctors': '/doctors/',
+    // 'doctorinfos': '/doctorinfos/',
     'login': '/o/token/',
     'register': '/users/',
     'current-user': '/users/current-user/',
     'appointments': "/appointments/",
     'healthrecords':'/healthrecords/me/',
     'schedules': '/schedules/',
+    'healthrecords': '/healthrecords/me/'
 }
 
 export const authApis = (token) => {

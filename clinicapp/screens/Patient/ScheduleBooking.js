@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, Alert } from "react-native";
-import { Button } from "react-native-paper";
+import { View, Text, TextInput, StyleSheet, Alert, FlatList } from "react-native";
+import { Button, Card } from "react-native-paper";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import HealthRecordCard from "../../components/HealthRecordCard";
 
 const ScheduleBooking = () => {
     const navigation = useNavigation();
@@ -12,23 +13,40 @@ const ScheduleBooking = () => {
     const [symptoms, setSymptoms] = useState("");
     const [diseaseType, setDiseaseType] = useState("");
     const [currentUser, setCurrentUser] = useState(null);
+    const [records, setRecords] = useState([]);
+
+    const info = [{
+        field: "disease_type",
+        label: "Loại bệnh",
+        value: "diseaseType",
+        event: "setDiseaseType"
+    }, {
+        field: "symptoms",
+        label: "Triệu chứng (Nếu có)",
+        value: "symptoms",
+        event: "setSymptoms"
+    }];
+
+    const loadRecords = async () => {
+        try {
+            const token = await AsyncStorage.getItem("token");
+            const res = await Apis.get(endpoints["healthrecords"], {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            setRecords(res.data);
+        } catch (error) {
+            console.error("Lỗi khi tải hồ sơ:", error);
+        }
+    };
 
     useEffect(() => {
-        const fetchUser = async () => {
-            const jsonValue = await AsyncStorage.getItem("currentUser");
-            console.log("User in AsyncStorage (ScheduleBooking):", jsonValue);
-            if (jsonValue !== null) {
-                const parsed = JSON.parse(jsonValue);
-                setCurrentUser(parsed);
-                console.log("Loaded user from AsyncStorage:", parsed);
-            } else {
-                Alert.alert("Lỗi", "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.");
-                navigation.navigate("Login");
-            }
-        };
-
-        fetchUser();
+        loadRecords();
     }, []);
+
+    const renderItem = ({ item }) => <HealthRecordCard record={item} />;
+
 
     const createAppointment = async () => {
         if (!diseaseType || !symptoms) {
@@ -36,56 +54,58 @@ const ScheduleBooking = () => {
             return;
         }
         try {
+            let form = new FormData();
+            form.append('')
             const token = await AsyncStorage.getItem("token");
             console.log("Access Token:", token);
 
-            if (!token) {
-                Alert.alert("Lỗi", "Không tìm thấy access token!");
-                return;
-            }
-            console.log("Schedule before booking:", schedule);
-
             const res = await authApis(token).post(endpoints["appointments"], {
                 schedule: schedule.id,
-                healthrecord: currentUser.healthrecord.id,
+                healthrecords: 6,
                 disease_type: diseaseType,
                 symptoms: symptoms,
             });
-            
-            console.log("Current user:", currentUser);
+            console.log("-----------");
+            console.info(res);
 
             Alert.alert("Thành công", "Đặt lịch khám thành công!");
             navigation.navigate("tabs", { screen: "appointment", });
         } catch (error) {
             console.error("Appointment error:", error);
-            if (error.response) {
-                console.log("RESPONSE ERROR DATA:", error.response.data);
-            }
             Alert.alert("Lỗi", "Không thể đặt lịch!");
         }
+    };
+
+    const renderField = (arrayInfo) => {
+        return arrayInfo.map(item => {
+            return (
+                <TextInput
+                    key={item.field}
+                    placeholder={item.label}
+                    // value={item.value}
+                    onChangeText={item.event}
+                    style={[styles.input, { height: 100 }]}
+                />
+            );
+        });
     };
 
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Đặt lịch với bác sĩ {doctor.user.full_name}</Text>
-            <Text>Ngày: {schedule.date}</Text>
+            <Text style={styles.title}>Đặt lịch với bác sĩ {doctor.doctor}</Text>
+            <Text style={styles.title}>Bệnh viện: {doctor.hospital_name}</Text>
+            <Text style={styles.title}>Chuyên khoa: {doctor.specialization_name}</Text>
+            <Text style={styles.date}>Ngày: {new Date(schedule.date).toLocaleDateString('vi-VN')}</Text>
             <Text>Giờ: {schedule.start_time} - {schedule.end_time}</Text>
 
-            <TextInput
-                placeholder="Loại bệnh"
-                value={diseaseType}
-                onChangeText={setDiseaseType}
-                style={styles.input}
+            <FlatList
+                data={records}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderItem}
             />
-            <TextInput
-                placeholder="Triệu chứng"
-                value={symptoms}
-                onChangeText={setSymptoms}
-                multiline
-                numberOfLines={4}
-                style={[styles.input, { height: 100 }]}
-            />
+
+            {renderField(info)}
 
 
             <Button mode="contained" onPress={createAppointment}>Xác nhận đặt lịch</Button>

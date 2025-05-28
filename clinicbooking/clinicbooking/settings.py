@@ -12,7 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-load_dotenv()
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(dotenv_path=env_path)
 from django.conf.global_settings import AUTH_USER_MODEL
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +26,7 @@ EMAIL_PORT = 587  # Cổng SMTP (587 cho TLS)
 EMAIL_USE_TLS = True  # Bật TLS (Transport Layer Security)
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')  # Email của bạn
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')  # Mật khẩu của email (hoặc App password nếu dùng 2FA)
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')  # Email gửi đi mặc định
+DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')  # Email gửi đi mặc định
 
 # Cấu hình celery giúp gửi email và push notification theo lich hẹn
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
@@ -57,6 +58,7 @@ INSTALLED_APPS = [
     'oauth2_provider',
     'ckeditor',
     'ckeditor_uploader',
+    'django_filters',
 ]
 
 OAUTH2_PROVIDER = {'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'}

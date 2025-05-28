@@ -1,6 +1,9 @@
 from cloudinary.provisioning import users
+import os
+from datetime import datetime
+import random
 from django.shortcuts import get_object_or_404
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils import timezone
@@ -99,9 +102,6 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return HealthRecord.objects.none()
-
         user = self.request.user
         return HealthRecord.objects.filter(user=user)
 
@@ -154,16 +154,54 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
     serializer_class = serializers.AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def send_appointment_successfull_email(self, appointment):
+        healthrecord = appointment.healthrecord
+        schedule = appointment.schedule
+        doctor = schedule.doctor
+        infodr = doctor.doctor
+        subject = "Đặt lịch khám bệnh thành công - Clinic Booking"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        to_email = [healthrecord.email]
 
-    def get_queryset(self):
-        # Lấy các lịch hẹn theo từng user
-        return Appointment.objects.filter(user=self.request.user)
+        text_content = f"""
+        Chào {healthrecord.full_name},
+
+        Bạn đã đặt lịch khám thành công (Mã: #{appointment.id}).
+        Vui lòng thanh toán trong vòng 30 phút kể từ lúc đặt.
+        Nếu đã thanh toán, vui lòng bỏ qua email này.
+
+        Trân trọng,
+        Clinic Booking App
+        """
+
+        html_content = f"""
+        <p>Chào <strong>{healthrecord.full_name}</strong>,</p>
+
+        <p>Bạn đã đặt lịch khám bệnh thành công tại <strong>Clinic Booking</strong>.</p>
+
+        <p><strong>Thông tin lịch khám:</strong></p>
+        <ul>
+            <li><strong>Mã lịch hẹn:</strong> #{appointment.id}</li>
+            <li><strong>Mã hồ sơ sức khoẻ:</strong> #{healthrecord.id}</li>
+            <li><strong>Ngày khám:</strong> {schedule.date.strftime('%d/%m/%Y')}</li>
+            <li><strong>Thời gian:</strong> {schedule.start_time} - {schedule.end_time}</li>
+            <li><strong>Bác sĩ:</strong> {doctor.full_name}</li>
+            <li><strong>Bệnh viện:</strong> {infodr.hospital}</li>
+            <li><strong>Chuyên khoa:</strong> {infodr.specialization}</li>
+        </ul>
+
+        <p><em style="color:red;"><strong>Lưu ý:</strong> Vui lòng thanh toán trong vòng <strong>30 phút</strong> kể từ khi đặt lịch.<br>
+        Nếu đã thanh toán, vui lòng bỏ qua email này.</em></p>
+
+        <p style="margin-top:20px;">Trân trọng,<br><em>Đội ngũ Clinic Booking</em></p>
+        """
+
+        msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        print(serializer)
-        print(request.data)
         serializer.is_valid(raise_exception=True)
 
         schedule_id = request.data.get('schedule')
@@ -190,22 +228,19 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
         )
         schedule.sum_booking += 1
         schedule.save()
-
-        Payment.objects.create(
-            appointment=appointment,
-            amount=doctor.consultation_fee,
-            method='momo',
-            status='pending'
-        )
-
         output_serializer = self.get_serializer(appointment)
+        self.send_appointment_successfull_email(appointment)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return HealthRecord.objects.none()
-        # Lấy các lịch hẹn theo từng user
-        return Appointment.objects.filter(healthrecord__user=self.request.user)
+        user = self.request.user
+        # Lấy các lịch hẹn của user đăng nhập
+        # user là bệnh nhân: Lấy lịch khám do user đó đặt
+        if user.role == 'patient':
+            return Appointment.objects.filter(healthrecord__user=user)
+        # user là bác sĩ: Lấy các lịch khám các user đặt bác sĩ đó
+        if user.role == 'doctor':
+            return Appointment.objects.filter(schedule__doctor=user)
 
     @action(detail=True, methods=["patch"], permission_classes=[permissions.IsAuthenticated])
     def cancel(self, request, pk=None):
@@ -244,7 +279,7 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
             return Response({'Lịch khám mới đã đầy.'}, status=status.HTTP_400_BAD_REQUEST)
             # Kiểm tra trùng lịch (bệnh nhân đã có lịch với new_schedule chưa)
         print(Appointment.objects.filter(healthrecord=appointment.healthrecord, schedule=new_schedule,
-                                      cancel=False))
+                                         cancel=False))
         if Appointment.objects.filter(healthrecord=appointment.healthrecord, schedule=new_schedule,
                                       cancel=False).exists():
             return Response({'detail': 'Bạn đã có lịch khám trong khoảng thời gian này.'},
@@ -289,17 +324,21 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
         queryset = self.queryset
         params = self.request.query_params
 
+        print(queryset)
+
         # Lọc theo bác sĩ (user_id)
         if (doctor_id := params.get('doctor_id')):
-            queryset = queryset.filter(doctor_id=doctor_id)
+            queryset = queryset.filter(doctor_id=int(doctor_id))
 
         # Lọc theo ngày cụ thể
         if (date := params.get('date')):
             queryset = queryset.filter(date=date)
 
         # Lọc theo trạng thái còn trống
-        if (is_available := params.get('is_available')) is not None:
-            queryset = queryset.filter(is_available=is_available.lower() in ['true', '1'])
+        if (active := params.get('active')) is not None:
+            queryset = queryset.filter(active=active.lower() in ['true', '1'])
+
+        print(queryset)
         return queryset
 
 
@@ -401,29 +440,8 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
         return Response({'message': 'Thanh toán thành công.'}, status=status.HTTP_200_OK)
 
-    def send_payment_success_email(self, payment):
-        patient = payment.appointment.patient
-        subject = "Xác nhận thanh toán thành công"
-        message = (
-            f"Chào {patient.first_name},\n\n"
-            f"Bạn đã thanh toán thành công cho cuộc hẹn khám bệnh (Mã: #{payment.appointment.id}).\n"
-            f"- Phương thức: {payment.method}\n"
-            f"- Số tiền: {payment.amount} VND\n"
-            f"- Mã giao dịch: {payment.transaction_id or 'Không có'}\n\n"
-            f"Trân trọng,\nPhòng khám"
-        )
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [patient.email])
-
-    @action(detail=False, methods=['get'], url_path='test-send-email')
-    def test_send_email(self, request):
-        send_mail(
-            'Test Email',  # Tiêu đề email
-            'This is a test email sent from Django using Gmail.',  # Nội dung email
-            'clinic@gmail.com',  # Địa chỉ email gửi
-            ['tthau2004@gmail.com'],  # Địa chỉ email nhận
-            fail_silently=False,  # Không bỏ qua lỗi
-        )
-        return HttpResponse("Test email sent successfully!")
+    def create(self, request, *args, **kwargs):
+        serializers = serializers.PaymentSerializer
 
 
 class DoctorReportView(APIView):
