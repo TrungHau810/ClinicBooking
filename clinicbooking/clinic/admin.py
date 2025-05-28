@@ -45,7 +45,8 @@ class MyDoctorAdmin(admin.ModelAdmin):
 
 
 class MyHealthRecordAdmin(admin.ModelAdmin):
-    list_display = ['id', 'full_name', 'gender', 'day_of_birth', 'address', 'CCCD', 'email', 'user', 'medical_history',
+    list_display = ['id', 'full_name', 'gender', 'day_of_birth', 'address', 'BHYT', 'CCCD', 'email', 'user',
+                    'medical_history',
                     'created_date', 'active']
     search_fields = ['id', 'full_name', 'CCCD']
 
@@ -99,6 +100,12 @@ class MyUserAdmin(admin.ModelAdmin):
 class MyScheduleAdmin(admin.ModelAdmin):
     list_display = ['id', 'doctor_id', 'doctor_name', 'date', 'start_time', 'end_time', 'capacity', 'sum_booking',
                     'active']
+
+    # Lọc user có role là doctor
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "doctor":
+            kwargs["queryset"] = User.objects.filter(role="doctor", doctor__isnull=False)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def doctor_name(self, doctor):
         return doctor.doctor.full_name

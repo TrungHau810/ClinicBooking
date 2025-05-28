@@ -84,11 +84,11 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIVi
     def filter_doctors(self, queryset):
         params = self.request.query_params
 
-        if (hospital_name := params.get('hospital')):
-            queryset = queryset.filter(hospital__name__icontains=hospital_name)
+        if (hospital_id := params.get('hospital')):
+            queryset = queryset.filter(hospital_id=hospital_id)
 
-        if (specialization_name := params.get('specialization')):
-            queryset = queryset.filter(specialization__name__icontains=specialization_name)
+        if (specialization_id := params.get('specialization')):
+            queryset = queryset.filter(specialization_id=specialization_id)
 
         if (doctor_name := params.get('name')):
             queryset = queryset.filter(user__full_name__icontains=doctor_name)
@@ -316,7 +316,7 @@ def get_payment(self, request, pk):
 
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
                       generics.CreateAPIView, generics.UpdateAPIView):
-    queryset = Schedule.objects.filter(is_available=True)
+    queryset = Schedule.objects.filter(active=True)
     serializer_class = serializers.ScheduleSerializer
     parser_classes = [parsers.MultiPartParser]
 
@@ -324,17 +324,21 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
         queryset = self.queryset
         params = self.request.query_params
 
+        print(queryset)
+
         # Lọc theo bác sĩ (user_id)
         if (doctor_id := params.get('doctor_id')):
-            queryset = queryset.filter(doctor_id=doctor_id)
+            queryset = queryset.filter(doctor_id=int(doctor_id))
 
         # Lọc theo ngày cụ thể
         if (date := params.get('date')):
             queryset = queryset.filter(date=date)
 
         # Lọc theo trạng thái còn trống
-        if (is_available := params.get('is_available')) is not None:
-            queryset = queryset.filter(is_available=is_available.lower() in ['true', '1'])
+        if (active := params.get('active')) is not None:
+            queryset = queryset.filter(active=active.lower() in ['true', '1'])
+
+        print(queryset)
         return queryset
 
 
