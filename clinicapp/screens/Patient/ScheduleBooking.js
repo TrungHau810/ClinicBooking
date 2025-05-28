@@ -9,7 +9,6 @@ const ScheduleBooking = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { schedule, doctor } = route.params;
-
     const [symptoms, setSymptoms] = useState("");
     const [diseaseType, setDiseaseType] = useState("");
     const [currentUser, setCurrentUser] = useState(null);
@@ -47,16 +46,21 @@ const ScheduleBooking = () => {
             console.log("Schedule before booking:", schedule);
 
             const res = await authApis(token).post(endpoints["appointments"], {
-                schedule_id: schedule.id,
-                user: currentUser.id,
+                schedule: schedule.id,
+                healthrecord: currentUser.healthrecord.id,
                 disease_type: diseaseType,
                 symptoms: symptoms,
             });
+            
+            console.log("Current user:", currentUser);
 
             Alert.alert("Thành công", "Đặt lịch khám thành công!");
-            navigation.navigate("tabs",{screen: "appointment", });
+            navigation.navigate("tabs", { screen: "appointment", });
         } catch (error) {
             console.error("Appointment error:", error);
+            if (error.response) {
+                console.log("RESPONSE ERROR DATA:", error.response.data);
+            }
             Alert.alert("Lỗi", "Không thể đặt lịch!");
         }
     };
@@ -83,7 +87,7 @@ const ScheduleBooking = () => {
                 style={[styles.input, { height: 100 }]}
             />
 
-            
+
             <Button mode="contained" onPress={createAppointment}>Xác nhận đặt lịch</Button>
         </View>
     );

@@ -81,11 +81,11 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIVi
     def filter_doctors(self, queryset):
         params = self.request.query_params
 
-        if (hospital_name := params.get('hospital')):
-            queryset = queryset.filter(hospital__name__icontains=hospital_name)
+        if (hospital_id := params.get('hospital')):
+            queryset = queryset.filter(hospital_id=hospital_id)
 
-        if (specialization_name := params.get('specialization')):
-            queryset = queryset.filter(specialization__name__icontains=specialization_name)
+        if (specialization_id := params.get('specialization')):
+            queryset = queryset.filter(specialization_id=specialization_id)
 
         if (doctor_name := params.get('name')):
             queryset = queryset.filter(user__full_name__icontains=doctor_name)
@@ -99,6 +99,9 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return HealthRecord.objects.none()
+
         user = self.request.user
         return HealthRecord.objects.filter(user=user)
 
@@ -278,7 +281,7 @@ def get_payment(self, request, pk):
 
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
                       generics.CreateAPIView, generics.UpdateAPIView):
-    queryset = Schedule.objects.filter(is_available=True)
+    queryset = Schedule.objects.filter(active=True)
     serializer_class = serializers.ScheduleSerializer
     parser_classes = [parsers.MultiPartParser]
 

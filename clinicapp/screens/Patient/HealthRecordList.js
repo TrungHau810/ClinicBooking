@@ -5,11 +5,8 @@ import { Button, Card } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { endpoints } from "../../configs/Apis";
 import { SafeAreaView } from "react-native-safe-area-context";
-<<<<<<< HEAD
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MyStyles from "../../styles/MyStyles";
-=======
->>>>>>> 81adef28e3bb0e197ec41fc79dfa58733d534cfb
 
 const HealthRecordList = ({ navigation }) => {
   const [records, setRecords] = useState([]);
@@ -102,7 +99,6 @@ const HealthRecordList = ({ navigation }) => {
   );
 
   return (
-<<<<<<< HEAD
     <View style={styles.container}>
       <View style={styles.headerWrapper}>
         <StatusBar barStyle="light-content" backgroundColor="#1E90FF" />
@@ -121,22 +117,6 @@ const HealthRecordList = ({ navigation }) => {
         renderItem={renderItem}
       />
     </View>
-=======
-    <SafeAreaView>
-      <View style={styles.container}>
-        <TouchableOpacity onPress={() => navigation.navigate("HealthRecord")}>
-          <Button mode="contained">Tạo hồ sơ sức khỏe mới</Button>
-        </TouchableOpacity>
-
-        <Text style={styles.title}>Danh sách hồ sơ</Text>
-        <FlatList
-          data={records}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderItem}
-        />
-      </View>
-    </SafeAreaView>
->>>>>>> 81adef28e3bb0e197ec41fc79dfa58733d534cfb
   );
 };
 

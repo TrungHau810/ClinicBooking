@@ -28,29 +28,19 @@ const ScheduleScreen = () => {
         fetchSchedules();
     }, [doctor]);
 
-    // useEffect(() => {
-    //     const fetchUser = async () => {
-    //         const jsonValue = await AsyncStorage.getItem("currentUser");
-    //         if (jsonValue !== null) {
-    //             setCurrentUser(JSON.parse(jsonValue));
-    //         }
-    //     };
-    //     fetchUser();
-    // }, []);
-
 
     const renderSchedule = ({ item }) => (
-        <View style={[styles.scheduleItem, item.is_full && { opacity: 0.5 }]}>
+        <View style={[styles.scheduleItem, item.active && { opacity: 0.5 }]}>
             <Text style={styles.date}>Ngày: {new Date(item.date).toLocaleDateString('vi-VN')}</Text>
             <Text>
                 Giờ: {item.start_time.slice(0, 5)} - {item.end_time.slice(0, 5)}
             </Text>
             <Text>Số lượng tối đa: {item.capacity}</Text>
-            <Text style={{ color: item.is_full ? 'gray' : 'green' }}>
-                Trạng thái: {item.is_full ? 'Hết chỗ' : 'Còn chỗ'}
+            <Text style={{ color: item.active ? 'gray' : 'green' }}>
+                Trạng thái: {item.active ? 'Hết chỗ' : 'Còn chỗ'}
             </Text>
             <Card.Actions>
-                <Button mode="contained" disabled={item.is_full} onPress={() => navigation.navigate("ScheduleBooking", { doctor, schedule: item })}>Chọn</Button>
+                <Button mode="contained" disabled={item.active} onPress={() => navigation.navigate("ScheduleBooking", { doctor, schedule: item })}>Chọn</Button>
             </Card.Actions>
         </View>
     );
