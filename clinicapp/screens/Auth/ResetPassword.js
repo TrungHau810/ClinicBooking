@@ -1,58 +1,101 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { ScrollView, StyleSheet, Alert } from "react-native"; // Thêm Alert ở đây
 import { Text, TextInput, Button, HelperText } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Apis, { endpoints } from "../../configs/Apis";
 
 const ResetPassword = () => {
-  const [email, setEmail] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+const [resetLoading, setResetLoading] = useState(false);
+  const [msg, setMsg] = useState("");
   const [otp, setOTP] = useState("");
+  const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [error, setError] = useState("");
+  const [confirm, setConfirm] = useState("");
 
-  const handleSendOTP = () => {
-    if (!email.includes("@")) {
-      setError("Vui lòng nhập email hợp lệ!");
-    } else {
-      setError("");
-      // TODO: Gửi OTP qua email ở đây
-      console.log("Đã gửi OTP tới:", email);
+  const validate = () => {
+    if (newPassword !== confirm) {
+      setMsg("Mật khẩu không khớp");
+      return false;
+    }
+    return true;
+  };
+
+  const requestOTP = async () => {
+    if (!email.trim()) {
+      setMsg("Vui lòng nhập Email!");
+      return;
+    }
+    setMsg("");
+    try {
+      setOtpLoading(true);
+      const res = await Apis.post(endpoints["reset-password-otp"], { email });
+      setMsg("Đã gửi mã OTP về email.");
+      Alert.alert("Thành công", "Mã OTP đã được gửi về email của bạn.");
+    } catch (error) {
+      setMsg("Không thể gửi OTP. Vui lòng thử lại.");
+      Alert.alert("Lỗi", "Không thể gửi OTP. Vui lòng kiểm tra lại email.");
+      console.error(error);
+    } finally {
+      setOtpLoading(false);
     }
   };
 
-  const handleVerifyOTP = () => {
-    if (!otp || !newPassword) {
-      setError("Vui lòng nhập mã OTP và mật khẩu mới!");
-    } else {
-      setError("");
-      // TODO: Xác minh mã OTP và đổi mật khẩu ở đây
-      console.log("OTP:", otp, "New Password:", newPassword);
+  const resetPassword = async () => {
+    if (!validate()) {
+      Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp.");
+      return;
+    }
+
+    try {
+      setResetLoading(true);
+      const res = await Apis.post(endpoints["reset-password-confirm"], {
+        email,
+        otp,
+        new_password: newPassword,
+      });
+
+      setMsg("Mật khẩu đã được đặt lại thành công.");
+      Alert.alert("Thành công", "Mật khẩu của bạn đã được cập nhật.");
+    } catch (error) {
+      setMsg("Không thể đặt lại mật khẩu. Kiểm tra thông tin và thử lại.");
+      Alert.alert("Lỗi", "Không thể đặt lại mật khẩu. Kiểm tra OTP và thông tin.");
+      console.error(error);
+    } finally {
+      setResetLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={{ flex: 1 }}
-    >
+    <SafeAreaView>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>🔐 Khôi phục mật khẩu</Text>
+        <Text style={styles.title}>Khôi phục mật khẩu</Text>
         <Text style={styles.subtitle}>Vui lòng nhập email và làm theo hướng dẫn</Text>
+
+        {msg !== "" && (
+          <HelperText type="error" visible={true}>
+            {msg}
+          </HelperText>
+        )}
 
         <TextInput
           label="Email"
-          mode="outlined"
+          mode="flat"
           value={email}
           onChangeText={setEmail}
           style={styles.input}
           left={<TextInput.Icon icon="email" />}
         />
 
-        <Button mode="contained" onPress={handleSendOTP} style={styles.button}>
+        <Button mode="contained" onPress={requestOTP}
+          loading={otpLoading} disabled={otpLoading}
+          style={[styles.button, { marginBottom: 20 }]}>
           Gửi mã OTP
         </Button>
 
         <TextInput
           label="Mã OTP"
-          mode="outlined"
+          mode="flat"
           value={otp}
           onChangeText={setOTP}
           style={styles.input}
@@ -61,25 +104,33 @@ const ResetPassword = () => {
 
         <TextInput
           label="Mật khẩu mới"
-          mode="outlined"
+          mode="flat"
+          secureTextEntry
           value={newPassword}
           onChangeText={setNewPassword}
-          secureTextEntry
           style={styles.input}
+          right={<TextInput.Icon icon="eye" />}
           left={<TextInput.Icon icon="lock-reset" />}
         />
 
-        {error !== "" && (
-          <HelperText type="error" visible={true}>
-            {error}
-          </HelperText>
-        )}
+        <TextInput
+          label="Xác nhận lại mật khẩu"
+          mode="flat"
+          secureTextEntry
+          value={confirm}
+          onChangeText={setConfirm}
+          style={styles.input}
+          right={<TextInput.Icon icon="eye" />}
+          left={<TextInput.Icon icon="lock-reset" />}
+        />
 
-        <Button mode="contained" onPress={handleVerifyOTP} style={styles.button}>
+        <Button mode="contained"
+          loading={resetLoading} disabled={resetLoading}
+          onPress={resetPassword} style={styles.button}>
           Đặt lại mật khẩu
         </Button>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -107,7 +158,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   button: {
-    marginTop: 10,
     paddingVertical: 5,
   },
 });

@@ -1,7 +1,14 @@
 import random
+<<<<<<< HEAD
+from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.db.models import Avg
+from django.template.loader import render_to_string
+=======
 
 from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Avg
+>>>>>>> 4eaed8131435528ab74ecf7adc7cc7ff8a42e51d
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from clinic.models import (User, Doctor, HealthRecord, Schedule,
@@ -252,16 +259,59 @@ class OTPRequestSerializer(serializers.Serializer):
 
     def create_otp(self, email):
         user = User.objects.get(email=email)
-        otp = f"{random.randint(100000, 999999)}"  # 6 chữ số
+        otp = f"{random.randint(100000, 999999)}"
         PasswordResetOTP.objects.create(user=user, otp_code=otp)
 
-        from django.core.mail import send_mail
-        send_mail(
-            subject="Mã OTP đặt lại mật khẩu",
-            message=f"Mã OTP của bạn là: {otp}. Có hiệu lực trong 10 phút.",
-            from_email="noreply@yourdomain.com",
-            recipient_list=[email],
-        )
+        subject = "Clinic App: Mã OTP đặt lại mật khẩu"
+        from_email = "noreply@yourdomain.com"
+        to = [email]
+
+        # Plain text (fallback)
+        text_content = f"""
+        Xin chào {user.full_name},
+    
+        Bạn vừa yêu cầu khôi phục mật khẩu cho tài khoản của mình trên hệ thống của chúng tôi.
+    
+        Mã OTP của bạn là: {otp}
+    
+        Lưu ý quan trọng:
+        - Mã OTP này có hiệu lực trong 10 phút kể từ thời điểm bạn nhận được email này.
+        - Tuyệt đối không cung cấp mã xác thực này cho bất kỳ ai, kể cả nhân viên hỗ trợ.
+    
+        Nếu bạn KHÔNG yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này hoặc liên hệ với bộ phận hỗ trợ của chúng tôi.
+    
+        Trân trọng,
+        Đội ngũ hỗ trợ khách hàng
+        """
+
+        # HTML content
+        html_content = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <p>Xin chào <strong>{user.full_name}</strong>,</p>
+
+            <p>Bạn vừa yêu cầu khôi phục mật khẩu cho tài khoản của mình trên hệ thống của chúng tôi.</p>
+
+            <p><strong>Mã OTP của bạn là: <span style="font-size: 18px; color: #d63031;">{otp}</span></strong></p>
+
+            <p><strong>Lưu ý quan trọng:</strong></p>
+            <ul>
+              <li>Mã OTP này có hiệu lực trong <strong>10 phút</strong> kể từ thời điểm bạn nhận được email này.</li>
+              <li><strong style="color: red;">Tuyệt đối không cung cấp mã xác thực này cho bất kỳ ai</strong>, kể cả nhân viên hỗ trợ.</li>
+            </ul>
+
+            <p>Nếu bạn <strong>KHÔNG</strong> yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này hoặc liên hệ ngay với bộ phận hỗ trợ của chúng tôi để được giúp đỡ.</p>
+
+            <p>Trân trọng,<br />
+            Đội ngũ hỗ trợ khách hàng</p>
+          </body>
+        </html>
+        """
+
+        msg = EmailMultiAlternatives(subject, text_content, from_email, to)
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+
         return otp
 
 
