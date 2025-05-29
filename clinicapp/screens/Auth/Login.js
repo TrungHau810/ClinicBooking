@@ -252,7 +252,7 @@ const Login = ({ navigation }) => {
           onPress={() => navigation.navigate("ResetPassword")}
           labelStyle={{ color: "#6200ee" }}
         >
-          Quên mật khẩu
+          Quên mật khẩu?
         </Button>
       </ScrollView>
     </SafeAreaView>
