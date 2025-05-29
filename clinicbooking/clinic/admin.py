@@ -216,8 +216,7 @@ admin_site.register(Payment, MyPaymentAdmin)
 admin_site.register(Notification, MyNotificationAdmin)
 admin_site.register(Hospital, MyHospitalAdmin)
 admin_site.register(Specialization, MySpecializationAdmin)
-admin_site.register(PasswordResetOTP, MyPasswordResetOTPAdmin)
 
 admin_site.register(Application)
 admin_site.register(AccessToken, MyAccessTokenAdmin)
-
+admin_site.register(PasswordResetOTP, MyPasswordResetOTPAdmin)

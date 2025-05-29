@@ -209,12 +209,6 @@ class Appointment(BaseModel):
     def __str__(self):
         return f"{self.healthrecord} - {self.schedule}"
 
-    @property
-    def can_cancel_or_reschedule(self):
-        appointment_datetime = datetime.combine(self.schedule.date, self.schedule.start_time)
-        appointment_datetime = timezone.make_aware(appointment_datetime)  # make it timezone-aware
-        return appointment_datetime - timezone.now() >= timedelta(hours=24)
-
 
 class Payment(BaseModel):
     class PaymentMethod(models.TextChoices):

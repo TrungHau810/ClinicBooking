@@ -1,5 +1,6 @@
 import axios from "axios";
 
+
 const BASE_URL = "http://192.168.1.6:8000/"; 
 
 export const endpoints = {
@@ -17,7 +18,6 @@ export const endpoints = {
     'appointments': "/appointments/",
     'healthrecords':'/healthrecords/me/',
     'schedules': '/schedules/',
-    'healthrecords': '/healthrecords/me/',
     'notifications': '/notifications/',
 }
 

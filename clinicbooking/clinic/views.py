@@ -1,12 +1,13 @@
-from cloudinary.provisioning import users
-import os
 from datetime import datetime, timedelta
+from django.contrib.auth.tokens import default_token_generator
 import random
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from rest_framework.decorators import action, permission_classes
 from rest_framework.exceptions import PermissionDenied, AuthenticationFailed, ValidationError
 from rest_framework.views import APIView
@@ -85,11 +86,6 @@ class PasswordResetConfirmOTPViewSet(APIView):
 class PatientViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = User.objects.filter(role='patient')
     serializer_class = serializers.UserSerializer
-
-
-# class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView):
-#     queryset = User.objects.filter(role='doctor')
-#     serializer_class = serializers.UserSerializer
 
 
 class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
@@ -300,6 +296,7 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
             return Response({'detail': 'Lịch khám này đã bị huỷ'}, status=status.HTTP_400_BAD_REQUEST)
         if not is_more_than_24_hours_ahead(schedule_date, schedule_time):
             return Response({'erorr': 'Bạn chỉ được huỷ lịch trước 24 tiếng'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Huỷ lịch
         appointment.cancel = True
         appointment.save()
@@ -316,12 +313,15 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
         appointment = Appointment.objects.get(pk=pk)
         schedule_date = appointment.schedule.date
         schedule_time = appointment.schedule.start_time
+
         if not appointment:
             return Response("Không tìm thấy lịch khám", status=status.HTTP_404_NOT_FOUND)
         if appointment.cancel:
             return Response("Lịch khám đã bị huỷ", status=status.HTTP_404_NOT_FOUND)
+
         if not is_more_than_24_hours_ahead(schedule_date, schedule_time):
             return Response({'erorr': 'Bạn chỉ được đổi lịch trước 24 tiếng'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Lấy id của lịch mới
         new_schedule_id = request.data.get('new_schedule_id')
         if not new_schedule_id:
@@ -402,22 +402,19 @@ class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
         user = self.request.user
         queryset = self.queryset
 
-        appointment_id = self.request.query_params.get('appointment')
-        if appointment_id:
-            return queryset.filter(test_result__appointment__patient=user) | queryset.filter(
-                test_result__appointment__doctor=user)
+        return queryset
 
-        sender_id = self.request.query_params.get('sender')
-        receiver_id = self.request.query_params.get('receiver')
-        if sender_id and receiver_id:
-            if str(user.id) != sender_id and str(user.id) != receiver_id:
-                raise PermissionDenied("Bạn không có quyền xem tin nhắn này.")
-            return queryset.filter(
-                Q(sender_id=sender_id, receiver_id=receiver_id) |
-                Q(sender_id=receiver_id, receiver_id=sender_id)
-            ).order_by('created_date')
-
-        return queryset.none()
+        # sender_id = self.request.query_params.get('sender')
+        # receiver_id = self.request.query_params.get('receiver')
+        # if sender_id and receiver_id:
+        #     if str(user.id) != sender_id and str(user.id) != receiver_id:
+        #         raise PermissionDenied("Bạn không có quyền xem tin nhắn này.")
+        #     return queryset.filter(
+        #         Q(sender_id=sender_id, receiver_id=receiver_id) |
+        #         Q(sender_id=receiver_id, receiver_id=sender_id)
+        #     ).order_by('created_date')
+        #
+        # return queryset.none()
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -492,6 +489,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Thanh toán thành công.'}, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
+        # serializers = serializers.PaymentSerializer
         pass
 
 
