@@ -67,16 +67,17 @@ import { useEffect, useState } from "react";
 import { FlatList, Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Apis, { endpoints } from "../../configs/Apis";
-import { Button, Card } from "react-native-paper";
+import { Button, Card, Searchbar } from "react-native-paper";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "@react-navigation/native";
 
-const DoctorBooking = () => {
+const DoctorList = () => {
   const navigation = useNavigation();
   const [hospital, setHospital] = useState([]);
   const [doctor, setDoctor] = useState([]);
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [specializations, setSpecializations] = useState([]);
+  const [name, setName] = useState("");
   const [selectedSpecialization, setSelectedSpecialization] = useState(null);
 
 
@@ -89,29 +90,21 @@ const DoctorBooking = () => {
     }
   };
 
-  const loadDoctor = async (hospitalId = null, specializationId = null) => {
+  const loadDoctor = async (hospitalId = null, specializationId = null, name) => {
     try {
-<<<<<<< HEAD
-      let url = endpoints["doctorinfos"] + "?";
-
+      let url = endpoints["doctors"] + "?";
+      console.log(name);
       if (hospitalId) url += `hospital=${hospitalId}&`;
       if (specializationId) url += `specialization=${specializationId}&`;
+      if (name) url += `name=${encodeURIComponent(name)}&`;
+
 
       const res = await Apis.get(url);
-=======
-      let res;
-      if (hospitalId) {
-        res = await Apis.get(endpoints["doctorinfos"] + `?hospital_id=${hospitalId}`);
-      } else {
-        res = await Apis.get(endpoints["doctorinfos"]);
-      }
-      console.log(res);
->>>>>>> 81adef28e3bb0e197ec41fc79dfa58733d534cfb
       setDoctor(res.data);
+      console.log(res.data);
     } catch (err) {
       console.error(err);
     }
-    console.log(res.data);
   };
 
 
@@ -132,22 +125,24 @@ const DoctorBooking = () => {
   }, []);
 
   useEffect(() => {
-    loadDoctor(selectedHospital, selectedSpecialization);
-  }, [selectedHospital, selectedSpecialization]);
+    const timer = setTimeout(() => {
+      loadDoctor(selectedHospital, selectedSpecialization, name);
+    }, 600);
 
-<<<<<<< HEAD
+    return () => clearTimeout(timer); // Xoá timer cũ nếu người dùng gõ tiếp
+  }, [selectedHospital, selectedSpecialization, name]);
+
   const renderDoctor = (dr) => {
-    console.log(dr)
     return (
       <Card style={styles.card} key={dr.id}>
-        <Card.Title title={`Bác sĩ ${dr.user.full_name}`} />
+        <Card.Title titleStyle={{ fontWeight: 'bold' }} title={`Bác sĩ ${dr.doctor}`} />
         <Card.Content style={styles.cardContent}>
           <Image
             style={styles.avatar}
-            source={{ uri: dr.user.avatar }}
+            source={{ uri: dr.avatar }}
           />
           <View style={styles.doctorInfo}>
-            <Text>Chuyên khoa: {dr.specialization_name}</Text>
+            <Text style={{ marginBottom: 10 }}>Chuyên khoa: {dr.specialization_name}</Text>
             <Text>Cơ sở: {dr.hospital_name}</Text>
           </View>
         </Card.Content>
@@ -157,26 +152,6 @@ const DoctorBooking = () => {
       </Card>
     );
   };
-=======
-  const renderDoctor = (dr) => (
-    <Card style={styles.card} key={dr.id}>
-      <Card.Title title={`Bác sĩ ${dr.doctor}`} />
-      <Card.Content style={styles.cardContent}>
-        <Image
-          style={styles.avatar}
-          source={{ uri: dr.avatar }}
-        />
-        <View style={styles.doctorInfo}>
-          <Text>Chuyên khoa: {dr.specialization_name}</Text>
-          <Text>Cơ sở: {dr.hospital_name}</Text>
-        </View>
-      </Card.Content>
-      <Card.Actions>
-        <Button mode="contained">Đặt lịch khám</Button>
-      </Card.Actions>
-    </Card>
-  );
->>>>>>> 81adef28e3bb0e197ec41fc79dfa58733d534cfb
 
   return (
     <SafeAreaView style={styles.container}>
@@ -209,6 +184,11 @@ const DoctorBooking = () => {
         </Picker>
       </View>
 
+      <Searchbar style={{ marginBottom: 10 }}
+        placeholder="Nhập tên bác sĩ cần tìm..."
+        onChangeText={(value) => setName(value)}
+
+      />
 
       <FlatList
         data={doctor}
@@ -266,4 +246,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DoctorBooking;
+export default DoctorList;

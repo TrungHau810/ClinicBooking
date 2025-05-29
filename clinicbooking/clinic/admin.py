@@ -45,7 +45,8 @@ class MyDoctorAdmin(admin.ModelAdmin):
 
 
 class MyHealthRecordAdmin(admin.ModelAdmin):
-    list_display = ['id', 'full_name', 'gender', 'day_of_birth', 'address', 'CCCD', 'email', 'user', 'medical_history',
+    list_display = ['id', 'full_name', 'gender', 'day_of_birth', 'address', 'BHYT', 'CCCD', 'email', 'user',
+                    'medical_history',
                     'created_date', 'active']
     search_fields = ['id', 'full_name', 'CCCD']
 
@@ -100,6 +101,12 @@ class MyScheduleAdmin(admin.ModelAdmin):
     list_display = ['id', 'doctor_id', 'doctor_name', 'date', 'start_time', 'end_time', 'capacity', 'sum_booking',
                     'active']
 
+    # Lọc user có role là doctor
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "doctor":
+            kwargs["queryset"] = User.objects.filter(role="doctor", doctor__isnull=False)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     def doctor_name(self, doctor):
         return doctor.doctor.full_name
 
@@ -122,6 +129,8 @@ class MyTestResultAdmin(admin.ModelAdmin):
 class MySpecializationAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'active']
 
+class MyNotificationAdmin(admin.ModelAdmin):
+    list_display = ['id', 'content', 'created_date', 'updated_date']
 
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ['id', 'patient_id', 'patient_name', 'doctor_id', 'doctor_name', 'rating', 'comment', 'reply',
@@ -192,7 +201,7 @@ admin_site.register(Message)
 admin_site.register(Appointment, MyAppointmentAdmin)
 admin_site.register(Review, ReviewAdmin)
 admin_site.register(Payment, MyPaymentAdmin)
-admin_site.register(Notification)
+admin_site.register(Notification, MyNotificationAdmin)
 admin_site.register(Hospital, MyHospitalAdmin)
 admin_site.register(Specialization, MySpecializationAdmin)
 

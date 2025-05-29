@@ -56,20 +56,20 @@ class PatientSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
-        
+
 
 class DoctorSerializer(ModelSerializer):
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
     specialization_name = serializers.CharField(source='specialization.name', read_only=True)
-    user = UserSerializer(read_only=True)
-    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    # user = UserSerializer(read_only=True)
+    doctor_id = serializers.IntegerField(source='user.id', read_only=True)
     doctor = serializers.CharField(source='user.full_name', read_only=True)
     avatar = serializers.CharField(source='user.avatar.url', read_only=True)
     consultation_fee = serializers.SerializerMethodField()
 
     class Meta:
         model = Doctor
-        fields = ['id', 'user_id', 'doctor', 'avatar', 'biography', 'license_number', 'license_image', 'active',
+        fields = ['id','doctor_id', 'doctor', 'avatar', 'biography', 'license_number', 'license_image', 'active',
                   'hospital_id', 'hospital_name',
                   'specialization', 'specialization_name', 'consultation_fee']
 
@@ -123,7 +123,8 @@ class AppointmentSerializer(ModelSerializer):
     schedule_date = serializers.DateField(source='schedule.date', read_only=True)
     schedule_start = serializers.TimeField(source='schedule.start_time', read_only=True)
     schedule_end = serializers.TimeField(source='schedule.end_time', read_only=True)
-    schedule_id = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(),source='schedule',write_only=True)
+    schedule_id = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(), source='schedule',
+                                                     write_only=True)
 
     class Meta:
         model = Appointment
@@ -133,8 +134,8 @@ class AppointmentSerializer(ModelSerializer):
 
 
 class ScheduleSerializer(ModelSerializer):
-  
-  def create(self, validated_data):
+
+    def create(self, validated_data):
         data = validated_data.copy()
         schedule = Schedule(**data)
         schedule.save()
