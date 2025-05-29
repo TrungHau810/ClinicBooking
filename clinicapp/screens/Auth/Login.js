@@ -127,7 +127,7 @@
 
 import { useContext, useState } from "react";
 import { Alert, ScrollView, Text, View, StyleSheet, ImageBackground } from "react-native";
-import { Button, HelperText, TextInput } from "react-native-paper";
+import { Button, HelperText, TextInput, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -140,6 +140,7 @@ const Login = ({ navigation }) => {
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { colors } = useTheme();
 
   const dispatch = useContext(MyDispatchContext);
 
@@ -172,14 +173,14 @@ const Login = ({ navigation }) => {
 
       const userRes = await authApis(res.data.access_token).get(endpoints["current-user"]);
       await AsyncStorage.setItem("currentUser", JSON.stringify(userRes.data));
-      
+
       dispatch({
         type: "login",
         payload: userRes.data,
       });
       if (userRes.data.role === 'patient') {
         navigation.navigate("Patient");
-      } else{
+      } else {
         navigation.navigate("Doctor");
       }
 
@@ -194,92 +195,125 @@ const Login = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={MyStyles.container}>
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={styles.title}>Đăng nhập hệ thống</Text>
-        <Text style={styles.subtitle}>
-          Đặt lịch khám trực tuyến nhanh chóng và dễ dàng
-        </Text>
+    <View style={MyStyles.container}>
+      <ImageBackground
+        source={require("../../assets/clinicapp.jpg")}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <View style={styles.content}>
+          <Text style={styles.title}>Đăng nhập hệ thống</Text>
+          <Text style={styles.subtitle}>
+            Đặt lịch khám trực tuyến nhanh chóng và dễ dàng
+          </Text>
 
-        {errorMsg !== "" && (
-          <HelperText type="error" visible={true}>
-            {errorMsg}
-          </HelperText>
-        )}
+          {errorMsg !== "" && (
+            <HelperText type="error" visible={true}>
+              {errorMsg}
+            </HelperText>
+          )}
 
-        <TextInput
-          label="Tên đăng nhập"
-          value={user.username}
-          onChangeText={(text) => handleInputChange("username", text)}
-          mode="outlined"
-          left={<TextInput.Icon icon="account" />}
-          style={styles.input}
-        />
+          <TextInput
+            label="Tên đăng nhập"
+            value={user.username}
+            onChangeText={(text) => handleInputChange("username", text)}
+            mode="flat"
+            left={<TextInput.Icon icon="account" />}
+            style={styles.input}
+            theme={{
+              colors: {
+                primary: colors.accent, // màu khi focus
+                text: colors.text,       // màu chữ nhập
+                placeholder: "#333",     // màu label khi chưa focus
+              },
+            }}
+          />
 
-        <TextInput
-          label="Mật khẩu"
-          value={user.password}
-          onChangeText={(text) => handleInputChange("password", text)}
-          mode="outlined"
-          secureTextEntry={!showPassword}
-          left={<TextInput.Icon icon="lock" />}
-          right={
-            <TextInput.Icon
-              icon={showPassword ? "eye-off" : "eye"}
-              onPress={() => setShowPassword(!showPassword)}
-            />
-          }
-          style={styles.input}
-        />
+          <TextInput
+            label="Mật khẩu"
+            value={user.password}
+            onChangeText={(text) => handleInputChange("password", text)}
+            mode="flat"
+            secureTextEntry={!showPassword}
+            left={<TextInput.Icon icon="lock" />}
+            right={
+              <TextInput.Icon
+                icon={showPassword ? "eye-off" : "eye"}
+                onPress={() => setShowPassword(!showPassword)}
+              />
+            }
+            style={styles.input}
+            theme={{
+              colors: {
+                primary: colors.accent, // màu khi focus
+                text: colors.text,       // màu chữ nhập
+                placeholder: "#333",     // màu label khi chưa focus
+              },
+            }}
+          />
 
-        <Button
-          mode="contained"
-          onPress={login}
-          loading={loading}
-          disabled={loading}
-          style={styles.button}
-        >
-          Đăng nhập
-        </Button>
+          <Button
+            mode="contained"
+            onPress={login}
+            loading={loading}
+            disabled={loading}
+            style={styles.button}
+          >
+            Đăng nhập
+          </Button>
 
-        <Button
-          onPress={() => navigation.navigate("register")}
-          labelStyle={{ color: "#6200ee" }}
-        >
-          Chưa có tài khoản? Đăng ký
-        </Button>
-        <Button
-          onPress={() => navigation.navigate("ResetPassword")}
-          labelStyle={{ color: "#6200ee" }}
-        >
-          Quên mật khẩu
-        </Button>
-      </ScrollView>
-    </SafeAreaView>
+          <Button
+            onPress={() => navigation.navigate("register")}
+            labelStyle={{ color: "#6200ee" }}
+          >
+            Chưa có tài khoản? Đăng ký
+          </Button>
+          <Button
+            onPress={() => navigation.navigate("ResetPassword")}
+            labelStyle={{ color: "#6200ee" }}
+          >
+            Quên mật khẩu
+          </Button>
+        </View>
+      </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   title: {
-        fontSize: 25,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 10
+    fontSize: 25,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 5,
+    color: "#212121",
+  },
+  subtitle: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 10
 
-    },
-    subtitle: {
-        fontSize: 15,
-        textAlign: 'center',
-        marginBottom: 10
-
-    },
-    input: {
-        paddingLeft: 25,
-    },
-    button: {
-        marginTop: 10,
-        marginBottom: 0,
-    },
+  },
+  input: {
+    // paddingLeft: 25,
+    marginBottom: 10,
+    backgroundColor: "white"
+  },
+  button: {
+    marginTop: 10,
+    marginBottom: 0,
+  },
+  background: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    opacity: 0.8
+  },
+  content: {
+    flexGrow: 1,
+    padding: 20,
+    justifyContent: "center"
+  },
 });
 
 export default Login;

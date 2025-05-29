@@ -228,7 +228,7 @@ class MessageSerializer(serializers.ModelSerializer):
 class ReviewSerializer(ModelSerializer):
     class Meta:
         model = Review
-
+        fields = ['id', 'rating', 'comment', 'reply', 'doctor', 'patient']
 
 class PaymentSerializer(ModelSerializer):
     class Meta:
