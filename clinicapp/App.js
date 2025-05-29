@@ -1,14 +1,17 @@
 import { NavigationContainer } from "@react-navigation/native";
 import AuthNavigator from "./navigation/AuthNavigator";
 import { MyContextProvider } from "./configs/MyContexts";
+import { NotificationProvider } from "./configs/NotificationContext";
 
 
 const App = () => {
   return (
     <MyContextProvider>
-      <NavigationContainer>
-        <AuthNavigator />
-      </NavigationContainer>
+      <NotificationProvider>
+        <NavigationContainer>
+          <AuthNavigator />
+        </NavigationContainer>
+      </NotificationProvider>
     </MyContextProvider>
   );
 }

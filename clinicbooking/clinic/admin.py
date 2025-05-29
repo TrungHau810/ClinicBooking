@@ -4,6 +4,7 @@ from django.db.models import Count, Sum
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.utils.timezone import now, localtime
+
 from clinic.models import (User, Doctor, HealthRecord, Schedule,
                            Appointment, Review, Message,
                            Payment, TestResult, Notification, Hospital, Specialization, PasswordResetOTP)
@@ -135,6 +136,10 @@ class MySpecializationAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'active']
 
 
+class MyNotificationAdmin(admin.ModelAdmin):
+    list_display = ['id', 'content', 'created_date', 'updated_date']
+
+
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ['id', 'patient_id', 'patient_name', 'doctor_id', 'doctor_name', 'rating', 'comment', 'reply',
                     'created_date']
@@ -208,9 +213,10 @@ admin_site.register(Message)
 admin_site.register(Appointment, MyAppointmentAdmin)
 admin_site.register(Review, ReviewAdmin)
 admin_site.register(Payment, MyPaymentAdmin)
-admin_site.register(Notification)
+admin_site.register(Notification, MyNotificationAdmin)
 admin_site.register(Hospital, MyHospitalAdmin)
 admin_site.register(Specialization, MySpecializationAdmin)
+
 admin_site.register(Application)
 admin_site.register(AccessToken, MyAccessTokenAdmin)
 admin_site.register(PasswordResetOTP, MyPasswordResetOTPAdmin)

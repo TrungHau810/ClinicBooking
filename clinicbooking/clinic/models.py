@@ -1,8 +1,7 @@
-import datetime
-
 from ckeditor.fields import RichTextField
 from django.db.models.fields import TextField
 from django.utils import timezone
+from datetime import datetime, timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -237,4 +236,7 @@ class PasswordResetOTP(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def is_expired(self):
-        return timezone.now() > self.created_at + datetime.timedelta(minutes=10)
+        return timezone.now() > self.created_at + timedelta(minutes=10)
+
+    def __str__(self):
+        return(f"User: {self.user} - OTP Code:{self.otp_code}")

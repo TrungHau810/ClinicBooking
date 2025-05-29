@@ -15,7 +15,7 @@ export const endpoints = {
     'appointments': "/appointments/",
     'healthrecords':'/healthrecords/me/',
     'schedules': '/schedules/',
-    'healthrecords': '/healthrecords/me/'
+    'notifications': '/notifications/',
 }
 
 export const authApis = (token) => {

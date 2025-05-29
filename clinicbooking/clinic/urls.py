@@ -1,8 +1,7 @@
 from django.urls import path, include
 from . import views
 from rest_framework.routers import BaseRouter, DefaultRouter
-
-from .views import PasswordResetSendOTPView, PasswordResetConfirmOTPView
+from .views import PasswordResetSendOTPViewSet, PasswordResetConfirmOTPViewSet
 
 # from .views import AdminReportViewSet, DoctorReportView
 
@@ -23,12 +22,13 @@ router.register('testresults', views.TestResultViewSet, basename='testresult')
 router.register('reviews', views.ReviewViewSet, basename='review')
 router.register('payments', views.PaymentViewSet, basename='payment')
 # # router.register('admin-report', views.AdminReportViewSet, basename='adminreport')
+router.register('notifications', views.NotificationViewSet, basename='notification')
 
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('api/password-reset/otp/', PasswordResetSendOTPView.as_view(), name='send_otp'),
-    path('api/password-reset/otp/confirm/', PasswordResetConfirmOTPView.as_view(), name='confirm_otp'),
+    path('api/password-reset/otp/', PasswordResetSendOTPViewSet.as_view(), name='send_otp'),
+    path('api/password-reset/otp/confirm/', PasswordResetConfirmOTPViewSet.as_view(), name='confirm_otp'),
     # path('reportsdoctor/', DoctorReportView.as_view(), name='doctorreport'),
     # path('reportsadmin/', AdminReportViewSet.as_view(), name='adminreport'),
 ]

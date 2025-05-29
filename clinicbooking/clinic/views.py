@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from django.contrib.auth.tokens import default_token_generator
+import random
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
@@ -14,7 +15,7 @@ from clinic import serializers, paginators
 from rest_framework import viewsets, generics, status, parsers, permissions
 from clinic.models import (User, Doctor, Payment, Appointment, Review,
                            Schedule, Notification, HealthRecord, Message, TestResult,
-                           Hospital, Specialization)
+                           Hospital, Specialization, PasswordResetOTP)
 from django.db.models import Q, Count, Sum
 from rest_framework.response import Response
 from clinic.permissions import IsDoctorOrSelf
@@ -60,7 +61,7 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView
         return Response(serializers.UserSerializer(u).data)
 
 
-class PasswordResetSendOTPView(APIView):
+class PasswordResetSendOTPViewSet(APIView):
     permission_classes = []
 
     def post(self, request):
@@ -71,7 +72,7 @@ class PasswordResetSendOTPView(APIView):
         return Response(serializer.errors, status=400)
 
 
-class PasswordResetConfirmOTPView(APIView):
+class PasswordResetConfirmOTPViewSet(APIView):
     permission_classes = []
 
     def post(self, request):
@@ -120,6 +121,8 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return HealthRecord.objects.none()  # Hoặc trả về queryset trống
         user = self.request.user
         return HealthRecord.objects.filter(user=user)
 
@@ -270,6 +273,8 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Appointment.objects.none()  # Hoặc trả về queryset trống
         user = self.request.user
         # Lấy các lịch hẹn của user đăng nhập
         # user là bệnh nhân: Lấy lịch khám do user đó đặt
@@ -373,8 +378,6 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
         queryset = self.queryset
         params = self.request.query_params
 
-        print(queryset)
-
         # Lọc theo bác sĩ (user_id)
         if (doctor_id := params.get('doctor_id')):
             queryset = queryset.filter(doctor_id=int(doctor_id))
@@ -387,7 +390,6 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
         if (active := params.get('active')) is not None:
             queryset = queryset.filter(active=active.lower() in ['true', '1'])
 
-        print(queryset)
         return queryset
 
 
@@ -398,16 +400,10 @@ class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
 
     def get_queryset(self):
         user = self.request.user
-        print(user)
         queryset = self.queryset
 
         return queryset
 
-        # appointment_id = self.request.query_params.get('appointment')
-        # if appointment_id:
-        #     return queryset.filter(test_result__appointment__patient=user) | queryset.filter(
-        #         test_result__appointment__doctor=user)
-        #
         # sender_id = self.request.query_params.get('sender')
         # receiver_id = self.request.query_params.get('receiver')
         # if sender_id and receiver_id:

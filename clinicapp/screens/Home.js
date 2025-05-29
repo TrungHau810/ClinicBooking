@@ -126,15 +126,6 @@ const Home = ({ navigation }) => {
       >
         Đặt lịch khám bệnh
       </Button>
-
-      <Button
-        mode="contained"
-        style={{ marginTop: 10 }}
-        onPress={() => navigation.navigate("Chat", { chatId: "testchat1", currentUserId: "user1" })}
-      >
-        Test Chat Real-time
-      </Button>
-
     </SafeAreaView >
   );
 };
