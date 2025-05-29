@@ -239,4 +239,4 @@ class PasswordResetOTP(models.Model):
         return timezone.now() > self.created_at + timedelta(minutes=10)
 
     def __str__(self):
-        return(f"User: {self.user} - OTP Code:{self.otp_code}")
+        return(f"username: {self.user} - OTP Code:{self.otp_code}")

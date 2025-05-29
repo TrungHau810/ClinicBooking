@@ -1,14 +1,10 @@
 import random
-<<<<<<< HEAD
 from django.core.mail import send_mail
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Avg
 from django.template.loader import render_to_string
-=======
-
 from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Avg
->>>>>>> 4eaed8131435528ab74ecf7adc7cc7ff8a42e51d
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from clinic.models import (User, Doctor, HealthRecord, Schedule,
@@ -235,6 +231,7 @@ class MessageSerializer(serializers.ModelSerializer):
 class ReviewSerializer(ModelSerializer):
     class Meta:
         model = Review
+        fields = '__all__'
 
 
 class PaymentSerializer(ModelSerializer):
