@@ -1,5 +1,7 @@
 import random
 
+from django.contrib.auth.tokens import default_token_generator
+from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from clinic.models import (User, Doctor, HealthRecord, Schedule,
@@ -52,6 +54,60 @@ class UserSerializer(ModelSerializer):
         u.set_password(u.password)
         u.save()
         return u
+
+
+class OTPRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email không tồn tại.")
+        return value
+
+    def create_otp(self, email):
+        user = User.objects.get(email=email)
+        otp = f"{random.randint(100000, 999999)}"  # 6 chữ số
+        PasswordResetOTP.objects.create(user=user, otp_code=otp)
+
+        from django.core.mail import send_mail
+        send_mail(
+            subject="Mã OTP đặt lại mật khẩu",
+            message=f"Mã OTP của bạn là: {otp}. Có hiệu lực trong 10 phút.",
+            from_email="noreply@yourdomain.com",
+            recipient_list=[email],
+        )
+        return otp
+
+
+class OTPConfirmResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        try:
+            user = User.objects.get(email=data['email'])
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Email không hợp lệ.")
+
+        try:
+            otp_obj = PasswordResetOTP.objects.filter(user=user, otp_code=data['otp']).latest('created_at')
+        except PasswordResetOTP.DoesNotExist:
+            raise serializers.ValidationError("OTP không đúng.")
+
+        if otp_obj.is_expired():
+            raise serializers.ValidationError("Mã OTP đã hết hạn.")
+
+        data['user'] = user
+        return data
+
+    def save(self):
+        user = self.validated_data['user']
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+
+        # Xoá OTP sau khi dùng
+        PasswordResetOTP.objects.filter(user=user).delete()
 
 
 class PatientSerializer(ModelSerializer):
@@ -163,7 +219,6 @@ class ScheduleSerializer(ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
-    receiver = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     class Meta:
         model = Message
@@ -173,7 +228,6 @@ class MessageSerializer(serializers.ModelSerializer):
 class ReviewSerializer(ModelSerializer):
     class Meta:
         model = Review
-        fields = ['id', 'rating', 'comment', 'reply', 'doctor', 'patient']
 
 
 class PaymentSerializer(ModelSerializer):
