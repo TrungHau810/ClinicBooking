@@ -1,7 +1,8 @@
+import datetime
+
 from ckeditor.fields import RichTextField
 from django.db.models.fields import TextField
 from django.utils import timezone
-from datetime import datetime, timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -65,7 +66,8 @@ class Doctor(BaseModel):
     biography = models.CharField(max_length=255, null=True)
     hospital = models.ForeignKey(Hospital, on_delete=models.PROTECT)
     specialization = models.ForeignKey(Specialization, on_delete=models.PROTECT)
-    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=100000, help_text="Giá khám bệnh (VND)"
+    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=100000,
+                                           help_text="Giá khám bệnh (VND)"
                                            )
 
     def __str__(self):
@@ -168,7 +170,12 @@ class Schedule(BaseModel):
     sum_booking = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        # Tự động cập nhật trạng thái is_available
+        """
+        Cập nhật trạng thái active của schedule (Tức là lịch đó còn khả dụng/trống không)
+        :param args:
+        :param kwargs:
+        :return:
+        """
         self.active = self.sum_booking < self.capacity
         super().save(*args, **kwargs)
 
@@ -198,16 +205,10 @@ class Appointment(BaseModel):
 
     class Meta:
         ordering = ['-id']
-        unique_together= ('healthrecord', 'schedule')
+        unique_together = ('healthrecord', 'schedule')
 
     def __str__(self):
         return f"{self.healthrecord} - {self.schedule}"
-
-    @property
-    def can_cancel_or_reschedule(self):
-        appointment_datetime = datetime.combine(self.schedule.date, self.schedule.start_time)
-        appointment_datetime = timezone.make_aware(appointment_datetime)  # make it timezone-aware
-        return appointment_datetime - timezone.now() >= timedelta(hours=24)
 
 
 class Payment(BaseModel):
@@ -227,4 +228,13 @@ class Payment(BaseModel):
     appointment = models.OneToOneField(Appointment, on_delete=models.PROTECT, related_name='payment')
 
     def __str__(self):
-        return(f'Payment_id {self.pk} - {self.appointment} - {self.status}')
+        return (f'Payment_id {self.pk} - {self.appointment} - {self.status}')
+
+
+class PasswordResetOTP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + datetime.timedelta(minutes=10)

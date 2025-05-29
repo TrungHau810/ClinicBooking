@@ -1,0 +1,16 @@
+/* Đổi màu nền toàn bộ admin */
+body {
+    background-color: aqua;
+}
+
+/* Đổi màu tiêu đề */
+#header {
+    background-color: yellow;
+    color: white;
+}
+
+/* Đổi màu nút “Save” */
+input.default {
+    background-color: #28a745;
+    color: white;
+}

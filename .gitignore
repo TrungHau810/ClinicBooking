@@ -210,3 +210,4 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+firebase/*.json

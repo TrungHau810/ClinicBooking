@@ -1,12 +1,12 @@
-from cloudinary.provisioning import users
-import os
-from datetime import datetime
-import random
+from datetime import datetime, timedelta
+from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from rest_framework.decorators import action, permission_classes
 from rest_framework.exceptions import PermissionDenied, AuthenticationFailed, ValidationError
 from rest_framework.views import APIView
@@ -18,7 +18,8 @@ from clinic.models import (User, Doctor, Payment, Appointment, Review,
 from django.db.models import Q, Count, Sum
 from rest_framework.response import Response
 from clinic.permissions import IsDoctorOrSelf
-from clinic.serializers import AppointmentSerializer, PaymentSerializer, NotificationSerializer, UserSerializer
+from clinic.serializers import AppointmentSerializer, PaymentSerializer, NotificationSerializer, UserSerializer, \
+    OTPRequestSerializer, OTPConfirmResetSerializer
 
 
 class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -59,14 +60,31 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView
         return Response(serializers.UserSerializer(u).data)
 
 
+class PasswordResetSendOTPView(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        serializer = OTPRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            otp = serializer.create_otp(serializer.validated_data['email'])
+            return Response({"message": "Đã gửi mã OTP về email."}, status=200)
+        return Response(serializer.errors, status=400)
+
+
+class PasswordResetConfirmOTPView(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        serializer = OTPConfirmResetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Đã đặt lại mật khẩu thành công."}, status=200)
+        return Response(serializer.errors, status=400)
+
+
 class PatientViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = User.objects.filter(role='patient')
     serializer_class = serializers.UserSerializer
-
-
-# class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView):
-#     queryset = User.objects.filter(role='doctor')
-#     serializer_class = serializers.UserSerializer
 
 
 class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView,
@@ -149,12 +167,31 @@ class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = serializers.TestResultSerializer
 
 
+def is_more_than_24_hours_ahead(schedule_date, schedule_time):
+    """
+    Kiểm tra lịch có cách thời điểm hiện tại hơn 24 tiếng không
+    :param schedule_date: Ngày của lịch
+    :param schedule_time: Thời gian bắt đầu
+    :return: True/False
+    """
+    schedule_datetime = datetime.combine(schedule_date, schedule_time)
+    schedule_datetime = timezone.make_aware(schedule_datetime)  # đảm bảo có timezone
+    now = timezone.now()
+
+    return schedule_datetime - now >= timedelta(hours=24)
+
+
 class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
     queryset = Appointment.objects.filter().all()
     serializer_class = serializers.AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def send_appointment_successfull_email(self, appointment):
+        """
+        Gửi email xác nhận đặt lịch khám thành công
+        :param appointment: Lịch khám
+        :return:
+        """
         healthrecord = appointment.healthrecord
         schedule = appointment.schedule
         doctor = schedule.doctor
@@ -245,11 +282,16 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
     @action(detail=True, methods=["patch"], permission_classes=[permissions.IsAuthenticated])
     def cancel(self, request, pk=None):
         appointment = Appointment.objects.get(pk=pk)
+        schedule_date = appointment.schedule.date
+        schedule_time = appointment.schedule.start_time
         if not appointment:
             return Response({'detail': 'Không tìm thấy lịch khám!'}, status=status.HTTP_404_NOT_FOUND)
 
         if appointment.cancel:
             return Response({'detail': 'Lịch khám này đã bị huỷ'}, status=status.HTTP_400_BAD_REQUEST)
+        if not is_more_than_24_hours_ahead(schedule_date, schedule_time):
+            return Response({'erorr': 'Bạn chỉ được huỷ lịch trước 24 tiếng'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Huỷ lịch
         appointment.cancel = True
         appointment.save()
@@ -264,10 +306,17 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
     @action(detail=True, methods=["patch"], permission_classes=[permissions.IsAuthenticated])
     def reschedule(self, request, pk=None):
         appointment = Appointment.objects.get(pk=pk)
+        schedule_date = appointment.schedule.date
+        schedule_time = appointment.schedule.start_time
+
         if not appointment:
             return Response("Không tìm thấy lịch khám", status=status.HTTP_404_NOT_FOUND)
         if appointment.cancel:
             return Response("Lịch khám đã bị huỷ", status=status.HTTP_404_NOT_FOUND)
+
+        if not is_more_than_24_hours_ahead(schedule_date, schedule_time):
+            return Response({'erorr': 'Bạn chỉ được đổi lịch trước 24 tiếng'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Lấy id của lịch mới
         new_schedule_id = request.data.get('new_schedule_id')
         if not new_schedule_id:
@@ -349,24 +398,27 @@ class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
 
     def get_queryset(self):
         user = self.request.user
+        print(user)
         queryset = self.queryset
 
-        appointment_id = self.request.query_params.get('appointment')
-        if appointment_id:
-            return queryset.filter(test_result__appointment__patient=user) | queryset.filter(
-                test_result__appointment__doctor=user)
+        return queryset
 
-        sender_id = self.request.query_params.get('sender')
-        receiver_id = self.request.query_params.get('receiver')
-        if sender_id and receiver_id:
-            if str(user.id) != sender_id and str(user.id) != receiver_id:
-                raise PermissionDenied("Bạn không có quyền xem tin nhắn này.")
-            return queryset.filter(
-                Q(sender_id=sender_id, receiver_id=receiver_id) |
-                Q(sender_id=receiver_id, receiver_id=sender_id)
-            ).order_by('created_date')
-
-        return queryset.none()
+        # appointment_id = self.request.query_params.get('appointment')
+        # if appointment_id:
+        #     return queryset.filter(test_result__appointment__patient=user) | queryset.filter(
+        #         test_result__appointment__doctor=user)
+        #
+        # sender_id = self.request.query_params.get('sender')
+        # receiver_id = self.request.query_params.get('receiver')
+        # if sender_id and receiver_id:
+        #     if str(user.id) != sender_id and str(user.id) != receiver_id:
+        #         raise PermissionDenied("Bạn không có quyền xem tin nhắn này.")
+        #     return queryset.filter(
+        #         Q(sender_id=sender_id, receiver_id=receiver_id) |
+        #         Q(sender_id=receiver_id, receiver_id=sender_id)
+        #     ).order_by('created_date')
+        #
+        # return queryset.none()
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -441,7 +493,8 @@ class PaymentViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Thanh toán thành công.'}, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
-        serializers = serializers.PaymentSerializer
+        # serializers = serializers.PaymentSerializer
+        pass
 
 
 class DoctorReportView(APIView):

@@ -1,8 +1,12 @@
+import random
+
+from django.contrib.auth.tokens import default_token_generator
+from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from clinic.models import (User, Doctor, HealthRecord, Schedule,
                            Appointment, Review, Message,
-                           Payment, TestResult, Notification, Hospital, Specialization)
+                           Payment, TestResult, Notification, Hospital, Specialization, PasswordResetOTP)
 
 
 class HospitalSerializer(ModelSerializer):
@@ -52,6 +56,60 @@ class UserSerializer(ModelSerializer):
         return u
 
 
+class OTPRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email không tồn tại.")
+        return value
+
+    def create_otp(self, email):
+        user = User.objects.get(email=email)
+        otp = f"{random.randint(100000, 999999)}"  # 6 chữ số
+        PasswordResetOTP.objects.create(user=user, otp_code=otp)
+
+        from django.core.mail import send_mail
+        send_mail(
+            subject="Mã OTP đặt lại mật khẩu",
+            message=f"Mã OTP của bạn là: {otp}. Có hiệu lực trong 10 phút.",
+            from_email="noreply@yourdomain.com",
+            recipient_list=[email],
+        )
+        return otp
+
+
+class OTPConfirmResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        try:
+            user = User.objects.get(email=data['email'])
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Email không hợp lệ.")
+
+        try:
+            otp_obj = PasswordResetOTP.objects.filter(user=user, otp_code=data['otp']).latest('created_at')
+        except PasswordResetOTP.DoesNotExist:
+            raise serializers.ValidationError("OTP không đúng.")
+
+        if otp_obj.is_expired():
+            raise serializers.ValidationError("Mã OTP đã hết hạn.")
+
+        data['user'] = user
+        return data
+
+    def save(self):
+        user = self.validated_data['user']
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+
+        # Xoá OTP sau khi dùng
+        PasswordResetOTP.objects.filter(user=user).delete()
+
+
 class PatientSerializer(ModelSerializer):
     class Meta:
         model = User
@@ -65,13 +123,18 @@ class DoctorSerializer(ModelSerializer):
     doctor_id = serializers.IntegerField(source='user.id', read_only=True)
     doctor = serializers.CharField(source='user.full_name', read_only=True)
     avatar = serializers.CharField(source='user.avatar.url', read_only=True)
+    # Phí khám bệnh của bác sĩ
     consultation_fee = serializers.SerializerMethodField()
+    # Tổng số lượt đánh giá bác sĩ
+    total_reviews = serializers.SerializerMethodField()
+    # Số sao trung bình của bác sĩ
+    average_rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Doctor
-        fields = ['id','doctor_id', 'doctor', 'avatar', 'biography', 'license_number', 'license_image', 'active',
+        fields = ['id', 'doctor_id', 'doctor', 'avatar', 'biography', 'license_number', 'license_image', 'active',
                   'hospital_id', 'hospital_name',
-                  'specialization', 'specialization_name', 'consultation_fee']
+                  'specialization', 'specialization_name', 'consultation_fee', 'total_reviews', 'average_rating']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -84,6 +147,14 @@ class DoctorSerializer(ModelSerializer):
     def get_consultation_fee(self, obj):
         # Format tiền: ví dụ 200000 → "200,000 VNĐ"
         return "{:,.0f} VNĐ".format(obj.consultation_fee)
+
+    def get_total_reviews(self, obj):
+        return Review.objects.filter(doctor=obj.user).count()
+
+    def get_average_rating(self, obj):
+        avg_rating = Review.objects.filter(doctor=obj.user).aggregate(Avg('rating'))['rating__avg']
+        print(avg_rating)
+        return round(avg_rating, 1) if avg_rating else 0  # Trả về 0 nếu chưa có đánh giá
 
     def create(self, validated_data):
         request = self.context['request']
@@ -148,7 +219,8 @@ class ScheduleSerializer(ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
-    receiver = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    # receiver = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    receiver = UserSerializer(read_only=True)
 
     class Meta:
         model = Message
@@ -158,7 +230,7 @@ class MessageSerializer(serializers.ModelSerializer):
 class ReviewSerializer(ModelSerializer):
     class Meta:
         model = Review
-        fields = ['id', 'rating', 'comment', 'reply', 'doctor', 'patient']
+        fields = ['id', 'rating', 'comment', 'reply', 'doctor_id', 'patient_id']
 
 
 class PaymentSerializer(ModelSerializer):

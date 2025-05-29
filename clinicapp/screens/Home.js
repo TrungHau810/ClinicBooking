@@ -58,7 +58,7 @@ const Home = ({ navigation }) => {
   const [hospital, setHospital] = useState([]);
   const [specialization, setSpecialization] = useState([]);
 
-  const loadSpecialization=async()=>{
+  const loadSpecialization = async () => {
     let res = await Apis.get(endpoints['specializations']);
     setSpecialization(res.data);
   };
@@ -66,7 +66,6 @@ const Home = ({ navigation }) => {
   const loadingHospital = async () => {
     try {
       const res = await Apis.get(endpoints['hospitals']);
-      console.log("Hospitals fetched:", res.data);
       setHospital(res.data);
     } catch (err) {
       console.error("Failed to load hospitals:", err);
@@ -77,27 +76,27 @@ const Home = ({ navigation }) => {
     loadingHospital();
   }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
     loadSpecialization();
-  },[])
+  }, [])
 
   const renderHospitalItem = ({ item }) => {
-    console.log("Image URL:", item.logo); 
+    console.log("Image URL:", item.logo);
 
     return (
-    <TouchableOpacity
-      style={styles.hospitalItem}
-      onPress={() => navigation.navigate('hospitaldetails', { hospitalId: item.id })}
-    >
-      <Image source={{ uri: item.logo }} style={styles.hospitalImage} />
-      <View style={styles.hospitalInfo}>
-        <Text style={styles.hospitalName}>{item.name}</Text>
-        <Text style={styles.hospitalDesc}>{`Địa chỉ: ${item.address}`}</Text>
-        <Text style={styles.hospitalPhone}>{`Hotline: ${item.phone}`}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
+      <TouchableOpacity
+        style={styles.hospitalItem}
+        onPress={() => navigation.navigate('hospitaldetails', { hospitalId: item.id })}
+      >
+        <Image source={{ uri: item.logo }} style={styles.hospitalImage} />
+        <View style={styles.hospitalInfo}>
+          <Text style={styles.hospitalName}>{item.name}</Text>
+          <Text style={styles.hospitalDesc}>{`Địa chỉ: ${item.address}`}</Text>
+          <Text style={styles.hospitalPhone}>{`Hotline: ${item.phone}`}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -127,7 +126,16 @@ const Home = ({ navigation }) => {
       >
         Đặt lịch khám bệnh
       </Button>
-    </SafeAreaView>
+
+      <Button
+        mode="contained"
+        style={{ marginTop: 10 }}
+        onPress={() => navigation.navigate("Chat", { chatId: "testchat1", currentUserId: "user1" })}
+      >
+        Test Chat Real-time
+      </Button>
+
+    </SafeAreaView >
   );
 };
 

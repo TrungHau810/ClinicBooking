@@ -45,9 +45,9 @@ const PatientNavigator = () => {
             <Stack.Screen name="tabs" component={TabNavigator} options={{ headerShown: false }} />
             <Stack.Screen name="doctorList" component={DoctorList} options={{ headerShown: true, title: 'Danh sách bác sĩ' }} />
             <Stack.Screen name="hospitaldetails" component={HospitalDetail} options={{ headerShown: true, title: 'Chi tiết bệnh viện' }} />
-            <Stack.Screen name="createHealthRecord" component={CreateHealthRecord} options={{title: "Tạo hồ sơ sức khoẻ"}} />
-            <Stack.Screen name="Schedule" component={Schedule} options={{headerShown: true, title:'Đặt lịch khám'}} />
-            <Stack.Screen name="scheduleBooking" component={ScheduleBooking}/>
+            <Stack.Screen name="createHealthRecord" component={CreateHealthRecord} options={{ title: "Tạo hồ sơ sức khoẻ" }} />
+            <Stack.Screen name="Schedule" component={Schedule} options={{ headerShown: true, title: 'Đặt lịch khám' }} />
+            <Stack.Screen name="scheduleBooking" component={ScheduleBooking} />
         </Stack.Navigator>
     );
 

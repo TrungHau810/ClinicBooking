@@ -4,10 +4,9 @@ from django.db.models import Count, Sum
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.utils.timezone import now, localtime
-
 from clinic.models import (User, Doctor, HealthRecord, Schedule,
                            Appointment, Review, Message,
-                           Payment, TestResult, Notification, Hospital, Specialization)
+                           Payment, TestResult, Notification, Hospital, Specialization, PasswordResetOTP)
 from oauth2_provider.models import Application, AccessToken
 from django.utils.html import mark_safe
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
@@ -16,6 +15,11 @@ from django import forms
 
 class MyAppointmentAdmin(admin.ModelAdmin):
     list_display = ['id', 'healthrecord', 'schedule', 'disease_type', 'status', 'cancel']
+
+
+class AppointmentInline(admin.StackedInline):
+    model = Appointment
+    fk_name = 'schedule'
 
 
 class MyDoctorAdmin(admin.ModelAdmin):
@@ -100,6 +104,7 @@ class MyUserAdmin(admin.ModelAdmin):
 class MyScheduleAdmin(admin.ModelAdmin):
     list_display = ['id', 'doctor_id', 'doctor_name', 'date', 'start_time', 'end_time', 'capacity', 'sum_booking',
                     'active']
+    inlines = [AppointmentInline, ]
 
     # Lọc user có role là doctor
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -158,6 +163,10 @@ class MyAccessTokenAdmin(admin.ModelAdmin):
     list_display = ['id', 'token', 'user']
 
 
+class MyPasswordResetOTPAdmin(admin.ModelAdmin):
+    pass
+
+
 class ClinicAdminSite(admin.AdminSite):
     site_header = 'Hệ thống quản trị đặt lịch khám sức khoẻ trực tuyến'
     site_title = "Clinic Admin"
@@ -202,6 +211,6 @@ admin_site.register(Payment, MyPaymentAdmin)
 admin_site.register(Notification)
 admin_site.register(Hospital, MyHospitalAdmin)
 admin_site.register(Specialization, MySpecializationAdmin)
-
 admin_site.register(Application)
 admin_site.register(AccessToken, MyAccessTokenAdmin)
+admin_site.register(PasswordResetOTP, MyPasswordResetOTPAdmin)

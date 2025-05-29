@@ -2,6 +2,8 @@ from django.urls import path, include
 from . import views
 from rest_framework.routers import BaseRouter, DefaultRouter
 
+from .views import PasswordResetSendOTPView, PasswordResetConfirmOTPView
+
 # from .views import AdminReportViewSet, DoctorReportView
 
 # from .views import DoctorReportView, AdminReportView, NotificationView
@@ -25,6 +27,8 @@ router.register('payments', views.PaymentViewSet, basename='payment')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('api/password-reset/otp/', PasswordResetSendOTPView.as_view(), name='send_otp'),
+    path('api/password-reset/otp/confirm/', PasswordResetConfirmOTPView.as_view(), name='confirm_otp'),
     # path('reportsdoctor/', DoctorReportView.as_view(), name='doctorreport'),
     # path('reportsadmin/', AdminReportViewSet.as_view(), name='adminreport'),
 ]
