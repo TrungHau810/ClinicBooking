@@ -21,6 +21,7 @@ router.register('testresults', views.TestResultViewSet, basename='testresult')
 router.register('reviews', views.ReviewViewSet, basename='review')
 router.register('payments', views.PaymentViewSet, basename='payment')
 # # router.register('admin-report', views.AdminReportViewSet, basename='adminreport')
+router.register('notifications', views.NotificationViewSet, basename='notification')
 
 
 urlpatterns = [

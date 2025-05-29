@@ -129,6 +129,8 @@ class MyTestResultAdmin(admin.ModelAdmin):
 class MySpecializationAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'active']
 
+class MyNotificationAdmin(admin.ModelAdmin):
+    list_display = ['id', 'content', 'created_date', 'updated_date']
 
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ['id', 'patient_id', 'patient_name', 'doctor_id', 'doctor_name', 'rating', 'comment', 'reply',
@@ -199,7 +201,7 @@ admin_site.register(Message)
 admin_site.register(Appointment, MyAppointmentAdmin)
 admin_site.register(Review, ReviewAdmin)
 admin_site.register(Payment, MyPaymentAdmin)
-admin_site.register(Notification)
+admin_site.register(Notification, MyNotificationAdmin)
 admin_site.register(Hospital, MyHospitalAdmin)
 admin_site.register(Specialization, MySpecializationAdmin)
 
