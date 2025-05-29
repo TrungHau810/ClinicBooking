@@ -1,6 +1,6 @@
 from cloudinary.provisioning import users
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail, EmailMultiAlternatives
@@ -14,11 +14,12 @@ from clinic import serializers, paginators
 from rest_framework import viewsets, generics, status, parsers, permissions
 from clinic.models import (User, Doctor, Payment, Appointment, Review,
                            Schedule, Notification, HealthRecord, Message, TestResult,
-                           Hospital, Specialization)
+                           Hospital, Specialization, PasswordResetOTP)
 from django.db.models import Q, Count, Sum
 from rest_framework.response import Response
 from clinic.permissions import IsDoctorOrSelf
-from clinic.serializers import AppointmentSerializer, PaymentSerializer, NotificationSerializer, UserSerializer
+from clinic.serializers import AppointmentSerializer, PaymentSerializer, NotificationSerializer, UserSerializer, \
+    OTPRequestSerializer, OTPConfirmResetSerializer
 
 
 class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -57,6 +58,28 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView
                     setattr(u, k, v)
             u.save()
         return Response(serializers.UserSerializer(u).data)
+
+
+class PasswordResetSendOTPViewSet(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        serializer = OTPRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            otp = serializer.create_otp(serializer.validated_data['email'])
+            return Response({"message": "Đã gửi mã OTP về email."}, status=200)
+        return Response(serializer.errors, status=400)
+
+
+class PasswordResetConfirmOTPViewSet(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        serializer = OTPConfirmResetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Đã đặt lại mật khẩu thành công."}, status=200)
+        return Response(serializer.errors, status=400)
 
 
 class PatientViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -102,6 +125,8 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return HealthRecord.objects.none()  # Hoặc trả về queryset trống
         user = self.request.user
         return HealthRecord.objects.filter(user=user)
 
@@ -149,12 +174,31 @@ class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = serializers.TestResultSerializer
 
 
+def is_more_than_24_hours_ahead(schedule_date, schedule_time):
+    """
+    Kiểm tra lịch có cách thời điểm hiện tại hơn 24 tiếng không
+    :param schedule_date: Ngày của lịch
+    :param schedule_time: Thời gian bắt đầu
+    :return: True/False
+    """
+    schedule_datetime = datetime.combine(schedule_date, schedule_time)
+    schedule_datetime = timezone.make_aware(schedule_datetime)  # đảm bảo có timezone
+    now = timezone.now()
+
+    return schedule_datetime - now >= timedelta(hours=24)
+
+
 class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
     queryset = Appointment.objects.filter().all()
     serializer_class = serializers.AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def send_appointment_successfull_email(self, appointment):
+        """
+        Gửi email xác nhận đặt lịch khám thành công
+        :param appointment: Lịch khám
+        :return:
+        """
         healthrecord = appointment.healthrecord
         schedule = appointment.schedule
         doctor = schedule.doctor
@@ -233,6 +277,8 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Appointment.objects.none()  # Hoặc trả về queryset trống
         user = self.request.user
         # Lấy các lịch hẹn của user đăng nhập
         # user là bệnh nhân: Lấy lịch khám do user đó đặt
@@ -245,11 +291,15 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
     @action(detail=True, methods=["patch"], permission_classes=[permissions.IsAuthenticated])
     def cancel(self, request, pk=None):
         appointment = Appointment.objects.get(pk=pk)
+        schedule_date = appointment.schedule.date
+        schedule_time = appointment.schedule.start_time
         if not appointment:
             return Response({'detail': 'Không tìm thấy lịch khám!'}, status=status.HTTP_404_NOT_FOUND)
 
         if appointment.cancel:
             return Response({'detail': 'Lịch khám này đã bị huỷ'}, status=status.HTTP_400_BAD_REQUEST)
+        if not is_more_than_24_hours_ahead(schedule_date, schedule_time):
+            return Response({'erorr': 'Bạn chỉ được huỷ lịch trước 24 tiếng'}, status=status.HTTP_400_BAD_REQUEST)
         # Huỷ lịch
         appointment.cancel = True
         appointment.save()
@@ -264,10 +314,14 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
     @action(detail=True, methods=["patch"], permission_classes=[permissions.IsAuthenticated])
     def reschedule(self, request, pk=None):
         appointment = Appointment.objects.get(pk=pk)
+        schedule_date = appointment.schedule.date
+        schedule_time = appointment.schedule.start_time
         if not appointment:
             return Response("Không tìm thấy lịch khám", status=status.HTTP_404_NOT_FOUND)
         if appointment.cancel:
             return Response("Lịch khám đã bị huỷ", status=status.HTTP_404_NOT_FOUND)
+        if not is_more_than_24_hours_ahead(schedule_date, schedule_time):
+            return Response({'erorr': 'Bạn chỉ được đổi lịch trước 24 tiếng'}, status=status.HTTP_400_BAD_REQUEST)
         # Lấy id của lịch mới
         new_schedule_id = request.data.get('new_schedule_id')
         if not new_schedule_id:
@@ -324,8 +378,6 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
         queryset = self.queryset
         params = self.request.query_params
 
-        print(queryset)
-
         # Lọc theo bác sĩ (user_id)
         if (doctor_id := params.get('doctor_id')):
             queryset = queryset.filter(doctor_id=int(doctor_id))
@@ -338,7 +390,6 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
         if (active := params.get('active')) is not None:
             queryset = queryset.filter(active=active.lower() in ['true', '1'])
 
-        print(queryset)
         return queryset
 
 
@@ -441,7 +492,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Thanh toán thành công.'}, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
-        serializers = serializers.PaymentSerializer
+        pass
 
 
 class DoctorReportView(APIView):

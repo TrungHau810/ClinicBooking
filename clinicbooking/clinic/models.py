@@ -65,7 +65,8 @@ class Doctor(BaseModel):
     biography = models.CharField(max_length=255, null=True)
     hospital = models.ForeignKey(Hospital, on_delete=models.PROTECT)
     specialization = models.ForeignKey(Specialization, on_delete=models.PROTECT)
-    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=100000, help_text="Giá khám bệnh (VND)"
+    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=100000,
+                                           help_text="Giá khám bệnh (VND)"
                                            )
 
     def __str__(self):
@@ -168,7 +169,12 @@ class Schedule(BaseModel):
     sum_booking = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        # Tự động cập nhật trạng thái is_available
+        """
+        Cập nhật trạng thái active của schedule (Tức là lịch đó còn khả dụng/trống không)
+        :param args:
+        :param kwargs:
+        :return:
+        """
         self.active = self.sum_booking < self.capacity
         super().save(*args, **kwargs)
 
@@ -198,7 +204,7 @@ class Appointment(BaseModel):
 
     class Meta:
         ordering = ['-id']
-        unique_together= ('healthrecord', 'schedule')
+        unique_together = ('healthrecord', 'schedule')
 
     def __str__(self):
         return f"{self.healthrecord} - {self.schedule}"
@@ -227,4 +233,16 @@ class Payment(BaseModel):
     appointment = models.OneToOneField(Appointment, on_delete=models.PROTECT, related_name='payment')
 
     def __str__(self):
-        return(f'Payment_id {self.pk} - {self.appointment} - {self.status}')
+        return (f'Payment_id {self.pk} - {self.appointment} - {self.status}')
+
+
+class PasswordResetOTP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=10)
+
+    def __str__(self):
+        return(f"User: {self.user} - OTP Code:{self.otp_code}")
