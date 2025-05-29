@@ -126,7 +126,7 @@
 
 
 import { useContext, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { Alert, ScrollView, Text, View, StyleSheet, ImageBackground } from "react-native";
 import { Button, HelperText, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -196,8 +196,8 @@ const Login = ({ navigation }) => {
   return (
     <SafeAreaView style={MyStyles.container}>
       <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={MyStyles.title}>Đăng nhập hệ thống</Text>
-        <Text style={MyStyles.subtitle}>
+        <Text style={styles.title}>Đăng nhập hệ thống</Text>
+        <Text style={styles.subtitle}>
           Đặt lịch khám trực tuyến nhanh chóng và dễ dàng
         </Text>
 
@@ -213,7 +213,7 @@ const Login = ({ navigation }) => {
           onChangeText={(text) => handleInputChange("username", text)}
           mode="outlined"
           left={<TextInput.Icon icon="account" />}
-          style={MyStyles.input}
+          style={styles.input}
         />
 
         <TextInput
@@ -229,7 +229,7 @@ const Login = ({ navigation }) => {
               onPress={() => setShowPassword(!showPassword)}
             />
           }
-          style={MyStyles.input}
+          style={styles.input}
         />
 
         <Button
@@ -237,7 +237,7 @@ const Login = ({ navigation }) => {
           onPress={login}
           loading={loading}
           disabled={loading}
-          style={MyStyles.button}
+          style={styles.button}
         >
           Đăng nhập
         </Button>
@@ -248,9 +248,38 @@ const Login = ({ navigation }) => {
         >
           Chưa có tài khoản? Đăng ký
         </Button>
+        <Button
+          onPress={() => navigation.navigate("ResetPassword")}
+          labelStyle={{ color: "#6200ee" }}
+        >
+          Quên mật khẩu
+        </Button>
       </ScrollView>
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  title: {
+        fontSize: 25,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 10
+
+    },
+    subtitle: {
+        fontSize: 15,
+        textAlign: 'center',
+        marginBottom: 10
+
+    },
+    input: {
+        paddingLeft: 25,
+    },
+    button: {
+        marginTop: 10,
+        marginBottom: 0,
+    },
+});
 
 export default Login;
