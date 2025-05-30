@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { View, StyleSheet, FlatList, Platform, StatusBar } from "react-native";
+import { View, StyleSheet, FlatList, Platform, StatusBar, Image } from "react-native";
 import { Card, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MyDispatchContext, MyUserContext } from "../../configs/MyContexts";
@@ -36,12 +36,15 @@ const Notification = () => {
     const renderItem = ({ item }) => (
         <View style={styles.recordBox}>
             <Card style={styles.card}>
-                <Card.Content>
-                    <Text style={styles.type}>{item.type.toUpperCase()}</Text>
-                    <Text>{item.content}</Text>
-                    <Text style={styles.date}>
-                        Gửi lúc: {new Date(item.send_at).toLocaleString()}
-                    </Text>
+                <Card.Content style={styles.cardContent}>
+                    <Image source={require('../../assets/notification.jpg')} style={styles.image} />
+                    <View style={styles.textContainer}>
+                        <Text style={styles.type}>{item.type.toUpperCase()}</Text>
+                        <Text>{item.content}</Text>
+                        <Text style={styles.date}>
+                            Gửi lúc: {new Date(item.send_at).toLocaleString()}
+                        </Text>
+                    </View>
                 </Card.Content>
             </Card>
         </View>
@@ -76,6 +79,7 @@ const styles = StyleSheet.create({
     },
     card: {
         backgroundColor: "#f6f6f6",
+        borderRadius: 10,
     },
     type: {
         fontWeight: "bold",
@@ -108,5 +112,20 @@ const styles = StyleSheet.create({
         marginTop: 7,
         marginHorizontal: 10,
     },
+    image: {
+        width: 90,
+        height: 90,
+        borderRadius: 8,
+        marginBottom: 5,
+    },
+    cardContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    textContainer: {
+        marginLeft: 12,
+        flex: 1,
+        flexShrink: 1,
+  },
 });
 export default Notification;
