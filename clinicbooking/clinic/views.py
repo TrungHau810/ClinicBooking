@@ -8,6 +8,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from requests_toolbelt.multipart.encoder import total_len
 from rest_framework.decorators import action, permission_classes
 from rest_framework.exceptions import PermissionDenied, AuthenticationFailed, ValidationError
 from rest_framework.views import APIView
@@ -124,7 +125,11 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         if getattr(self, 'swagger_fake_view', False):
             return HealthRecord.objects.none()  # Hoặc trả về queryset trống
         user = self.request.user
-        return HealthRecord.objects.filter(user=user)
+        if user.role == 'patient':
+            return HealthRecord.objects.filter(user=user)
+        elif user.role == 'doctor':
+            return HealthRecord.objects.filter(appointment__schedule__doctor=self.request.user)
+        return HealthRecord.objects.none()
 
     # Cho phép bệnh nhân tự tạo hồ sơ sức khoẻ
     @action(methods=['post'], detail=False, url_path='me', permission_classes=[permissions.IsAuthenticated])
@@ -153,7 +158,6 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
     # Method: PATCH, URL: /healthrecords/{id}/
     def partial_update(self, request, pk=None):
         user = request.user
-        print(user)
         # Kiểm tra phân quyền. Chỉ có bác sĩ mới được quyền chỉnh sửa hồ sơ
         if user.role == 'admin':
             return Response({"detail": "Bạn không có quyền chỉnh sửa hồ sơ được quyền chỉnh sửa hồ sơ."},
@@ -163,6 +167,23 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             record = HealthRecord.objects.get(pk=pk)
         except HealthRecord.DoesNotExist:
             return Response({"detail": "Hồ sơ không tồn tại."}, status=status.HTTP_404_NOT_FOUND)
+
+        is_doctor_examined = Appointment.objects.filter(
+            healthrecord=record,
+            schedule__doctor=user,
+            status='completed'  # chỉ bác sĩ đã từng khám mới có quyền
+        ).exists()
+
+        # Nếu không phải chủ hồ sơ hoặc bác sĩ đặt khám
+        if not (user == record.user or is_doctor_examined):
+            return Response({'detail': "Bạn không có quyền chỉnh sửa hồ sơ"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = serializers.HealthRecordSerializer(record, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -493,12 +514,14 @@ class PaymentViewSet(viewsets.ModelViewSet):
         pass
 
 
-class DoctorReportView(APIView):
+class DoctorReportViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         user = request.user
+        print(user)
         doctor = getattr(user, 'doctor', None)
+        print(doctor)
         if not doctor:
             return Response({'detail': 'Không phải bác sĩ.'}, status=403)
 
@@ -506,7 +529,8 @@ class DoctorReportView(APIView):
         year = request.query_params.get('year')
         quarter = request.query_params.get('quarter')
 
-        queryset = Appointment.objects.filter(schedule__doctor=doctor, status='completed')
+        total_appointment = Appointment.objects.filter(schedule__doctor=doctor.user).count()
+        queryset = Appointment.objects.filter(schedule__doctor=doctor.user, status='completed')
 
         if month and year:
             queryset = queryset.filter(schedule__date__year=year, schedule__date__month=month)
@@ -516,12 +540,16 @@ class DoctorReportView(APIView):
             queryset = queryset.filter(schedule__date__year=year,
                                        schedule__date__month__range=(start_month, end_month))
 
-        patient_count = queryset.count()
+        examined = queryset.count()
         top_diseases = queryset.values('disease_type').annotate(count=Count('disease_type')).order_by('-count')[:5]
+        unexamined = Appointment.objects.filter(status='paid').count()
+        print(f'Đã khám: {examined}')
 
         return Response({
-            'patient_count': patient_count,
-            'top_diseases': top_diseases,
+            'total_appoitment': total_appointment,
+            'examined_count': examined,
+            'unexamined_count': unexamined,
+            'top_disease': top_diseases,
         })
 
 
@@ -532,25 +560,49 @@ class AdminReportViewSet(APIView):
         if not request.user.is_staff:
             return Response({'detail': 'Không phải quản trị viên.'}, status=403)
 
+        # Lấy params và ép kiểu
         month = request.query_params.get('month')
         year = request.query_params.get('year')
         quarter = request.query_params.get('quarter')
+
+        try:
+            month = int(month) if month else None
+            year = int(year) if year else None
+            quarter = int(quarter) if quarter else None
+        except ValueError:
+            return Response({'detail': 'Tham số month, year, quarter phải là số.'}, status=400)
+
+        if month and (month < 1 or month > 12):
+            return Response({'detail': 'Tháng không hợp lệ (1-12).'}, status=400)
+
+        if quarter and (quarter < 1 or quarter > 4):
+            return Response({'detail': 'Quý không hợp lệ (1-4).'}, status=400)
 
         appt_queryset = Appointment.objects.filter(status='completed')
         payment_queryset = Payment.objects.filter(status='paid')
 
         if month and year:
             appt_queryset = appt_queryset.filter(schedule__date__year=year, schedule__date__month=month)
-            payment_queryset = payment_queryset.filter(appointment__schedule__date__year=year,
-                                                       appointment__schedule__date__month=month)
+            payment_queryset = payment_queryset.filter(
+                appointment__schedule__date__year=year,
+                appointment__schedule__date__month=month
+            )
+
         elif quarter and year:
-            start_month = (int(quarter) - 1) * 3 + 1
+            start_month = (quarter - 1) * 3 + 1
             end_month = start_month + 2
-            appt_queryset = appt_queryset.filter(schedule__date__year=year,
-                                                 schedule__date__month__range=(start_month, end_month))
-            payment_queryset = payment_queryset.filter(appointment__schedule__date__year=year,
-                                                       appointment__schedule__date__month__range=(
-                                                           start_month, end_month))
+            appt_queryset = appt_queryset.filter(
+                schedule__date__year=year,
+                schedule__date__month__range=(start_month, end_month)
+            )
+            payment_queryset = payment_queryset.filter(
+                appointment__schedule__date__year=year,
+                appointment__schedule__date__month__range=(start_month, end_month)
+            )
+
+        elif year:
+            appt_queryset = appt_queryset.filter(schedule__date__year=year)
+            payment_queryset = payment_queryset.filter(appointment__schedule__date__year=year)
 
         return Response({
             'appointment_count': appt_queryset.count(),

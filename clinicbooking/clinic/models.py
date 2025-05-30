@@ -70,7 +70,7 @@ class Doctor(BaseModel):
                                            )
 
     def __str__(self):
-        return (f"{self.user.full_name} - {self.hospital.name} - {self.specialization.name}")
+        return (f"BS {self.user.full_name} - BV {self.hospital.name} - {self.specialization.name}")
 
 
 class HealthRecord(BaseModel):
@@ -103,11 +103,11 @@ class HealthRecord(BaseModel):
     day_of_birth = models.DateField()
     occupation = models.CharField(max_length=50, choices=OCCUPATION_CHOICES, null=False)
     address = models.CharField(max_length=255, null=False)
-    medical_history = models.TextField(null=True)
+    medical_history = RichTextField()
     user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='health_records')
 
     def __str__(self):
-        return (f'{self.full_name} - {self.user}')
+        return (f'BN. {self.full_name} - TK {self.user}')
 
 
 class Notification(BaseModel):
@@ -195,9 +195,21 @@ class Appointment(BaseModel):
         ('cancelled', 'Đã hủy'),
     ]
 
+    DISEASE_TYPE_CHOICES =[
+        ('HoHap','Đường hô hấp'),
+        ('TieuHoa','Đường tiêu hoá'),
+        ('TK_TT', 'Thần kinh - Tâm thần'),
+        ('Mat', 'Bệnh về Mắt'),
+        ('ChanThuong', 'Chấn thương - chỉnh hình'),
+        ('DaLieu', 'Da liễu'),
+        ('TaiMuiHong', 'Tai - Mũi - Họng'),
+        ('Khac', 'Khác'),
+
+    ]
+
     healthrecord = models.ForeignKey(HealthRecord, on_delete=models.PROTECT)
     schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE)
-    disease_type = models.CharField(max_length=255, null=False)
+    disease_type = models.TextField(max_length=20, choices=DISEASE_TYPE_CHOICES)
     symptoms = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unpaid')
     cancel = models.BooleanField(default=False)
