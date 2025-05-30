@@ -81,16 +81,16 @@ const Profile = ({ navigation }) => {
                 </View>
 
                 <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-                    <Button mode="contained-tonal">Đăng xuất</Button>
+                    <Button mode="contained-tonal" style={styles.button} labelStyle={{ color: "#fff", fontSize: 16 }}>Đăng xuất</Button>
                 </TouchableOpacity>
             </SafeAreaView>
         );
     } else {
         content = (
             <SafeAreaView>
-                <Text>Vui lòng đăng nhập để sử dụng</Text>
+                <Text style={styles.title}>Vui lòng đăng nhập để sử dụng</Text>
                 <TouchableOpacity onPress={() => navigation.navigate("login")}>
-                    <Button>Đăng nhập</Button>
+                    <Button mode="contained-tonal" style={styles.button} labelStyle={{ color: "#fff", fontSize: 16 }}>Đăng nhập</Button>
                 </TouchableOpacity>
             </SafeAreaView>
         );
@@ -136,15 +136,6 @@ const styles = StyleSheet.create({
     infoSection: {
         paddingHorizontal: 10,
     },
-    label: {
-        fontWeight: "600",
-        fontSize: 16,
-        marginTop: 10,
-    },
-    value: {
-        fontSize: 16,
-        color: "#333",
-    },
     logoutBtn: {
         marginTop: 30,
         alignItems: "center",
@@ -162,6 +153,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#333",
         flexShrink: 1, // tránh tràn dòng với email dài
+    },
+    title: {
+        fontSize: 24,
+        textAlign: 'center',
+        marginBottom: 25
+    },
+    button: {
+        backgroundColor: '#17A2F3',
     },
 });
 

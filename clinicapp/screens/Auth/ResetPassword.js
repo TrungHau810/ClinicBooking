@@ -1,17 +1,20 @@
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Alert } from "react-native"; // Thêm Alert ở đây
-import { Text, TextInput, Button, HelperText } from "react-native-paper";
+import { ScrollView, StyleSheet, Alert, View, KeyboardAvoidingView, Platform } from "react-native"; // Thêm Alert ở đây
+import { Text, TextInput, Button, HelperText, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Apis, { endpoints } from "../../configs/Apis";
 
 const ResetPassword = () => {
   const [otpLoading, setOtpLoading] = useState(false);
-const [resetLoading, setResetLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [otp, setOTP] = useState("");
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const { colors } = useTheme();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const validate = () => {
     if (newPassword !== confirm) {
@@ -67,69 +70,121 @@ const [resetLoading, setResetLoading] = useState(false);
   };
 
   return (
-    <SafeAreaView>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Khôi phục mật khẩu</Text>
-        <Text style={styles.subtitle}>Vui lòng nhập email và làm theo hướng dẫn</Text>
+    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right', 'bottom']}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={60} // Tuỳ theo thanh header có hay không
+      >
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.title}>Khôi phục mật khẩu</Text>
+          <Text style={styles.subtitle}>Vui lòng nhập email và làm theo hướng dẫn</Text>
 
-        {msg !== "" && (
-          <HelperText type="error" visible={true}>
-            {msg}
-          </HelperText>
-        )}
+          {msg !== "" && (
+            <HelperText type="error" visible={true}>
+              {msg}
+            </HelperText>
+          )}
 
-        <TextInput
-          label="Email"
-          mode="flat"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          left={<TextInput.Icon icon="email" />}
-        />
+          <TextInput
+            label="Email"
+            underlineColor="transparent"
+            mode="flat"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+            left={<TextInput.Icon icon="email" />}
+            theme={{
+              colors: {
+                primary: colors.accent, // màu khi focus
+                text: colors.text,       // màu chữ nhập
+                placeholder: "#333",     // màu label khi chưa focus
+              },
+            }}
+          />
 
-        <Button mode="contained" onPress={requestOTP}
-          loading={otpLoading} disabled={otpLoading}
-          style={[styles.button, { marginBottom: 20 }]}>
-          Gửi mã OTP
-        </Button>
+          <Button mode="contained" onPress={requestOTP}
+            loading={otpLoading} disabled={otpLoading}
+            style={[styles.button, { marginBottom: 20 }]}>
+            Gửi mã OTP
+          </Button>
 
-        <TextInput
-          label="Mã OTP"
-          mode="flat"
-          value={otp}
-          onChangeText={setOTP}
-          style={styles.input}
-          left={<TextInput.Icon icon="numeric" />}
-        />
+          <TextInput
+            label="Mã OTP"
+            underlineColor="transparent"
+            mode="flat"
+            value={otp}
+            onChangeText={setOTP}
+            style={styles.input}
+            left={<TextInput.Icon icon="numeric" />}
+            theme={{
+              colors: {
+                primary: colors.accent, // màu khi focus
+                text: colors.text,       // màu chữ nhập
+                placeholder: "#333",     // màu label khi chưa focus
+              },
+            }}
+          />
 
-        <TextInput
-          label="Mật khẩu mới"
-          mode="flat"
-          secureTextEntry
-          value={newPassword}
-          onChangeText={setNewPassword}
-          style={styles.input}
-          right={<TextInput.Icon icon="eye" />}
-          left={<TextInput.Icon icon="lock-reset" />}
-        />
+          <TextInput
+            label="Mật khẩu mới"
+            underlineColor="transparent"
+            mode="flat"
+            value={newPassword}
+            onChangeText={setNewPassword}
+            style={styles.input}
+            secureTextEntry={!showPassword}
+            left={<TextInput.Icon icon="lock" />}
+            right={
+              <TextInput.Icon
+                icon={showPassword ? "eye-off" : "eye"}
+                onPress={() => setShowPassword(!showPassword)}
+              />
+            }
+            theme={{
+              colors: {
+                primary: colors.accent, // màu khi focus
+                text: colors.text,       // màu chữ nhập
+                placeholder: "#333",     // màu label khi chưa focus
+              },
+            }}
+          />
 
-        <TextInput
-          label="Xác nhận lại mật khẩu"
-          mode="flat"
-          secureTextEntry
-          value={confirm}
-          onChangeText={setConfirm}
-          style={styles.input}
-          right={<TextInput.Icon icon="eye" />}
-          left={<TextInput.Icon icon="lock-reset" />}
-        />
+          <TextInput
+            label="Xác nhận lại mật khẩu"
+            underlineColor="transparent"
+            mode="flat"
+            secureTextEntry={!showConfirmPassword} 
+            value={confirm}
+            onChangeText={setConfirm}
+            style={styles.input}
+            left={<TextInput.Icon icon="lock-reset" />}
+            right={
+              <TextInput.Icon
+                icon={showConfirmPassword ? "eye-off" : "eye"}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              />
+            }
+            theme={{
+              colors: {
+                primary: colors.accent,
+                text: colors.text,
+                placeholder: "#333",
+              },
+            }}
+          />
 
-        <Button mode="contained"
-          loading={resetLoading} disabled={resetLoading}
-          onPress={resetPassword} style={styles.button}>
-          Đặt lại mật khẩu
-        </Button>
-      </ScrollView>
+          <Button mode="contained"
+            loading={resetLoading} disabled={resetLoading}
+            onPress={resetPassword} style={styles.button}>
+            Đặt lại mật khẩu
+          </Button>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -137,16 +192,15 @@ const [resetLoading, setResetLoading] = useState(false);
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    justifyContent: "center",
-    flexGrow: 1,
+    flexGrow: 1, // quan trọng để ScrollView tự co giãn với nội dung
     backgroundColor: "#f5f6fa",
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 10,
     color: "#2f3640",
+    marginTop: 10,
   },
   subtitle: {
     fontSize: 14,
@@ -155,10 +209,15 @@ const styles = StyleSheet.create({
     color: "#636e72",
   },
   input: {
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 5,
   },
   button: {
     paddingVertical: 5,
+    backgroundColor: '#17A2F3',
   },
 });
 

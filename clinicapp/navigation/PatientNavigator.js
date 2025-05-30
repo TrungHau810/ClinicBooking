@@ -5,7 +5,7 @@ import Notification from "../screens/Patient/Notification";
 import HealthRecordList from "../screens/Patient/HealthRecordList";
 import Appointment from "../screens/Patient/Appointment";
 import HospitalDetail from "../screens/Patient/HospitalDetail";
-import Profile from "../screens/Patient/Profile";
+import Profile from "../screens/Common/Profile";
 import Home from "../screens/Home";
 import Schedule from "../screens/Patient/Schedule";
 import ScheduleBooking from "../screens/Patient/ScheduleBooking";
@@ -30,13 +30,13 @@ const Stack = createNativeStackNavigator();
 
 const Tab = createBottomTabNavigator();
 const TabNavigator = () => {
-    const { count } = useNotification();
-    return (
-        <Tab.Navigator>
-            <Tab.Screen name="home" component={Home} options={{ title: "Trang chủ", headerShown: false, tabBarIcon: () => <Icon size={30} source="home" /> }} />
-            <Tab.Screen name="healthrecordList" component={HealthRecordList} options={{ title: "Hồ sơ", headerShown: false, tabBarIcon: () => <Icon size={30} source="clipboard-plus" /> }} />
-            <Tab.Screen name="appointment" component={Appointment} options={{ title: "Lịch khám", headerShown: false, tabBarIcon: () => <Icon size={30} source="clipboard-text-outline" /> }} />
-            <Tab.Screen name="notification" component={Notification}
+  const { count } = useNotification();
+  return (
+    <Tab.Navigator>
+      <Tab.Screen name="home" component={Home} options={{ title: "Trang chủ", headerShown: false, tabBarIcon: () => <Icon size={30} source="home" /> }} />
+      <Tab.Screen name="healthrecordList" component={HealthRecordList} options={{ title: "Hồ sơ", headerShown: false, tabBarIcon: () => <Icon size={30} source="clipboard-plus" /> }} />
+      <Tab.Screen name="appointment" component={Appointment} options={{ title: "Lịch khám", headerShown: false, tabBarIcon: () => <Icon size={30} source="clipboard-text-outline" /> }} />
+      <Tab.Screen name="notification" component={Notification}
         options={{
           title: "Thông báo",
           headerShown: false,
@@ -50,22 +50,22 @@ const TabNavigator = () => {
           )
         }}
       />
-            <Tab.Screen name="profile" component={Profile} options={{ title: "Tài khoản", headerShown: false, tabBarIcon: () => <Icon size={30} source="account" /> }} />
-        </Tab.Navigator>
-    );
+      <Tab.Screen name="profile" component={Profile} options={{ title: "Tài khoản", headerShown: false, tabBarIcon: () => <Icon size={30} source="account" /> }} />
+    </Tab.Navigator>
+  );
 }
 
 const PatientNavigator = () => {
-    return (
-        <Stack.Navigator>
-            <Stack.Screen name="tabs" component={TabNavigator} options={{ headerShown: false }} />
-            <Stack.Screen name="doctorList" component={DoctorList} options={{ headerShown: true, title: 'Danh sách bác sĩ' }} />
-            <Stack.Screen name="hospitaldetails" component={HospitalDetail} options={{ headerShown: true, title: 'Chi tiết bệnh viện' }} />
-            <Stack.Screen name="createHealthRecord" component={CreateHealthRecord} options={{title: "Tạo hồ sơ sức khoẻ"}} />
-            <Stack.Screen name="Schedule" component={Schedule} options={{headerShown: true, title:'Đặt lịch khám'}} />
-            <Stack.Screen name="scheduleBooking" component={ScheduleBooking}/>
-        </Stack.Navigator>
-    );
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="tabs" component={TabNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="doctorList" component={DoctorList} options={{ headerShown: true, title: 'Danh sách bác sĩ' }} />
+      <Stack.Screen name="hospitaldetails" component={HospitalDetail} options={{ headerShown: true, title: 'Chi tiết bệnh viện' }} />
+      <Stack.Screen name="createHealthRecord" component={CreateHealthRecord} options={{ title: "Tạo hồ sơ sức khoẻ" }} />
+      <Stack.Screen name="Schedule" component={Schedule} options={{ headerShown: true, title: 'Đặt lịch khám' }} />
+      <Stack.Screen name="scheduleBooking" component={ScheduleBooking} />
+    </Stack.Navigator>
+  );
 
 }
 

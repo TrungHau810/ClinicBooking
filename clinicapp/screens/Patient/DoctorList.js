@@ -63,11 +63,11 @@
 // export default DoctorBooking;
 
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { FlatList, Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Apis, { endpoints } from "../../configs/Apis";
-import { Button, Card, Searchbar } from "react-native-paper";
+import { Button, Card, Searchbar, List } from "react-native-paper";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "@react-navigation/native";
 
@@ -79,6 +79,9 @@ const DoctorList = () => {
   const [specializations, setSpecializations] = useState([]);
   const [name, setName] = useState("");
   const [selectedSpecialization, setSelectedSpecialization] = useState(null);
+  const [expandedHospital, setExpandedHospital] = useState(false);
+  const [expandedSpecialization, setExpandedSpecialization] = useState(false);
+
 
 
   const loadHospital = async () => {
@@ -132,9 +135,9 @@ const DoctorList = () => {
     return () => clearTimeout(timer); // Xoá timer cũ nếu người dùng gõ tiếp
   }, [selectedHospital, selectedSpecialization, name]);
 
-  const renderDoctor = (dr) => {
+  const renderDoctor = useCallback((dr) => {
     return (
-      <Card style={styles.card} key={dr.id}>
+      <Card style={styles.cards} key={dr.id}>
         <Card.Title titleStyle={{ fontWeight: 'bold' }} title={`Bác sĩ ${dr.doctor}`} />
         <Card.Content style={styles.cardContent}>
           <Image
@@ -151,43 +154,72 @@ const DoctorList = () => {
         </Card.Actions>
       </Card>
     );
-  };
+  }, [navigation]);
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Danh sách bác sĩ</Text>
-
-      <View style={styles.filterContainer}>
-        <Text style={styles.filterLabel}>Lọc theo cơ sở y tế:</Text>
-        <Picker
-          selectedValue={selectedHospital}
-          onValueChange={(value) => setSelectedHospital(value)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Tất cả cơ sở y tế" value={null} />
-          {hospital.map((h) => (
-            <Picker.Item key={h.id} label={h.name} value={h.id} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.filterContainer}>
-        <Text style={styles.filterLabel}>Lọc theo chuyên khoa:</Text>
-        <Picker
-          selectedValue={selectedSpecialization}
-          onValueChange={(value) => setSelectedSpecialization(value)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Tất cả chuyên khoa" value={null} />
-          {specializations.map((s) => (
-            <Picker.Item key={s.id} label={s.name} value={s.id} />
-          ))}
-        </Picker>
-      </View>
-
-      <Searchbar style={{ marginBottom: 10 }}
+      <List.Section>
+        <View style={styles.filterContainer}>
+          <Text style={styles.filterLabel}>Lọc theo cơ sở y tế:</Text>
+          <List.Accordion
+            title={selectedHospital ? hospital.find(h => h.id === selectedHospital)?.name : "Tất cả cơ sở y tế"}
+            left={props => <List.Icon {...props} icon="hospital-building" />}
+            expanded={expandedHospital}
+            onPress={() => setExpandedHospital(!expandedHospital)}
+            style={styles.accordion}
+          >
+            <List.Item
+              title="Tất cả cơ sở y tế"
+              onPress={() => {
+                setSelectedHospital(null);
+                setExpandedHospital(false);
+              }}
+            />
+            {hospital.map(h => (
+              <List.Item
+                key={h.id}
+                title={h.name}
+                onPress={() => {
+                  setSelectedHospital(h.id);
+                  setExpandedHospital(false);
+                }}
+              />
+            ))}
+          </List.Accordion>
+        </View>
+        <View style={styles.filterContainer}>
+          <Text style={styles.filterLabel}>Lọc theo chuyên khoa:</Text>
+          <List.Accordion
+            title={selectedSpecialization ? specializations.find(s => s.id === selectedSpecialization)?.name : "Tất cả chuyên khoa"}
+            left={props => <List.Icon {...props} icon="stethoscope" />}
+            expanded={expandedSpecialization}
+            onPress={() => setExpandedSpecialization(!expandedSpecialization)}
+            style={styles.accordion}
+          >
+            <List.Item
+              title="Tất cả chuyên khoa"
+              onPress={() => {
+                setSelectedSpecialization(null);
+                setExpandedSpecialization(false);
+              }}
+            />
+            {specializations.map(s => (
+              <List.Item
+                key={s.id}
+                title={s.name}
+                onPress={() => {
+                  setSelectedSpecialization(s.id);
+                  setExpandedSpecialization(false);
+                }}
+              />
+            ))}
+          </List.Accordion>
+        </View>
+      </List.Section>
+      <Searchbar style={styles.search}
         placeholder="Nhập tên bác sĩ cần tìm..."
         onChangeText={(value) => setName(value)}
-
       />
 
       <FlatList
@@ -209,7 +241,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "bold",
-    marginTop: 15,
     marginBottom: 15,
     textAlign: "center",
   },
@@ -224,7 +255,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f2f2f2",
     borderRadius: 8,
   },
-  card: {
+  cards: {
     marginBottom: 16,
   },
   cardContent: {
@@ -243,6 +274,15 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingBottom: 20,
+  },
+  search: {
+    marginBottom: 10,
+    backgroundColor: "#17A2F3",
+  },
+  accordion: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+    paddingHorizontal: 5,
   },
 });
 
