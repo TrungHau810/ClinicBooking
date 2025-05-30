@@ -11,6 +11,8 @@ export const endpoints = {
     // 'doctorinfos': '/doctorinfos/',
     'login': '/o/token/',
     'register': '/users/',
+    'reset-password-otp': "/api/password-reset/otp/",
+    'reset-password-confirm': "/api/password-reset/otp/confirm/",
     'current-user': '/users/current-user/',
     'appointments': "/appointments/",
     'healthrecords':'/healthrecords/me/',

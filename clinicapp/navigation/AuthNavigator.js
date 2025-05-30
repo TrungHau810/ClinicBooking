@@ -15,7 +15,7 @@ const StackNavigator = () => {
             <Stack.Screen name="register" component={Register} options={{ title: "Đăng ký tài khoản" }} />
             <Stack.Screen name="Patient" component={PatientNavigator} options={{ headerShown: false }} />
             <Stack.Screen name="Doctor" component={DoctorNavigator} options={{ headerShown: false }} />
-            <Stack.Screen name="ResetPassword" component={ResetPassword} options={{ headerShown: false }} />
+            <Stack.Screen name="ResetPassword" component={ResetPassword} options={{ title: "Đặt lại mật khẩu", headerShown: true }} />
         </Stack.Navigator>
     );
 };
