@@ -2,6 +2,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AppointmentDoctor from "../screens/Doctor/AppointmentDoctor";
 import PatientHealthRecords from "../screens/Doctor/PatientHealthRecords";
+import Profile from "../screens/Common/Profile";
 import { Icon } from "react-native-paper";
 
 
@@ -23,6 +24,7 @@ const TabNavigator = () => {
         <Tab.Navigator>
             <Tab.Screen name="appointment" component={AppointmentDoctor} options={{ title: "Lịch hẹn", tabBarIcon: () => <Icon size={30} source="calendar-account" /> }} />
             <Tab.Screen name="healthrecord" component={PatientHealthRecords} options={{ title: "Hồ sơ sức khoẻ", tabBarIcon: () => <Icon size={30} source="clipboard-text-outline" /> }} />
+            <Tab.Screen name="profile" component={Profile} options={{ title: "Tài khoản", headerShown: false, tabBarIcon: () => <Icon size={30} source="account" /> }} />
         </Tab.Navigator>
     );
 }

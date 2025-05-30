@@ -49,11 +49,12 @@
 
 
 import { useEffect, useState } from "react";
-import { FlatList, Image, TouchableOpacity, View, StyleSheet, Dimensions, ScrollView } from "react-native";
+import { FlatList, Image, TouchableOpacity, View, StyleSheet, Dimensions, ScrollView, StatusBar } from "react-native";
 import { Button, Card, List, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Apis, { endpoints } from "../configs/Apis";
 import Carousel from 'react-native-reanimated-carousel';
+import MyStyles from "../styles/MyStyles";
 
 const Home = ({ navigation }) => {
   const [hospital, setHospital] = useState([]);
@@ -130,8 +131,13 @@ const Home = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
-        <Text style={styles.header}>Chào mừng đến TH Care</Text>
+      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+        <StatusBar barStyle="light-content" backgroundColor="#1E90FF" />
+        <View style={styles.headerContainer}>
+          <Text style={{ fontSize: 22, color: '#fff', fontWeight: 'bold', textAlign: 'center' }}>
+            Chào mừng đến TH Care
+          </Text>
+        </View>
         <View>
           <ImageSlider />
         </View>
@@ -248,6 +254,12 @@ const styles = StyleSheet.create({
   },
   p: {
     paddingHorizontal: 16,
+  },
+  headerContainer: {
+    width: '100%',
+    backgroundColor: '#1E90FF', 
+    paddingVertical: 20,
+    //paddingHorizontal: 16,
   },
 });
 
