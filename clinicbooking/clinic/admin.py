@@ -15,7 +15,11 @@ from django import forms
 
 
 class MyAppointmentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'healthrecord', 'schedule', 'disease_type', 'status', 'cancel']
+    list_display = ['id', 'healthrecord', 'schedule', 'disease_type', 'amount', 'status', 'cancel']
+
+    def amount(self, appointment):
+        amount = appointment.schedule.doctor.doctor.consultation_fee
+        return f"{amount:,.0f} ₫"
 
 
 class AppointmentInline(admin.StackedInline):
@@ -49,11 +53,17 @@ class MyDoctorAdmin(admin.ModelAdmin):
     # avatar_view.short_description = "Ảnh đại diện"
 
 
+class TestResultInline(admin.StackedInline):
+    model = TestResult
+    fk_name = 'health_record'
+
+
 class MyHealthRecordAdmin(admin.ModelAdmin):
     list_display = ['id', 'full_name', 'gender', 'day_of_birth', 'address', 'BHYT', 'CCCD', 'email', 'user',
                     'medical_history',
                     'created_date', 'active']
     search_fields = ['id', 'full_name', 'CCCD']
+    inlines = [TestResultInline, ]
 
     # Lọc user có role là patient (BN)
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -118,18 +128,29 @@ class MyScheduleAdmin(admin.ModelAdmin):
 
 
 class MyPaymentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'appointment_id', 'appointment', 'formatted_amount', 'method', 'status', 'created_date',
+    list_display = ['id', 'appointment_id', 'schedule', 'health_record', 'amount', 'method', 'status', 'created_date',
                     'updated_date']
 
-    def formatted_amount(self, obj):
+    def amount(self, obj):
         return f"{obj.amount:,.0f} ₫"
 
-    def appointment(self, appointment):
-        return appointment.appointment
+    def health_record(self, appointment):
+        return appointment.appointment.healthrecord
+
+    def schedule(self, appointment):
+        return appointment.appointment.schedule
 
 
 class MyTestResultAdmin(admin.ModelAdmin):
-    list_display = ['id', 'test_name', 'created_date', 'updated_date']
+    list_display = ['id', 'test_name', 'created_date', 'updated_date', 'health_record']
+    readonly_fields = ['image_view']
+
+    def image_view(self, test_result):
+        if test_result.image:
+            return mark_safe(f"<img src='{test_result.image.url}' width=200 />")
+        return "Không có ảnh đại diện"
+
+    image_view.short_description = "Ảnh đại diện"
 
 
 class MySpecializationAdmin(admin.ModelAdmin):
