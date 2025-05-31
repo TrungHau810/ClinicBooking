@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MyDispatchContext, MyUserContext } from "../../configs/MyContexts";
 import Apis, { endpoints } from "../../configs/Apis";
 import { useNotification } from "../../configs/NotificationContext";
+import RenderHTML from "react-native-render-html";
 
 const Notification = () => {
     const [notifications, setNotifications] = useState([]);
@@ -39,8 +40,8 @@ const Notification = () => {
                 <Card.Content style={styles.cardContent}>
                     <Image source={require('../../assets/notification.jpg')} style={styles.image} />
                     <View style={styles.textContainer}>
-                        <Text style={styles.type}>{item.type.toUpperCase()}</Text>
-                        <Text>{item.content}</Text>
+                        <Text style={styles.type}>{item.title.toUpperCase()}</Text>
+                        <RenderHTML source={{ html: item.content }} />
                         <Text style={styles.date}>
                             Gửi lúc: {new Date(item.send_at).toLocaleString()}
                         </Text>
@@ -126,6 +127,6 @@ const styles = StyleSheet.create({
         marginLeft: 12,
         flex: 1,
         flexShrink: 1,
-  },
+    },
 });
 export default Notification;

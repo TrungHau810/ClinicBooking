@@ -42,7 +42,7 @@ const Schedule = () => {
                 Trạng thái: {item.active ? 'Hết chỗ' : 'Còn chỗ'}
             </Text>
             <Card.Actions>
-                <Button mode="contained" disabled={item.active} onPress={() => navigation.navigate("scheduleBooking", { doctor, schedule: item })}>Chọn</Button>
+                <Button mode="contained" disabled={item.active} onPress={() => navigation.navigate("ScheduleBooking", { doctor, schedule: item })}>Chọn</Button>
             </Card.Actions>
         </View>
     );

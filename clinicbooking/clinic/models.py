@@ -112,19 +112,15 @@ class HealthRecord(BaseModel):
 
 class Notification(BaseModel):
     class NotifyType(models.TextChoices):
-        NHAC_NHO = 'nhac_nho', 'Nhắc nhở'
         UU_DAI = 'uu_dai', 'Ưu đãi'
-        HE_THONG = 'he_thong', 'Hệ thống'
+        KHAM_SK = 'kham_sk', 'Khám sức khoẻ định kỳ'
 
-    class NotifyForm(models.TextChoices):
-        EMAIL = 'email', 'Email'
-        PUSH = 'push', 'Push Notification'
-
-    content = models.CharField(max_length=255, null=False)
+    title = models.CharField(max_length=255, blank=False, null=False)
+    content = RichTextField()
+    type = models.CharField(max_length=20, choices=NotifyType, default=NotifyType.UU_DAI)
     send_at = models.DateTimeField(null=False)
-    type = models.CharField(max_length=20, choices=NotifyType, default=NotifyType.NHAC_NHO)
-    form = models.CharField(max_length=20, choices=NotifyForm, default=NotifyForm.EMAIL)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_read = models.BooleanField(default=False)
+    users = models.ManyToManyField('User')
 
 
 class TestResult(BaseModel):

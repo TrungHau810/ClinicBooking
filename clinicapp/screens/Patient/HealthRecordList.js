@@ -1,25 +1,23 @@
-
-import React, { useEffect, useState } from "react";
-import { View, FlatList, StyleSheet, Text, TouchableOpacity, StatusBar, Platform } from "react-native";
-import { Button, Card } from "react-native-paper";
+import React, { useContext, useEffect, useState } from "react";
+import { View, FlatList, StyleSheet, Text, TouchableOpacity, StatusBar, Platform, RefreshControl, } from "react-native";
+import { FAB } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { endpoints } from "../../configs/Apis";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import MyStyles from "../../styles/MyStyles";
 import HealthRecordCard from "../../components/HealthRecordCard";
+import { MyUserContext } from "../../configs/MyContexts";
 
 const HealthRecordList = ({ navigation }) => {
   const [records, setRecords] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const user = useContext(MyUserContext);
 
   const loadRecords = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
       const res = await Apis.get(endpoints["healthrecords"], {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setRecords(res.data);
     } catch (error) {
@@ -29,7 +27,7 @@ const HealthRecordList = ({ navigation }) => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadRecords();  // gọi lại hàm load
+    await loadRecords();
     setRefreshing(false);
   };
 
@@ -37,106 +35,89 @@ const HealthRecordList = ({ navigation }) => {
     loadRecords();
   }, []);
 
-  const getOccupationLabel = (key) => {
-    const occupations = {
-      doctor: 'Bác sĩ',
-      nurse: 'Y tá',
-      teacher: 'Giáo viên',
-      engineer: 'Kỹ sư',
-      student: 'Học sinh/Sinh viên',
-      worker: 'Công nhân',
-      freelancer: 'Làm tự do',
-      office_staff: 'Nhân viên văn phòng',
-      business: 'Kinh doanh',
-      driver: 'Tài xế',
-      farmer: 'Nông dân',
-      police: 'Công an',
-      other: 'Khác'
-    };
-
-    return occupations[key] || 'Không rõ';
-  };
-
   const renderItem = ({ item }) => <HealthRecordCard record={item} />;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerWrapper}>
-        <StatusBar barStyle="light-content" backgroundColor="#1E90FF" />
-        <View style={MyStyles.headerContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate("createHealthRecord")} style={MyStyles.rightIcon}>
-            <MaterialCommunityIcons name="account-plus" size={25} color="#fff" />
-            <Text style={styles.createText}>Tạo mới</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.title}>Danh sách hồ sơ</Text>
-        </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#1E90FF" />
+      <View style={styles.header}>
+        <Text style={styles.title}>📋 Hồ sơ sức khỏe</Text>
       </View>
-      <FlatList
-        data={records}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
-      />
-    </View>
+
+      {user?.type !== "logout" ? (
+        <FlatList
+          data={records}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={
+            records.length === 0 ? styles.emptyListContainer : null
+          }
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>Không có hồ sơ nào</Text>
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        />
+      ) : (
+        <View style={styles.notLoggedIn}>
+          <Text style={styles.emptyText}>⚠️ Vui lòng đăng nhập để xem hồ sơ</Text>
+        </View>
+      )}
+
+      {user?.type !== "logout" && (
+        <FAB
+          icon="plus"
+          label="Tạo hồ sơ"
+          style={styles.fab}
+          onPress={() => navigation.navigate("CreateHealthRecord")}
+        />
+      )}
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    // padding: 1,
-    backgroundColor: "#fff",
     flex: 1,
+    backgroundColor: "#f8f9fa",
+  },
+  header: {
+    backgroundColor: "#1E90FF",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 10 : 44,
+    paddingBottom: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
   },
   title: {
+    color: "#fff",
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 10,
+  },
+  emptyListContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#888",
     textAlign: "center",
-    color: "#fff",
   },
-  card: {
-    marginBottom: 1,
-    borderRadius: 6,
-    elevation: 2,
-    backgroundColor: '#fff',
+  fab: {
+    position: "absolute",
+    margin: 16,
+    right: 16,
+    bottom: 16,
+    backgroundColor: "#1E90FF",
   },
-  name: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#17A2F3',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  infoText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#333',
-  },
-  recordBox: {
-    borderWidth: 1,
-    borderColor: '#000', // viền đen
-    borderRadius: 6,     // bo góc nhẹ
-    // padding: 1,
-    // margin: 10,
-    backgroundColor: '#fff',
-    marginBottom: 2,
-    marginTop: 8,
-    marginHorizontal: 10
-  },
-  headerWrapper: {
-    backgroundColor: '#1E90FF', // xanh dương
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 44, // tránh đè status bar (44 cho iPhone notch)
-    paddingBottom: 10,
-    width: '100%',
-  },
-  createText: {
-    color: '#fff',
+  notLoggedIn: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

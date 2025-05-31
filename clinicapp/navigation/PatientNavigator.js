@@ -1,70 +1,81 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Badge, Icon } from "react-native-paper";
+import { useNotification } from "../configs/NotificationContext";
+import { View, StyleSheet } from "react-native";
+
+// Screens
 import Notification from "../screens/Patient/Notification";
 import HealthRecordList from "../screens/Patient/HealthRecordList";
 import Appointment from "../screens/Patient/Appointment";
 import HospitalDetail from "../screens/Patient/HospitalDetail";
-import Profile from "../screens/Common/Profile";
 import Home from "../screens/Home";
 import Schedule from "../screens/Patient/Schedule";
 import ScheduleBooking from "../screens/Patient/ScheduleBooking";
 import CreateHealthRecord from "../screens/Patient/CreateHealthRecord";
 import DoctorList from "../screens/Patient/DoctorList";
-import { useNotification } from "../configs/NotificationContext";
-import { View, StyleSheet } from "react-native";
+import ProfileStack from "./ProfileStack";
 
 const Stack = createNativeStackNavigator();
-// const StackNavigator = () => {
-//     return (
-//         <Stack.Navigator>
-//             <Stack.Screen name="home" component={Home} options={{ title: "Trang chủ", headerShown: false }} />
-//             <Stack.Screen name="healtrecord" component={HealthRecord} options={{ title: "Hồ sơ sức khoẻ", headerShown: true }} />
-//             <Stack.Screen name="appointment" component={Appointment} options={{ title: "Lịch khám", headerShown: true }} />
-//             <Stack.Screen name="profile" component={Profile} options={{ title: "Tài khoản", headerShown: true }} />
-//             <Stack.Screen name="notification" component={Notification} options={{ title: "Thông b", headerShown: true }} />
-//             <Stack.Screen name="doctorbooking" component={DoctorBooking} options={{ title: "Danh sách bác sĩ", headerShown: true }} />
-//         </Stack.Navigator>
-//     );
-// };
-
 const Tab = createBottomTabNavigator();
-const TabNavigator = () => {
-  const { count } = useNotification();
+
+const HomeStack = () => {
   return (
-    <Tab.Navigator>
-      <Tab.Screen name="home" component={Home} options={{ title: "Trang chủ", headerShown: false, tabBarIcon: () => <Icon size={30} source="home" /> }} />
-      <Tab.Screen name="healthrecordList" component={HealthRecordList} options={{ title: "Hồ sơ", headerShown: false, tabBarIcon: () => <Icon size={30} source="clipboard-plus" /> }} />
-      <Tab.Screen name="appointment" component={Appointment} options={{ title: "Lịch khám", headerShown: false, tabBarIcon: () => <Icon size={30} source="clipboard-text-outline" /> }} />
-      <Tab.Screen name="notification" component={Notification}
-        options={{
-          title: "Thông báo",
-          headerShown: false,
-          tabBarIcon: () => (
-            <View style={styles.iconWrapper}>
-              <Icon size={30} source="bell" />
-              {count > 0 && (
-                <Badge style={styles.badge}>{count}</Badge>
-              )}
-            </View>
-          )
-        }}
-      />
-      <Tab.Screen name="profile" component={Profile} options={{ title: "Tài khoản", headerShown: false, tabBarIcon: () => <Icon size={30} source="account" /> }} />
-    </Tab.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="HospitalDetail" component={HospitalDetail} options={{ title: "Giới thiệu", headerShown: true }} />
+      <Stack.Screen name="DoctorList" component={DoctorList} />
+      <Stack.Screen name="Schedule" component={Schedule}/>
+      <Stack.Screen name="ScheduleBooking" component={ScheduleBooking}/>
+    </Stack.Navigator>
   );
-}
+};
+
+const HealthRecorStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HealthRecordList" component={HealthRecordList} />
+      <Stack.Screen name="CreateHealthRecord" component={CreateHealthRecord} />
+    </Stack.Navigator>
+  );
+};
+
+const AppointmentStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Appointment" component={Appointment} />
+    </Stack.Navigator>
+  );
+};
+
+const NotificationStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Notification" component={Notification} />
+    </Stack.Navigator>
+  );
+};
 
 const PatientNavigator = () => {
+  const { count } = useNotification();
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="tabs" component={TabNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="doctorList" component={DoctorList} options={{ headerShown: true, title: 'Danh sách bác sĩ' }} />
-      <Stack.Screen name="hospitaldetails" component={HospitalDetail} options={{ headerShown: true, title: 'Chi tiết bệnh viện' }} />
-      <Stack.Screen name="createHealthRecord" component={CreateHealthRecord} options={{ title: "Tạo hồ sơ sức khoẻ" }} />
-      <Stack.Screen name="Schedule" component={Schedule} options={{ headerShown: true, title: 'Đặt lịch khám' }} />
-      <Stack.Screen name="scheduleBooking" component={ScheduleBooking} />
-    </Stack.Navigator>
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
+      <Tab.Screen name="HomeTab" component={HomeStack} options={{ tabBarLabel: "Trang chủ", tabBarIcon: () => <Icon size={30} source="home" /> }} />
+      <Tab.Screen name="HealthRecordTab" component={HealthRecorStack} options={{ tabBarLabel: "Hồ sơ", tabBarIcon: () => <Icon size={30} source="clipboard-plus" /> }} />
+      <Tab.Screen name="AppointmentTab" component={AppointmentStack} options={{ tabBarLabel: "Lịch khám", tabBarIcon: () => <Icon size={30} source="clipboard-text-outline" /> }} />
+      <Tab.Screen name="NotificationTab" component={NotificationStack} options={{
+        tabBarLabel: "Thông báo", tabBarIcon: () => (
+          <View style={styles.iconWrapper}>
+            <Icon size={30} source="bell" />
+            {count > 0 && (
+              <Badge style={styles.badge}>{count}</Badge>
+            )}
+          </View>
+        )
+      }}
+      />
+      <Tab.Screen name="ProfileTab" component={ProfileStack} options={{ tabBarLabel: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
+    </Tab.Navigator>
   );
 
 }
