@@ -321,6 +321,7 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
 
         # Huỷ lịch
         appointment.cancel = True
+        appointment.status = "canceled"
         appointment.save()
 
         # Giảm số lượng đặt lịch khám của bác sĩ

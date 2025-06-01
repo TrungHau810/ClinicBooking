@@ -117,7 +117,7 @@ const Login = ({ navigation }) => {
 
                 <TextInput
                   label="Mật khẩu"
-                  underlineColorAndroid="transparent"
+                  underlineColor="transparent"
                   value={user.password}
                   onChangeText={(text) => handleInputChange("password", text)}
                   mode="flat"

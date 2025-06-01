@@ -1,11 +1,11 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { View, StyleSheet, FlatList } from "react-native";
 import { Button, Card, Chip, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MyDispatchContext, MyUserContext } from "../../configs/MyContexts";
 import { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 
 const statusList = [
     { label: "Chưa thanh toán", value: "unpaid" },
@@ -17,20 +17,33 @@ const statusList = [
 const Appointment = () => {
     const [selectedStatus, setSelectedStatus] = useState("unpaid");
     const [appointments, setAppointments] = useState([]);
+    const [refreshing, setRefreshing] = useState(false);
     const nav = useNavigation();
 
     const user = useContext(MyUserContext);
 
-    const loadAppointments = async () => {
-        const token = await AsyncStorage.getItem('token');
-        const res = await authApis(token).get(endpoints['appointments']);
-        console.log(res.data);
-        setAppointments(res.data);
+    const loadAppointments = async (isRefresh = false) => {
+        try {
+            if (isRefresh) setRefreshing(true);
+            const token = await AsyncStorage.getItem('token');
+            const res = await authApis(token).get(endpoints['appointments']);
+            setAppointments(res.data);
+        } catch (err) {
+            console.error("Lỗi khi tải lịch khám:", error);
+        } finally {
+            if (isRefresh) setRefreshing(false);
+        }
     };
 
     useEffect(() => {
         loadAppointments();
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadAppointments();
+        }, [])
+    );
 
     const renderStatus = (status) => {
         switch (status) {
@@ -40,7 +53,7 @@ const Appointment = () => {
                 return <Chip style={styles.confirmedChip}>Đã thanh toán</Chip>;
             case "completed":
                 return <Chip style={styles.canceledChip}>Đã khám</Chip>;
-            case "cancelled":
+            case "canceled":
                 return <Chip style={styles.completedChip}>Đã huỷ</Chip>;
 
             default:
@@ -60,7 +73,7 @@ const Appointment = () => {
                 {item.cancel_reason && (
                     <Text style={styles.cancelReason}>Lý do huỷ: {item.cancel_reason}</Text>
                 )}
-                <Button mode="contained" style={styles.button} onPress={() => nav.navigate('AppointmentDetails')}>Chi tiết</Button>
+                <Button mode="contained" style={styles.button} onPress={() => nav.navigate('AppointmentDetails', { appointment: item })}>Chi tiết</Button>
             </Card.Content>
         </Card>
     );
@@ -91,17 +104,18 @@ const Appointment = () => {
                 ))}
             </View>
 
-            {filteredAppointments.length > 0 ? (
-                <FlatList
-                    data={filteredAppointments}
-                    renderItem={renderAppointment}
-                    keyExtractor={(item) => item.id.toString()}
-                />
-            ) : (
-                <Text style={styles.noAppointmentText}>
-                    Bạn chưa có phiếu khám nào
-                </Text>
-            )}
+            <FlatList
+                data={filteredAppointments}
+                renderItem={renderAppointment}
+                keyExtractor={(item) => item.id.toString()}
+                refreshing={refreshing}
+                onRefresh={() => loadAppointments(true)}
+                ListEmptyComponent={
+                    <Text style={styles.noAppointmentText}>
+                        Bạn chưa có phiếu khám nào
+                    </Text>
+                }
+            />
         </SafeAreaView>
     );
 };
