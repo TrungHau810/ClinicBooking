@@ -106,18 +106,18 @@ const Login = ({ navigation }) => {
                   mode="flat"
                   left={<TextInput.Icon icon="account" />}
                   style={styles.input}
-                  theme={{
-                    colors: {
-                      primary: colors.accent, // màu khi focus
-                      text: colors.text,       // màu chữ nhập
-                      placeholder: "#333",     // màu label khi chưa focus
-                    },
-                  }}
+                  // theme={{
+                  //   colors: {
+                  //     primary: colors.accent, // màu khi focus
+                  //     text: colors.text,       // màu chữ nhập
+                  //     placeholder: "#333",     // màu label khi chưa focus
+                  //   },
+                  // }}
                 />
 
                 <TextInput
                   label="Mật khẩu"
-                  underlineColor="transparent"
+                  underlineColorAndroid="transparent"
                   value={user.password}
                   onChangeText={(text) => handleInputChange("password", text)}
                   mode="flat"
@@ -130,13 +130,13 @@ const Login = ({ navigation }) => {
                     />
                   }
                   style={styles.input}
-                  theme={{
-                    colors: {
-                      primary: colors.accent, // màu khi focus
-                      text: colors.text,       // màu chữ nhập
-                      placeholder: "#333",     // màu label khi chưa focus
-                    },
-                  }}
+                  // theme={{
+                  //   colors: {
+                  //     primary: colors.accent, // màu khi focus
+                  //     text: colors.text,       // màu chữ nhập
+                  //     placeholder: "#333",     // màu label khi chưa focus
+                  //   },
+                  // }}
                 />
 
                 <Button

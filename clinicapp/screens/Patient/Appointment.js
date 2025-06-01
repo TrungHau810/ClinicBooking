@@ -1,31 +1,3 @@
-// import { Chip, Text } from "react-native-paper";
-// import { SafeAreaView } from "react-native-safe-area-context";
-
-
-// const status = [
-//     { label: "Đang chờ xác nhận" },
-//     { label: "Đã xác nhận" },
-//     { label: "Đã hoàn thành" },
-//     { label: "Đã huỷ" },
-// ];
-
-
-
-// const Appointment = () => {
-
-//     return (
-//         <SafeAreaView>
-
-//             {status.map(s => <Chip mode="outlined">{s.label}</Chip>)}
-
-//             <Text>Đặt lịch hẹn khám bệnh</Text>
-//         </SafeAreaView>
-//     );
-// }
-
-// export default Appointment;
-
-
 import { useContext, useEffect, useState } from "react";
 import { View, StyleSheet, FlatList } from "react-native";
 import { Button, Card, Chip, Text } from "react-native-paper";
@@ -33,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MyDispatchContext, MyUserContext } from "../../configs/MyContexts";
 import { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
 const statusList = [
     { label: "Chưa thanh toán", value: "unpaid" },
@@ -44,6 +17,7 @@ const statusList = [
 const Appointment = () => {
     const [selectedStatus, setSelectedStatus] = useState("unpaid");
     const [appointments, setAppointments] = useState([]);
+    const nav = useNavigation();
 
     const user = useContext(MyUserContext);
 
@@ -68,7 +42,7 @@ const Appointment = () => {
                 return <Chip style={styles.canceledChip}>Đã khám</Chip>;
             case "cancelled":
                 return <Chip style={styles.completedChip}>Đã huỷ</Chip>;
-            
+
             default:
                 return <Chip>{status}</Chip>;
         }
@@ -86,7 +60,7 @@ const Appointment = () => {
                 {item.cancel_reason && (
                     <Text style={styles.cancelReason}>Lý do huỷ: {item.cancel_reason}</Text>
                 )}
-                <Button mode="contained" style={styles.button}>Chi tiết</Button>
+                <Button mode="contained" style={styles.button} onPress={() => nav.navigate('AppointmentDetails')}>Chi tiết</Button>
             </Card.Content>
         </Card>
     );

@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Badge, Icon } from "react-native-paper";
+import { Badge, Icon, useTheme } from "react-native-paper";
 import { useNotification } from "../configs/NotificationContext";
 import { View, StyleSheet } from "react-native";
 
@@ -15,6 +15,7 @@ import ScheduleBooking from "../screens/Patient/ScheduleBooking";
 import CreateHealthRecord from "../screens/Patient/CreateHealthRecord";
 import DoctorList from "../screens/Patient/DoctorList";
 import ProfileStack from "./ProfileStack";
+import AppointmentDetails from "../screens/Patient/AppointmentDetails";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -25,8 +26,8 @@ const HomeStack = () => {
       <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="HospitalDetail" component={HospitalDetail} options={{ title: "Giới thiệu", headerShown: true }} />
       <Stack.Screen name="DoctorList" component={DoctorList} />
-      <Stack.Screen name="Schedule" component={Schedule}/>
-      <Stack.Screen name="ScheduleBooking" component={ScheduleBooking}/>
+      <Stack.Screen name="Schedule" component={Schedule} />
+      <Stack.Screen name="ScheduleBooking" component={ScheduleBooking} />
     </Stack.Navigator>
   );
 };
@@ -44,6 +45,7 @@ const AppointmentStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Appointment" component={Appointment} />
+      <Stack.Screen name="AppointmentDetails" component={AppointmentDetails} />
     </Stack.Navigator>
   );
 };
@@ -58,15 +60,17 @@ const NotificationStack = () => {
 
 const PatientNavigator = () => {
   const { count } = useNotification();
+  const theme = useTheme();
+
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="HomeTab" component={HomeStack} options={{ tabBarLabel: "Trang chủ", tabBarIcon: () => <Icon size={30} source="home" /> }} />
-      <Tab.Screen name="HealthRecordTab" component={HealthRecorStack} options={{ tabBarLabel: "Hồ sơ", tabBarIcon: () => <Icon size={30} source="clipboard-plus" /> }} />
-      <Tab.Screen name="AppointmentTab" component={AppointmentStack} options={{ tabBarLabel: "Lịch khám", tabBarIcon: () => <Icon size={30} source="clipboard-text-outline" /> }} />
+      <Tab.Screen name="HomeTab" component={HomeStack} options={{ tabBarLabel: "Trang chủ", tabBarIcon: ({ focused }) => <Icon size={30} source="home-outline" color={focused ? theme.colors.primary : 'black'} /> }} />
+      <Tab.Screen name="HealthRecordTab" component={HealthRecorStack} options={{ tabBarLabel: "Hồ sơ", tabBarIcon: ({ focused }) => <Icon size={30} source="clipboard-plus-outline" color={focused ? theme.colors.primary : 'black'} /> }} />
+      <Tab.Screen name="AppointmentTab" component={AppointmentStack} options={{ tabBarLabel: "Lịch khám", tabBarIcon: ({ focused }) => <Icon size={30} source="clipboard-text-outline" color={focused ? theme.colors.primary : 'black'} /> }} />
       <Tab.Screen name="NotificationTab" component={NotificationStack} options={{
-        tabBarLabel: "Thông báo", tabBarIcon: () => (
+        tabBarLabel: "Thông báo", tabBarIcon: ({ focused }) => (
           <View style={styles.iconWrapper}>
-            <Icon size={30} source="bell" />
+            <Icon size={30} source="bell-outline" color={focused ? theme.colors.primary : 'black'} />
             {count > 0 && (
               <Badge style={styles.badge}>{count}</Badge>
             )}
@@ -74,7 +78,7 @@ const PatientNavigator = () => {
         )
       }}
       />
-      <Tab.Screen name="ProfileTab" component={ProfileStack} options={{ tabBarLabel: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
+      <Tab.Screen name="ProfileTab" component={ProfileStack} options={{ tabBarLabel: "Tài khoản", tabBarIcon: ({ focused }) => <Icon size={30} source="account-outline" color={focused ? theme.colors.primary : 'black'} /> }} />
     </Tab.Navigator>
   );
 

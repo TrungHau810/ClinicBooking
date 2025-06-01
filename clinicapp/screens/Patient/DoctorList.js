@@ -4,21 +4,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Apis, { endpoints } from "../../configs/Apis";
 import { Button, Card, Searchbar, List, Icon } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
+import Header from "../../components/Header";
+import StepIndicator from "../../components/StepIndicator";
 
-// Custom Header with Back Button
-const CustomHeader = ({ title }) => {
-  const navigation = useNavigation();
-
-  return (
-    <View style={headerStyles.header}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={headerStyles.backButton}>
-        <Icon source="arrow-left" size={24} />
-      </TouchableOpacity>
-      <Text style={headerStyles.title}>{title}</Text>
-      <View style={headerStyles.rightSpace} />
-    </View>
-  );
-};
 
 const DoctorList = () => {
   const navigation = useNavigation();
@@ -85,6 +73,17 @@ const DoctorList = () => {
         <View style={styles.doctorInfo}>
           <Text style={{ marginBottom: 10 }}>Chuyên khoa: {dr.specialization_name}</Text>
           <Text>Cơ sở: {dr.hospital_name}</Text>
+          <Text style={{ paddingTop: 5 }}>Kinh nghiệm: {dr.biography}</Text>
+          <Text style={{ paddingTop: 5 }}>Giá khám bệnh: {dr.consultation_fee}</Text>
+          <Text style={{ paddingTop: 5 }}>
+            {dr.total_reviews === 0
+              ? 'Chưa có lượt đánh giá'
+              : `Đánh giá: ${dr.average_rating}⭐ (${dr.total_reviews} lượt đánh giá)`
+            }
+          </Text>
+
+
+
         </View>
       </Card.Content>
       <Card.Actions>
@@ -97,8 +96,7 @@ const DoctorList = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <CustomHeader title="Danh sách bác sĩ" />
-
+      <Header title={"Chọn bác sĩ"} />
       <List.Section>
         <View style={styles.filterContainer}>
           <Text style={styles.filterLabel}>Lọc theo cơ sở y tế:</Text>
@@ -160,7 +158,7 @@ const DoctorList = () => {
       </List.Section>
 
       <Searchbar
-        style={styles.search}
+        style={[styles.search, { textDecorationColor: 'black' }]}
         placeholder="Nhập tên bác sĩ cần tìm..."
         onChangeText={(value) => setName(value)}
       />
@@ -175,33 +173,7 @@ const DoctorList = () => {
   );
 };
 
-// Header styles
-const headerStyles = StyleSheet.create({
-  header: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    marginBottom: 8,
-  },
-  backButton: {
-    padding: 8,
-  },
-  title: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  rightSpace: {
-    width: 32,
-  },
-});
 
-// Main styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

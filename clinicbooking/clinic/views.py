@@ -265,14 +265,15 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        schedule_id = request.data.get('schedule')
+        schedule_id = request.data.get('schedule_id')
         healthrecord_id = request.data.get('healthrecord')
+        print(schedule_id, healthrecord_id)
 
         try:
             schedule = Schedule.objects.get(id=schedule_id)
-            doctor = Doctor.objects.get(user=schedule.doctor)
             healthrecord = HealthRecord.objects.get(pk=healthrecord_id)
-        except (Schedule.DoesNotExist, Doctor.DoesNotExist, HealthRecord.DoesNotExist):
+            print(schedule, healthrecord)
+        except (Schedule.DoesNotExist, HealthRecord.DoesNotExist):
             return Response({"detail": "Dữ liệu không hợp lệ"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Kiểm tra xem bệnh nhân đã có lịch với lịch này chưa (nếu cần)
@@ -391,7 +392,7 @@ def get_payment(self, request, pk):
 
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
                       generics.CreateAPIView, generics.UpdateAPIView):
-    queryset = Schedule.objects.filter(active=True)
+    queryset = Schedule.objects.all()
     serializer_class = serializers.ScheduleSerializer
     parser_classes = [parsers.MultiPartParser]
 
