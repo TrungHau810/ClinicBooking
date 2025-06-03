@@ -4,10 +4,16 @@ import { Icon } from "react-native-paper";
 
 import AppointmentDoctor from "../screens/Doctor/AppointmentDoctor";
 import PatientHealthRecords from "../screens/Doctor/PatientHealthRecords";
+import AppointmentCalendar from "../screens/Doctor/AppointmentCalendar";
+import DoctorAppointmentDetails from "../screens/Doctor/DoctorAppointmentDetails";
+import CreateMedicalResult from "../screens/Doctor/CreateMedicalResult";
 import Profile from "../screens/Common/Profile";
 import Home from "../screens/Home"
 import ChatScreen from "../screens/Common/ChatScreen";
 import UserList from "../screens/Common/UserList";
+
+import { Icon } from "react-native-paper";
+import PatientHealthRecordDetail from "../screens/Doctor/PatientHealthRecordDetail";
 
 
 const Stack = createNativeStackNavigator();
@@ -49,6 +55,10 @@ const DoctorNavigator = () => {
         <Stack.Navigator>
             <Stack.Screen name="MainDoctor" component={TabNavigator} options={{ headerShown: false }} />
             <Stack.Screen name="ChatStack" component={ChatStack} options={{ title: "Chat" }} />
+            <Stack.Screen name="AppointmentCalendar" component={AppointmentCalendar} />
+            <Stack.Screen name="DoctorAppointmentDetails" component={DoctorAppointmentDetails} />
+            <Stack.Screen name="CreateMedicalResult" component={CreateMedicalResult} />
+            <Stack.Screen name="PatientHealthRecordDetail" component={PatientHealthRecordDetail} />
         </Stack.Navigator>
     );
 };

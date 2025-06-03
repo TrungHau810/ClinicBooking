@@ -19,7 +19,8 @@ export const endpoints = {
     'healthrecords': '/healthrecords/me/',
     'schedules': '/schedules/',
     'notifications': '/notifications/',
-    'messages': '/messages/'
+    'messages': '/messages/',
+    'testresults': '/testresults/',
 }
 
 export const authApis = (token) => {

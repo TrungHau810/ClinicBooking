@@ -17,6 +17,8 @@ const ScheduleBooking = () => {
     const [currentUser, setCurrentUser] = useState(null);
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState(null);
+
 
     const diseaseType = [
         { key: 'HoHap', label: 'Đường hô hấp' },
@@ -71,15 +73,27 @@ const ScheduleBooking = () => {
         }
     };
 
-    const renderItem = ({ item }) => <HealthRecordCard record={item} />;
+    const renderItem = ({ item }) => (
+        <TouchableOpacity onPress={() => setSelectedRecord(item)}>
+            <HealthRecordCard
+                record={item}
+                isSelected={selectedRecord?.id === item.id} // truyền để highlight
+            />
+        </TouchableOpacity>
+    );
+
 
     const validate = () => {
-        if (selectedDisease === null) {
-            Alert.alert("Lỗi", "Vui lòng chọn loại bệnh!")
-            return false;
-        }
-        return true;
-    };
+    if (!selectedRecord) {
+        Alert.alert("Lỗi", "Vui lòng chọn hồ sơ sức khoẻ!");
+        return false;
+    }
+    if (selectedDisease === null) {
+        Alert.alert("Lỗi", "Vui lòng chọn loại bệnh!");
+        return false;
+    }
+    return true;
+};
 
     // Hàm tạo lịch khám
     const createAppointment = async () => {
@@ -95,7 +109,7 @@ const ScheduleBooking = () => {
 
                 const res = await authApis(token).post(endpoints["appointments"], {
                     schedule_id: schedule.id,
-                    healthrecord: 1,
+                    healthrecord: selectedRecord.id,
                     disease_type: selectedDisease,
                     symptoms: symptoms,
                 }, {

@@ -173,7 +173,7 @@ class DoctorSerializer(ModelSerializer):
 class TestResultSerializer(ModelSerializer):
     class Meta:
         model = TestResult
-        fields = ['id', 'test_name', 'description', 'image', 'health_record_id']
+        fields = ['id', 'test_name', 'description', 'image', 'health_record']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
