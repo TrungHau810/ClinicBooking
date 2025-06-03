@@ -173,7 +173,7 @@ class DoctorSerializer(ModelSerializer):
 class TestResultSerializer(ModelSerializer):
     class Meta:
         model = TestResult
-        fields = ['id', 'test_name', 'description', 'image', 'health_record_id']
+        fields = ['id', 'test_name', 'description', 'image', 'health_record']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -199,10 +199,11 @@ class AppointmentSerializer(ModelSerializer):
     schedule_end = serializers.TimeField(source='schedule.end_time', read_only=True)
     schedule_id = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(), source='schedule',
                                                      write_only=True)
+    healthrecord = HealthRecordSerializer(read_only=True)
 
     class Meta:
         model = Appointment
-        fields = ['id', 'healthrecord_id', 'created_date', 'updated_date',
+        fields = ['id', 'healthrecord', 'created_date', 'updated_date',
                   'disease_type', 'symptoms', 'status', 'created_date',
                   'schedule_date', 'schedule_start', 'schedule_end', 'active', 'schedule_id']
 

@@ -2,8 +2,12 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AppointmentDoctor from "../screens/Doctor/AppointmentDoctor";
 import PatientHealthRecords from "../screens/Doctor/PatientHealthRecords";
+import AppointmentCalendar from "../screens/Doctor/AppointmentCalendar";
+import DoctorAppointmentDetails from "../screens/Doctor/DoctorAppointmentDetails";
+import CreateMedicalResult from "../screens/Doctor/CreateMedicalResult";
 import Profile from "../screens/Common/Profile";
 import { Icon } from "react-native-paper";
+import PatientHealthRecordDetail from "../screens/Doctor/PatientHealthRecordDetail";
 
 
 const Stack = createNativeStackNavigator();
@@ -33,7 +37,11 @@ const TabNavigator = () => {
 const DoctorNavigator = () => {
     return (
         <Stack.Navigator>
-            <Stack.Screen name="MainDoctor" component={TabNavigator} options={{headerShown: false}} />
+            <Stack.Screen name="MainDoctor" component={TabNavigator} options={{ headerShown: false }} />
+            <Stack.Screen name="AppointmentCalendar" component={AppointmentCalendar} />
+            <Stack.Screen name="DoctorAppointmentDetails" component={DoctorAppointmentDetails} />
+            <Stack.Screen name="CreateMedicalResult" component={CreateMedicalResult} />
+            <Stack.Screen name="PatientHealthRecordDetail" component={PatientHealthRecordDetail} />
         </Stack.Navigator>
     );
 };

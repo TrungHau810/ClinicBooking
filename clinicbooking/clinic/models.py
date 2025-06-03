@@ -188,7 +188,7 @@ class Appointment(BaseModel):
         ('unpaid', 'Chưa thanh toán'),
         ('paid', 'Đã thanh toán'),
         ('completed', 'Đã khám'),
-        ('cancelled', 'Đã hủy'),
+        ('canceled', 'Đã hủy'),
     ]
 
     DISEASE_TYPE_CHOICES =[

@@ -128,7 +128,7 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         if user.role == 'patient':
             return HealthRecord.objects.filter(user=user)
         elif user.role == 'doctor':
-            return HealthRecord.objects.filter(appointment__schedule__doctor=self.request.user)
+            return HealthRecord.objects.filter(appointment__schedule__doctor=self.request.user).distinct()
         return HealthRecord.objects.none()
 
     # Cho phép bệnh nhân tự tạo hồ sơ sức khoẻ
@@ -186,7 +186,7 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView):
+class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
     queryset = TestResult.objects.filter(active=True)
     serializer_class = serializers.TestResultSerializer
 
@@ -205,7 +205,7 @@ def is_more_than_24_hours_ahead(schedule_date, schedule_time):
     return schedule_datetime - now >= timedelta(hours=24)
 
 
-class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
+class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView, generics.UpdateAPIView):
     queryset = Appointment.objects.filter().all()
     serializer_class = serializers.AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
