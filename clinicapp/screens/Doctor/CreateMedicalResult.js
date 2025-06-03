@@ -1,14 +1,10 @@
 import React, { useState } from "react";
-import {
-    View, StyleSheet, TextInput, Image, Alert, ScrollView,
-    TouchableOpacity, Platform
-} from "react-native";
+import { View, StyleSheet, TextInput, Image, Alert, ScrollView, TouchableOpacity, Platform } from "react-native";
 import { Button, Text } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import { endpoints } from "../../configs/Apis";
+import Apis, { endpoints } from "../../configs/Apis";
 
 const CreateMedicalTestResult = () => {
     const navigation = useNavigation();
@@ -39,6 +35,7 @@ const CreateMedicalTestResult = () => {
     };
 
     const handleSubmit = async () => {
+        let res;
         if (!testName || !image) {
             Alert.alert("Lỗi", "Tên xét nghiệm và ảnh là bắt buộc.");
             return;
@@ -57,14 +54,15 @@ const CreateMedicalTestResult = () => {
                 name: image.fileName || `test-${Date.now()}.jpg`,
                 type: image.mimeType || "image/jpeg",
             });
-
-            const res = await axios.post(endpoints["testresults"], formData, {
+            console.log("FORMDATA", formData);
+            const res = await Apis.post(endpoints["testresults"], formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                     Authorization: `Bearer ${token}`,
                 },
             });
 
+            console.info(res);
 
             Alert.alert("Thành công", "Đã tạo kết quả xét nghiệm.");
             navigation.goBack(); // hoặc navigation.navigate('TestResultList')
