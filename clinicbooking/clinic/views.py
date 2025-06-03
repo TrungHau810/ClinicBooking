@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from django.contrib.auth.tokens import default_token_generator
 import random
+
+from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
@@ -8,6 +10,8 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from oauthlib.uri_validate import query
+from pyexpat.errors import messages
 from requests_toolbelt.multipart.encoder import total_len
 from rest_framework.decorators import action, permission_classes
 from rest_framework.exceptions import PermissionDenied, AuthenticationFailed, ValidationError
@@ -21,7 +25,7 @@ from django.db.models import Q, Count, Sum
 from rest_framework.response import Response
 from clinic.permissions import IsDoctorOrSelf
 from clinic.serializers import AppointmentSerializer, PaymentSerializer, NotificationSerializer, UserSerializer, \
-    OTPRequestSerializer, OTPConfirmResetSerializer
+    OTPRequestSerializer, OTPConfirmResetSerializer, MessageSerializer
 
 
 class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -60,6 +64,18 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView
                     setattr(u, k, v)
             u.save()
         return Response(serializers.UserSerializer(u).data)
+
+    @action(methods=['get'], detail=False, url_path='doctors')
+    def get_doctors(self, request):
+        doctors = User.objects.filter(role='doctor')
+        serializer = self.get_serializer(doctors, many=True)
+        return Response(serializer.data)
+
+    @action(methods=['get'], detail=False, url_path='patients')
+    def get_patients(self, request):
+        patients = User.objects.filter(role='patient')
+        serializer = self.get_serializer(patients, many=True)
+        return Response(serializer.data)
 
 
 class PasswordResetSendOTPViewSet(APIView):
@@ -186,7 +202,7 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView):
+class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
     queryset = TestResult.objects.filter(active=True)
     serializer_class = serializers.TestResultSerializer
 
@@ -321,12 +337,15 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
 
         # Huỷ lịch
         appointment.cancel = True
-        appointment.status = "canceled"
+        appointment.status = "cancelled"
         appointment.save()
 
         # Giảm số lượng đặt lịch khám của bác sĩ
         schedule = appointment.schedule
-        schedule.sum_booking -= 1
+        if schedule.sum_booking > 0:
+            schedule.sum_booking -= 1
+        else:
+            schedule.sum_booking = 0
         schedule.save()
 
         return Response('Huỷ lịch khám thành công', status=status.HTTP_200_OK)
@@ -423,45 +442,69 @@ class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
 
     def get_queryset(self):
         user = self.request.user
-        queryset = self.queryset
+        participant_id = self.request.query_params.get('participant_id')
+        print(participant_id)
+        if not participant_id:
+            raise ValidationError("participant_id is required")
 
-        return queryset
+        try:
+            participant = User.objects.get(pk=participant_id)
 
-        # sender_id = self.request.query_params.get('sender')
-        # receiver_id = self.request.query_params.get('receiver')
-        # if sender_id and receiver_id:
-        #     if str(user.id) != sender_id and str(user.id) != receiver_id:
-        #         raise PermissionDenied("Bạn không có quyền xem tin nhắn này.")
-        #     return queryset.filter(
-        #         Q(sender_id=sender_id, receiver_id=receiver_id) |
-        #         Q(sender_id=receiver_id, receiver_id=sender_id)
-        #     ).order_by('created_date')
-        #
-        # return queryset.none()
+        except User.DoesNotExist:
+            raise ValidationError("Người dùng không tồn tại")
+        messages = Message.objects.filter(Q(sender=user, receiver=participant) | Q(sender=participant, receiver=user)).order_by('created_date')
+        print(messages)
 
-    def perform_create(self, serializer):
-        user = self.request.user
-        receiver = serializer.validated_data.get('receiver')
+        return messages
 
-        if not receiver:
-            raise PermissionDenied("Bạn phải chọn người nhận tin nhắn.")
+    def create(self, request, *args, **kwargs):
+        sender = request.user
+        receiver_id = request.data.get('receiver')
 
-        if not hasattr(user, 'role') or user.role not in ['patient', 'doctor']:
-            raise PermissionDenied("Bạn không có quyền gửi tin nhắn.")
+        if not receiver_id:
+            raise ValidationError("Trường 'receiver' là bắt buộc.")
 
-        if not hasattr(receiver, 'role') or receiver.role not in ['patient', 'doctor']:
-            raise PermissionDenied("Người nhận phải là bệnh nhân hoặc bác sĩ.")
+        try:
+            receiver = User.objects.get(pk=receiver_id)
+        except User.DoesNotExist:
+            raise ValidationError("Người nhận không tồn tại.")
 
-        # Bệnh nhân chỉ được phép nhắn với bác sĩ
-        if user.role == 'patient' and receiver.role != 'doctor':
-            raise PermissionDenied("Bệnh nhân chỉ được phép nhắn tin cho bác sĩ.")
+        if sender == receiver:
+            raise ValidationError("Người gửi và người nhận không được giống nhau.")
 
-        # Bác sĩ chỉ được phép nhắn với bệnh nhân
-        if user.role == 'doctor' and receiver.role != 'patient':
-            raise PermissionDenied("Bác sĩ chỉ được phép nhắn tin cho bệnh nhân.")
+        # Tạo serializer không có sender/receiver
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        # Nếu đúng thì lưu tin nhắn
-        serializer.save(sender=user)
+        # Lưu thủ công với sender và receiver
+        serializer.save(sender=sender, receiver=receiver)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    # def perform_create(self, serializer):
+    #     user = self.request.user
+    #     receiver = serializer.validated_data.get('receiver')
+    #     print(receiver)
+    #
+    #     if not receiver:
+    #         raise PermissionDenied("Bạn phải chọn người nhận tin nhắn.")
+    #
+    #     if not hasattr(user, 'role') or user.role not in ['patient', 'doctor']:
+    #         raise PermissionDenied("Bạn không có quyền gửi tin nhắn.")
+    #
+    #     if not hasattr(receiver, 'role') or receiver.role not in ['patient', 'doctor']:
+    #         raise PermissionDenied("Người nhận phải là bệnh nhân hoặc bác sĩ.")
+    #
+    #     # Bệnh nhân chỉ được phép nhắn với bác sĩ
+    #     if user.role == 'patient' and receiver.role != 'doctor':
+    #         raise PermissionDenied("Bệnh nhân chỉ được phép nhắn tin cho bác sĩ.")
+    #
+    #     # Bác sĩ chỉ được phép nhắn với bệnh nhân
+    #     if user.role == 'doctor' and receiver.role != 'patient':
+    #         raise PermissionDenied("Bác sĩ chỉ được phép nhắn tin cho bệnh nhân.")
+    #
+    #     # Nếu đúng thì lưu tin nhắn
+    #     serializer.save(sender=user)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

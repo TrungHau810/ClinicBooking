@@ -1,12 +1,13 @@
 import axios from "axios";
 
-const BASE_URL = "http://192.168.1.103:8000/";
+const BASE_URL = "http://192.168.1.8:8000/";
 
 export const endpoints = {
     'hospitals': '/hospitals/',
     'hospital-details': (hospitalId) => `/hospitals/${hospitalId}/`,
     'specializations': '/specializations/',
-    'patients': '/patients/',
+    'user-patients': '/users/patients/',
+    'user-doctors': '/users/doctors/',
     'doctors': '/doctors/',
     // 'doctorinfos': '/doctorinfos/',
     'login': '/o/token/',
@@ -15,9 +16,10 @@ export const endpoints = {
     'reset-password-confirm': "/api/password-reset/otp/confirm/",
     'current-user': '/users/current-user/',
     'appointments': "/appointments/",
-    'healthrecords':'/healthrecords/me/',
+    'healthrecords': '/healthrecords/me/',
     'schedules': '/schedules/',
     'notifications': '/notifications/',
+    'messages': '/messages/'
 }
 
 export const authApis = (token) => {

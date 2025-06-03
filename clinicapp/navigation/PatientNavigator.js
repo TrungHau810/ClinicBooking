@@ -16,6 +16,8 @@ import CreateHealthRecord from "../screens/Patient/CreateHealthRecord";
 import DoctorList from "../screens/Patient/DoctorList";
 import ProfileStack from "./ProfileStack";
 import AppointmentDetails from "../screens/Patient/AppointmentDetails";
+import ChatScreen from "../screens/Common/ChatScreen";
+import UserList from "../screens/Common/UserList";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -28,6 +30,8 @@ const HomeStack = () => {
       <Stack.Screen name="DoctorList" component={DoctorList} />
       <Stack.Screen name="Schedule" component={Schedule} />
       <Stack.Screen name="ScheduleBooking" component={ScheduleBooking} />
+      <Stack.Screen name="UserList" component={UserList} />
+      <Stack.Screen name="ChatScreen" component={ChatScreen} />
     </Stack.Navigator>
   );
 };

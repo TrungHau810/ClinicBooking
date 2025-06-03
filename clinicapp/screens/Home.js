@@ -64,7 +64,6 @@ const Home = () => {
   }, [])
 
   const renderHospitalItem = ({ item }) => {
-    console.log("Image URL:", item.logo);
 
     return (
       <TouchableOpacity
@@ -113,6 +112,7 @@ const Home = () => {
           </View>
         ))}
       </ScrollView>
+      <Button mode="contained" onPress={() => nav.navigate("UserList")}>Nhắn tin</Button>
     </SafeAreaView >
   );
 };

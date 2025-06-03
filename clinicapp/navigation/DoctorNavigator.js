@@ -1,13 +1,26 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Icon } from "react-native-paper";
+
 import AppointmentDoctor from "../screens/Doctor/AppointmentDoctor";
 import PatientHealthRecords from "../screens/Doctor/PatientHealthRecords";
 import Profile from "../screens/Common/Profile";
-import { Icon } from "react-native-paper";
+import Home from "../screens/Home"
+import ChatScreen from "../screens/Common/ChatScreen";
+import UserList from "../screens/Common/UserList";
 
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+const ChatStack = () => {
+    return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="UserList" component={UserList} />
+            <Stack.Screen name="ChatScreen" component={ChatScreen} />
+        </Stack.Navigator>
+    );
+};
 
 const StackNavigator = () => {
     return (
@@ -22,6 +35,7 @@ const StackNavigator = () => {
 const TabNavigator = () => {
     return (
         <Tab.Navigator>
+            <Tab.Screen name="Home" component={AppointmentDoctor} options={{ title: "Lịch hẹn", tabBarIcon: () => <Icon size={30} source="calendar-account" /> }} />
             <Tab.Screen name="appointment" component={AppointmentDoctor} options={{ title: "Lịch hẹn", tabBarIcon: () => <Icon size={30} source="calendar-account" /> }} />
             <Tab.Screen name="healthrecord" component={PatientHealthRecords} options={{ title: "Hồ sơ sức khoẻ", tabBarIcon: () => <Icon size={30} source="clipboard-text-outline" /> }} />
             <Tab.Screen name="profile" component={Profile} options={{ title: "Tài khoản", headerShown: false, tabBarIcon: () => <Icon size={30} source="account" /> }} />
@@ -33,7 +47,8 @@ const TabNavigator = () => {
 const DoctorNavigator = () => {
     return (
         <Stack.Navigator>
-            <Stack.Screen name="MainDoctor" component={TabNavigator} options={{headerShown: false}} />
+            <Stack.Screen name="MainDoctor" component={TabNavigator} options={{ headerShown: false }} />
+            <Stack.Screen name="ChatStack" component={ChatStack} options={{ title: "Chat" }} />
         </Stack.Navigator>
     );
 };

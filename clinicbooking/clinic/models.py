@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
+from rest_framework.exceptions import ValidationError
 
 
 # ---------- BaseModel ---------- #
@@ -138,11 +139,14 @@ class Message(BaseModel):
     is_read = models.BooleanField(default=False)
     sender = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='sent_messages', null=True)
     receiver = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='received_messages', null=True)
-    test_result = models.OneToOneField(TestResult, on_delete=models.SET_NULL, null=True)
-    parent_message = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
+    test_result = models.OneToOneField(TestResult, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return (f"{self.sender} - {self.receiver}")
+
+    def clean(self):
+        if self.sender == self.receiver:
+            raise ValidationError("Người gửi và người nhận không được giống nhau.")
 
 
 class Review(BaseModel):

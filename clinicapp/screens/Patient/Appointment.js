@@ -11,7 +11,7 @@ const statusList = [
     { label: "Chưa thanh toán", value: "unpaid" },
     { label: "Đã thanh toán", value: "paid" },
     { label: "Đã khám", value: "completed" },
-    { label: "Đã huỷ", value: "canceled" },
+    { label: "Đã huỷ", value: "cancelled" },
 ];
 
 const Appointment = () => {
@@ -37,6 +37,7 @@ const Appointment = () => {
 
     useEffect(() => {
         loadAppointments();
+        console.log(selectedStatus);
     }, []);
 
     useFocusEffect(
@@ -53,7 +54,7 @@ const Appointment = () => {
                 return <Chip style={styles.confirmedChip}>Đã thanh toán</Chip>;
             case "completed":
                 return <Chip style={styles.canceledChip}>Đã khám</Chip>;
-            case "canceled":
+            case "cancelled":
                 return <Chip style={styles.completedChip}>Đã huỷ</Chip>;
 
             default:

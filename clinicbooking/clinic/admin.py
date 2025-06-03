@@ -166,6 +166,11 @@ class NotificationForm(forms.ModelForm):
         fields = '__all__'
 
 
+class MyMessageAdmin(admin.ModelAdmin):
+    list_display = ['id', 'sender', 'receiver', 'created_date']
+    list_filter = ['sender', 'receiver',]
+
+
 class MyNotificationAdmin(admin.ModelAdmin):
     forms = NotificationForm
     list_display = ['id', 'title', 'content', 'send_at', 'created_date', 'updated_date']
@@ -240,7 +245,7 @@ admin_site.register(Doctor, MyDoctorAdmin)
 admin_site.register(HealthRecord, MyHealthRecordAdmin)
 admin_site.register(Schedule, MyScheduleAdmin)
 admin_site.register(TestResult, MyTestResultAdmin)
-admin_site.register(Message)
+admin_site.register(Message, MyMessageAdmin)
 admin_site.register(Appointment, MyAppointmentAdmin)
 admin_site.register(Review, ReviewAdmin)
 admin_site.register(Payment, MyPaymentAdmin)
