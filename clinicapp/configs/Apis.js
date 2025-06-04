@@ -16,6 +16,7 @@ export const endpoints = {
     'current-user': '/users/current-user/',
     'appointments': "/appointments/",
     'healthrecords': '/healthrecords/me/',
+    'healthrecords-update': '/healthrecords/',
     'schedules': '/schedules/',
     'notifications': '/notifications/',
     'messages': '/messages/',

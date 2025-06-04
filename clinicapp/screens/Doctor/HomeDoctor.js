@@ -18,6 +18,7 @@ const DoctorHome = ({ navigation }) => {
             const token = await AsyncStorage.getItem("token");
             const res = await authApis(token).get(endpoints["current-user"]);
             setDoctor(res.data);
+            console.log(res.data);
         } catch (error) {
             console.error("Lỗi khi lấy thông tin bác sĩ:", error);
         }
@@ -62,9 +63,27 @@ const DoctorHome = ({ navigation }) => {
         }
     };
 
+    const loadPatientsExaminedmedicalResultsCreatedCount = async () => {
+        try {
+            const token = await AsyncStorage.getItem("token");
+            const res = await authApis(token).get(endpoints["appointments"]);
+            const appointments = res.data;
+
+            const completedCount = appointments.filter(item => item.status === "completed").length;
+            setStats(prev => ({
+                ...prev,
+                patientsExamined: completedCount,
+                medicalResultsCreated: completedCount,
+            }));
+        } catch (error) {
+            console.error("Lỗi khi đếm lịch đã khám:", error);
+        }
+    };
+
     useEffect(() => {
         loadDoctor();
         loadTodayAppointmentsCount();
+        loadPatientsExaminedmedicalResultsCreatedCount();
     }, []);
 
     return (
@@ -103,17 +122,23 @@ const DoctorHome = ({ navigation }) => {
 
                 <View style={styles.quickActions}>
                     <TouchableOpacity style={styles.quickButton} onPress={() => navigation.navigate("Appointment")}>
-                        <Icon source="calendar-account" size={28} />
+                        <View style={styles.iconContainer}>
+                            <Icon source="calendar" size={28} color={theme.colors.primary} />
+                        </View>
                         <Text>Lịch hẹn</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.quickButton} onPress={() => navigation.navigate("HealthRecords")}>
-                        <Icon source="clipboard-text-outline" size={28} />
+                        <View style={styles.iconContainer}>
+                            <Icon source="clipboard-text-outline" size={28} color={theme.colors.primary} />
+                        </View>
                         <Text>Hồ sơ</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.quickButton} onPress={() => navigation.navigate("CreateMedicalResult")}>
-                        <Icon source="file-document-edit-outline" size={28} />
+                    {/* <TouchableOpacity style={styles.quickButton} onPress={() => navigation.navigate("PatientHealthRecords")}>
+                        <View style={styles.iconContainer}>
+                            <Icon source="file-document-edit-outline" size={28} color={theme.colors.primary} />
+                        </View>
                         <Text>Kết quả khám</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
             </ScrollView>
             <Button mode="contained" onPress={() => nav.navigate("ChatStack")}>Nhắn tin</Button>
@@ -139,8 +164,11 @@ const styles = StyleSheet.create({
     statCard: {
         flex: 1,
         marginHorizontal: 4,
-        paddingVertical: 10,
+        paddingVertical: 16,
         alignItems: "center",
+        borderRadius: 12,
+        elevation: 3,
+        backgroundColor: "#f5f9ff", // hoặc tạo gradient
     },
     statNumber: {
         fontSize: 24,
@@ -160,6 +188,12 @@ const styles = StyleSheet.create({
     quickButton: {
         alignItems: "center",
         padding: 10,
+    },
+    iconContainer: {
+        backgroundColor: "#e6f0ff",
+        borderRadius: 30,
+        padding: 10,
+        marginBottom: 8,
     },
 });
 

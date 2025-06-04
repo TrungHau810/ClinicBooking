@@ -1,13 +1,28 @@
-import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import ImageViewing from "react-native-image-viewing";
 
 const TestResultCard = ({ result }) => {
+    const [visible, setVisible] = useState(false);
+
     return (
         <View style={styles.card}>
             <Text style={styles.name}>{result.test_name}</Text>
             <Text style={styles.description}>{result.description}</Text>
+
             {result.image && (
-                <Image source={{ uri: result.image }} style={styles.image} />
+                <>
+                    <TouchableOpacity onPress={() => setVisible(true)}>
+                        <Image source={{ uri: result.image }} style={styles.image} />
+                    </TouchableOpacity>
+
+                    <ImageViewing
+                        images={[{ uri: result.image }]}
+                        imageIndex={0}
+                        visible={visible}
+                        onRequestClose={() => setVisible(false)}
+                    />
+                </>
             )}
         </View>
     );

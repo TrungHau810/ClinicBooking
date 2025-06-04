@@ -18,6 +18,7 @@ import ProfileStack from "./ProfileStack";
 import AppointmentDetails from "../screens/Patient/AppointmentDetails";
 import ChatScreen from "../screens/Common/ChatScreen";
 import UserList from "../screens/Common/UserList";
+import TestResult from "../screens/Patient/TestResult";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -41,6 +42,7 @@ const HealthRecorStack = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HealthRecordList" component={HealthRecordList} />
       <Stack.Screen name="CreateHealthRecord" component={CreateHealthRecord} />
+      <Stack.Screen name="TestResult" component={TestResult} options={{ title: "Kết quả xét nghiệm", headerShown: true}}/>
     </Stack.Navigator>
   );
 };
