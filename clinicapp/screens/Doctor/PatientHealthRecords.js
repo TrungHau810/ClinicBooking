@@ -5,7 +5,7 @@ import Apis, { endpoints } from "../../configs/Apis";
 import HealthRecordCard from "../../components/HealthRecordCard";
 
 const PatientHealthRecords = ({ navigation }) => {
-  const [ records, setRecords] = useState([]);
+  const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadRecords = async () => {
@@ -50,9 +50,22 @@ const PatientHealthRecords = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
-  title: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
-  empty: { textAlign: "center", color: "#999", marginTop: 20 },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#fff",
+    marginTop: 30
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10
+  },
+  empty: {
+    textAlign: "center",
+    color: "#999",
+    marginTop: 20
+  },
 });
 
 export default PatientHealthRecords;
