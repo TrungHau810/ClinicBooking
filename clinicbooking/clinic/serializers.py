@@ -1,12 +1,11 @@
 import random
-from django.core.mail import send_mail
-from django.core.mail import EmailMultiAlternatives
 from django.db.models import Avg
 from django.template.loader import render_to_string
 from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
+from clinic.email import send_appointment_successfull_email, send_otp_email
 from clinic.models import (User, Doctor, HealthRecord, Schedule,
                            Appointment, Review, Message,
                            Payment, TestResult, Notification, Hospital, Specialization, PasswordResetOTP)
@@ -122,8 +121,7 @@ class PatientSerializer(ModelSerializer):
 class DoctorSerializer(ModelSerializer):
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
     specialization_name = serializers.CharField(source='specialization.name', read_only=True)
-    # user = UserSerializer(read_only=True)
-    doctor_id = serializers.IntegerField(source='user.id', read_only=True)
+    user = UserSerializer(read_only=True)
     doctor = serializers.CharField(source='user.full_name', read_only=True)
     avatar = serializers.CharField(source='user.avatar.url', read_only=True)
     # Phí khám bệnh của bác sĩ
@@ -135,7 +133,7 @@ class DoctorSerializer(ModelSerializer):
 
     class Meta:
         model = Doctor
-        fields = ['id', 'doctor_id', 'doctor', 'avatar', 'biography', 'license_number', 'license_image', 'active',
+        fields = ['id', 'user', 'doctor', 'avatar', 'biography', 'license_number', 'license_image', 'active',
                   'hospital_id', 'hospital_name',
                   'specialization', 'specialization_name', 'consultation_fee', 'total_reviews', 'average_rating']
 
@@ -173,7 +171,7 @@ class DoctorSerializer(ModelSerializer):
 class TestResultSerializer(ModelSerializer):
     class Meta:
         model = TestResult
-        fields = ['id', 'test_name', 'description', 'image', 'health_record_id']
+        fields = ['id', 'test_name', 'description', 'image', 'health_record']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -193,20 +191,6 @@ class HealthRecordSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class AppointmentSerializer(ModelSerializer):
-    schedule_date = serializers.DateField(source='schedule.date', read_only=True)
-    schedule_start = serializers.TimeField(source='schedule.start_time', read_only=True)
-    schedule_end = serializers.TimeField(source='schedule.end_time', read_only=True)
-    schedule_id = serializers.PrimaryKeyRelatedField(queryset=Schedule.objects.all(), source='schedule',
-                                                     write_only=True)
-
-    class Meta:
-        model = Appointment
-        fields = ['id', 'healthrecord_id', 'created_date', 'updated_date',
-                  'disease_type', 'symptoms', 'status', 'created_date',
-                  'schedule_date', 'schedule_start', 'schedule_end', 'active', 'schedule_id']
-
-
 class ScheduleSerializer(ModelSerializer):
 
     def create(self, validated_data):
@@ -217,15 +201,61 @@ class ScheduleSerializer(ModelSerializer):
 
     class Meta:
         model = Schedule
-        fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity']
+        fields = ['id', 'date', 'start_time', 'end_time', 'doctor_id', 'capacity', 'sum_booking', 'active']
+
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    schedule = ScheduleSerializer(read_only=True)
+    healthrecord = HealthRecordSerializer(read_only=True)
+
+    schedule_id = serializers.PrimaryKeyRelatedField(
+        queryset=Schedule.objects.all(), write_only=True
+    )
+    healthrecord_id = serializers.PrimaryKeyRelatedField(
+        queryset=HealthRecord.objects.all(), write_only=True
+    )
+
+    class Meta:
+        model = Appointment
+        fields = ['id', 'healthrecord', 'healthrecord_id', 'created_date', 'updated_date',
+                  'disease_type', 'symptoms', 'status', 'schedule', 'schedule_id',
+                  'active', 'cancel', 'reason']
+
+    def validate(self, data):
+        schedule = data.get('schedule_id')
+        healthrecord = data.get('healthrecord_id')
+
+        if Appointment.objects.filter(healthrecord=healthrecord, schedule=schedule).exists():
+            raise serializers.ValidationError("Bạn đã có lịch khám này rồi!")
+
+        return data
+
+    def create(self, validated_data):
+        schedule = validated_data.pop('schedule_id')
+        healthrecord = validated_data.pop('healthrecord_id')
+
+        appointment = Appointment.objects.create(
+            schedule=schedule,
+            healthrecord=healthrecord,
+            status='unpaid',  # mặc định khi tạo
+            **validated_data
+        )
+
+        schedule.sum_booking += 1
+        schedule.save()
+
+        send_appointment_successfull_email(appointment)
+
+        return appointment
 
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
+    receiver = UserSerializer(read_only=True)
 
     class Meta:
         model = Message
-        fields = ['id', 'content', 'is_read', 'sender', 'receiver', 'test_result', 'created_date', 'parent_message']
+        fields = ['id', 'content', 'is_read', 'sender', 'receiver', 'test_result', 'created_date']
 
 
 class ReviewSerializer(ModelSerializer):
@@ -258,57 +288,8 @@ class OTPRequestSerializer(serializers.Serializer):
         user = User.objects.get(email=email)
         otp = f"{random.randint(100000, 999999)}"
         PasswordResetOTP.objects.create(user=user, otp_code=otp)
-
-        subject = "Clinic App: Mã OTP đặt lại mật khẩu"
-        from_email = "noreply@yourdomain.com"
-        to = [email]
-
-        # Plain text (fallback)
-        text_content = f"""
-        Xin chào {user.full_name},
-    
-        Bạn vừa yêu cầu khôi phục mật khẩu cho tài khoản của mình trên hệ thống của chúng tôi.
-    
-        Mã OTP của bạn là: {otp}
-    
-        Lưu ý quan trọng:
-        - Mã OTP này có hiệu lực trong 10 phút kể từ thời điểm bạn nhận được email này.
-        - Tuyệt đối không cung cấp mã xác thực này cho bất kỳ ai, kể cả nhân viên hỗ trợ.
-    
-        Nếu bạn KHÔNG yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này hoặc liên hệ với bộ phận hỗ trợ của chúng tôi.
-    
-        Trân trọng,
-        Đội ngũ hỗ trợ khách hàng
-        """
-
-        # HTML content
-        html_content = f"""
-        <html>
-          <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <p>Xin chào <strong>{user.full_name}</strong>,</p>
-
-            <p>Bạn vừa yêu cầu khôi phục mật khẩu cho tài khoản của mình trên hệ thống của chúng tôi.</p>
-
-            <p><strong>Mã OTP của bạn là: <span style="font-size: 18px; color: #d63031;">{otp}</span></strong></p>
-
-            <p><strong>Lưu ý quan trọng:</strong></p>
-            <ul>
-              <li>Mã OTP này có hiệu lực trong <strong>10 phút</strong> kể từ thời điểm bạn nhận được email này.</li>
-              <li><strong style="color: red;">Tuyệt đối không cung cấp mã xác thực này cho bất kỳ ai</strong>, kể cả nhân viên hỗ trợ.</li>
-            </ul>
-
-            <p>Nếu bạn <strong>KHÔNG</strong> yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này hoặc liên hệ ngay với bộ phận hỗ trợ của chúng tôi để được giúp đỡ.</p>
-
-            <p>Trân trọng,<br />
-            Đội ngũ hỗ trợ khách hàng</p>
-          </body>
-        </html>
-        """
-
-        msg = EmailMultiAlternatives(subject, text_content, from_email, to)
-        msg.attach_alternative(html_content, "text/html")
-        msg.send()
-
+        # Gọi hàm gửi OTP qua mail
+        send_otp_email(user, otp)
         return otp
 
 

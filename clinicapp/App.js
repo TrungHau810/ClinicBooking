@@ -5,19 +5,22 @@ import { MyContextProvider } from "./configs/MyContexts";
 import { NotificationProvider } from "./configs/NotificationContext";
 import { theme } from "./theme";
 import { PaperProvider } from "react-native-paper";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 const App = () => {
   return (
-    <PaperProvider theme={theme}>
-      <MyContextProvider>
-        <NotificationProvider>
-          <NavigationContainer>
-            <AuthNavigator />
-          </NavigationContainer>
-        </NotificationProvider>
-      </MyContextProvider>
-    </PaperProvider>
+    <SafeAreaProvider>
+      <PaperProvider theme={theme}>
+        <MyContextProvider>
+          <NotificationProvider>
+            <NavigationContainer>
+              <AuthNavigator />
+            </NavigationContainer>
+          </NotificationProvider>
+        </MyContextProvider>
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }
 

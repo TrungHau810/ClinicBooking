@@ -1,38 +1,3 @@
-// import { useContext } from "react";
-// import { Button, Text } from "react-native-paper";
-// import { MyDispatchContext, MyUserContext } from "../../configs/MyContexts";
-// import { SafeAreaView } from "react-native-safe-area-context";
-// import { Image, TouchableOpacity } from "react-native";
-
-
-// const Profile = ({ navigation }) => {
-
-//     const user = useContext(MyUserContext);
-//     const dispatch = useContext(MyDispatchContext);
-
-//     const logout = () => {
-//         // dispatch({
-//         //     'type': 'logout'
-//         // });
-//         // navigation.navigate('home');
-//     };
-
-//     return (
-//         <SafeAreaView>
-//             <Text>Trang thông tin cá nhân</Text>
-//             <Image style={{ width: 100, height: 100, borderRadius: 50 }} source={{ uri: user.payload.avatar }} />
-//             <Text>{`Xin chào ${user.payload.last_name} ${user.payload.first_name}!`}</Text>
-
-//             <TouchableOpacity onPress={() => logout}><Button mode="contained-tonal">Đăng xuất</Button></TouchableOpacity>
-//         </SafeAreaView>
-
-//     );
-
-// };
-
-// export default Profile;
-
-
 import { useContext } from "react";
 import { Button, Text, Divider } from "react-native-paper";
 import { MyDispatchContext, MyUserContext } from "../../configs/MyContexts";
@@ -81,16 +46,19 @@ const Profile = ({ navigation }) => {
                 </View>
 
                 <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-                    <Button mode="contained-tonal">Đăng xuất</Button>
+                    <Button mode="contained-tonal" style={styles.button} labelStyle={{ color: "#fff", fontSize: 16 }}>Đăng xuất</Button>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate("EditProfile")} style={styles.logoutBtn}>
+                    <Button mode="contained-tonal" style={styles.button} labelStyle={{ color: "#fff", fontSize: 16 }}>Chỉnh sửa thông tin</Button>
                 </TouchableOpacity>
             </SafeAreaView>
         );
     } else {
         content = (
             <SafeAreaView>
-                <Text>Vui lòng đăng nhập để sử dụng</Text>
-                <TouchableOpacity onPress={() => navigation.navigate("login")}>
-                    <Button>Đăng nhập</Button>
+                <Text style={styles.title}>Vui lòng đăng nhập để sử dụng</Text>
+                <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+                    <Button mode="contained-tonal" style={styles.button} labelStyle={{ color: "#fff", fontSize: 16 }}>Đăng nhập</Button>
                 </TouchableOpacity>
             </SafeAreaView>
         );
@@ -136,15 +104,6 @@ const styles = StyleSheet.create({
     infoSection: {
         paddingHorizontal: 10,
     },
-    label: {
-        fontWeight: "600",
-        fontSize: 16,
-        marginTop: 10,
-    },
-    value: {
-        fontSize: 16,
-        color: "#333",
-    },
     logoutBtn: {
         marginTop: 30,
         alignItems: "center",
@@ -162,6 +121,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#333",
         flexShrink: 1, // tránh tràn dòng với email dài
+    },
+    title: {
+        fontSize: 24,
+        textAlign: 'center',
+        marginBottom: 25
+    },
+    button: {
+        backgroundColor: '#17A2F3',
     },
 });
 

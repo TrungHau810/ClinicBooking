@@ -1,7 +1,7 @@
-import { Button, Card, RadioButton, Text, TextInput } from "react-native-paper";
+import { Button, Card, RadioButton, Text, TextInput, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MyStyles from "../../styles/MyStyles";
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, StyleSheet, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
 import { useEffect, useState } from "react";
 import * as ImagePicker from 'expo-image-picker'
 import Apis, { endpoints } from "../../configs/Apis";
@@ -18,7 +18,8 @@ const info = [
 ];
 
 const Register = ({ navigation }) => {
-
+    const { colors } = useTheme();
+    const [showPassword, setShowPassword] = useState({});
     const [userType, setUserType] = useState('patient'); // 'patient' or 'doctor'
     const [user, setUser] = useState({});
     const [loading, setLoading] = useState(false);
@@ -46,8 +47,8 @@ const Register = ({ navigation }) => {
         return infoArray.map(item => {
             if (item.field === 'avatar') {
                 return (
-                    <View key={item.field} style={styles.container}>
-                        <Text style={styles.avatarText}>Chọn ảnh đại diện</Text>
+                    <View key={item.field} >
+                        <Text style={styles.label}>Chọn ảnh đại diện</Text>
                         <TouchableOpacity style={styles.avatarWrapper} onPress={pick}>
                             {user.avatar ? (
                                 <Image source={{ uri: user.avatar.uri }} style={styles.avatar} />
@@ -64,10 +65,31 @@ const Register = ({ navigation }) => {
                         <Text style={styles.label}>{item.label}</Text>
                         <TextInput
                             style={styles.input}
+                            underlineColor="transparent"
                             placeholder={item.label}
-                            secureTextEntry={item.secureTextEntry}
+                            //secureTextEntry={item.secureTextEntry}
                             // value={formData[input.field]}
                             onChangeText={t => setState(t, item.field)}
+                            secureTextEntry={!!item.secureTextEntry && !showPassword[item.field]}
+                            left={item.secureTextEntry ? undefined : <TextInput.Icon icon={item.icon} />}
+                            right={item.secureTextEntry && (
+                                <TextInput.Icon
+                                    icon={showPassword[item.field] ? "eye-off" : "eye"}
+                                    onPress={() =>
+                                        setShowPassword(prev => ({
+                                            ...prev,
+                                            [item.field]: !prev[item.field]
+                                        }))
+                                    }
+                                />
+                            )}
+                            theme={{
+                                colors: {
+                                    primary: colors.accent, // màu khi focus
+                                    text: colors.text,       // màu chữ nhập
+                                    placeholder: "#333",     // màu label khi chưa focus
+                                },
+                            }}
                         />
                     </View>
                 );
@@ -114,27 +136,33 @@ const Register = ({ navigation }) => {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.title}>Đăng ký tài khoản</Text>
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={50} // tùy chỉnh để tránh header hoặc tab bar bị đẩy lên
+        >
+            <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" >
+                <Text style={styles.title}>Đăng ký tài khoản</Text>
 
-            {renderForm(info)}
+                {renderForm(info)}
 
-            <View style={{ marginBottom: 20 }}>
-                <Text style={{ fontWeight: 'bold', marginBottom: 10 }}>Loại tài khoản</Text>
-                <RadioButton.Group onValueChange={setUserType} value={userType}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <RadioButton value="patient" />
-                        <Text style={{ marginRight: 20 }}>Bệnh nhân</Text>
+                <View style={{ marginBottom: 20 }}>
+                    <Text style={{ fontWeight: 'bold', marginBottom: 10 }}>Loại tài khoản</Text>
+                    <RadioButton.Group onValueChange={setUserType} value={userType}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <RadioButton value="patient" color='#17A2F3' />
+                            <Text style={{ marginRight: 20 }}>Bệnh nhân</Text>
 
-                        <RadioButton value="doctor" />
-                        <Text>Bác sĩ</Text>
-                    </View>
-                </RadioButton.Group>
-            </View>
+                            <RadioButton value="doctor" color='#17A2F3' />
+                            <Text>Bác sĩ</Text>
+                        </View>
+                    </RadioButton.Group>
+                </View>
 
 
-            <TouchableOpacity onPress={register}><Button mode="contained">Đăng ký</Button></TouchableOpacity>
-        </ScrollView>
+                <TouchableOpacity onPress={register}><Button mode="contained" style={styles.button}>Đăng ký</Button></TouchableOpacity>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 };
 
@@ -151,16 +179,32 @@ const styles = StyleSheet.create({
         marginBottom: 25
     },
     inputContainer: {
-        marginBottom: 15
+        marginBottom: 15,
     },
     label: {
         fontSize: 15,
-        marginBottom: 5
+        marginBottom: 5,
     },
     input: {
         borderWidth: 1,
         borderColor: '#aaa',
-        borderRadius: 5,
-        padding: 10
-    }
+        borderRadius: 10,
+        backgroundColor: '#FFFFFF',
+    },
+    avatarWrapper: {
+        height: 150,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#e9e9e9',
+        borderRadius: 10,
+        marginBottom: 10
+    },
+    avatar: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+    },
+    button: {
+    backgroundColor: '#17A2F3'
+  },
 });

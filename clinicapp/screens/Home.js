@@ -1,64 +1,17 @@
-// import { useEffect, useState } from "react";
-// import { FlatList, Image, ScrollView, TouchableOpacity, View } from "react-native";
-// import { Button, List, Text } from "react-native-paper";
-// import { SafeAreaView } from "react-native-safe-area-context";
-// import Apis, { endpoints } from "../configs/Apis";
-
-
-
-// const Home = ({ navigation }) => {
-
-//     const [hospital, setHospital] = useState([]);
-
-//     const loadingHospital = async () => {
-//         let res = await Apis.get(endpoints['hospitals']);
-//         setHospital(res.data);
-//     }
-
-//     useEffect(() => {
-//         loadingHospital();
-//     }, []);
-
-
-//     return (
-//         <SafeAreaView>
-//             <Text>Chào mừng đến TH Care </Text>
-//             <View>
-//                 <Button mode="contained" onPress={() => navigation.navigate('doctorbooking')}>Đặt khám bác sĩ</Button>
-//             </View>
-
-//             {/* <TouchableOpacity onPress={navigation.navigate('profile')}>
-//                 <Button mode="contained">Đặt lịch khám</Button>
-//             </TouchableOpacity> */}
-//             <FlatList data={hospital} renderItem={({ item }) => (
-//                 <TouchableOpacity onPress={()=> {navigation.navigate('hospitaldetails', {'hospitalId': item.id})}}>
-//                     <List.Item
-//                         title={item.name}
-//                         description={`${item.address} \n ${item.phone}`}
-//                         left={() => <Image style={{ width: 50, height: 50, borderRadius: 8, marginRight: 10 }} source={{ uri: item.image }} />} />
-//                 </TouchableOpacity>
-//             )} />
-
-//            <TouchableOpacity onPress={()=>navigation.navigate('')}><Button>Đặt lịch khám bệnh</Button></TouchableOpacity>
-
-//         </SafeAreaView>
-//     );
-// }
-
-// export default Home;
-
-
 import { useEffect, useState } from "react";
-import { FlatList, Image, TouchableOpacity, View, StyleSheet, Dimensions, ScrollView } from "react-native";
+import { FlatList, Image, TouchableOpacity, View, StyleSheet, Dimensions, ScrollView, StatusBar } from "react-native";
 import { Button, Card, List, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Apis, { endpoints } from "../configs/Apis";
 import Carousel from 'react-native-reanimated-carousel';
+import MyStyles from "../styles/MyStyles";
+import { useNavigation } from "@react-navigation/native";
 
-const Home = ({ navigation }) => {
+const Home = () => {
   const [hospital, setHospital] = useState([]);
   const [specialization, setSpecialization] = useState([]);
   const { width } = Dimensions.get('window');
+  const nav = useNavigation();
 
   const imageList = [
     require('../assets/home1.jpg'),
@@ -111,12 +64,11 @@ const Home = ({ navigation }) => {
   }, [])
 
   const renderHospitalItem = ({ item }) => {
-    console.log("Image URL:", item.logo);
 
     return (
       <TouchableOpacity
         style={[styles.hospitalItem, styles.recordBox]}
-        onPress={() => navigation.navigate('hospitaldetails', { hospitalId: item.id })}
+        onPress={() => nav.navigate('HospitalDetail', { hospitalId: item.id })}
       >
         <Image source={{ uri: item.logo }} style={styles.hospitalImage} />
         <View style={styles.hospitalInfo}>
@@ -130,17 +82,23 @@ const Home = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
-        <Text style={styles.header}>Chào mừng đến TH Care</Text>
+      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+        <StatusBar barStyle="light-content" backgroundColor="#1E90FF" />
+        <View style={styles.headerContainer}>
+          <Text style={{ fontSize: 22, color: '#fff', fontWeight: 'bold', textAlign: 'center' }}>
+            Chào mừng đến Open Care
+          </Text>
+        </View>
         <View>
           <ImageSlider />
         </View>
+
         <Card.Actions>
           <View style={styles.button}>
             <Button
               mode="contained"
               style={styles.actionButton}
-              onPress={() => navigation.navigate('doctorList')}
+              onPress={() => nav.navigate('DoctorList')}
               labelStyle={styles.buttonLabel}
             >
               Đặt khám bác sĩ
@@ -148,22 +106,13 @@ const Home = ({ navigation }) => {
           </View>
         </Card.Actions>
 
-        {/* <FlatList
-          data={hospital}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderHospitalItem}
-          contentContainerStyle={styles.listContainer}
-          style={styles.p}
-        /> */}
-
         {Array.isArray(hospital) && hospital.map((item, index) => (
           <View key={index} style={styles.p}>
             {renderHospitalItem({ item })}
           </View>
         ))}
-
-        {/* {specialization.map(s => <Text key={s.id}>{s.name}</Text>)} */}
       </ScrollView>
+      <Button mode="contained" onPress={() => nav.navigate("UserList")}>Nhắn tin</Button>
     </SafeAreaView >
   );
 };
@@ -248,6 +197,12 @@ const styles = StyleSheet.create({
   },
   p: {
     paddingHorizontal: 16,
+  },
+  headerContainer: {
+    width: '100%',
+    backgroundColor: '#1E90FF',
+    paddingVertical: 20,
+    //paddingHorizontal: 16,
   },
 });
 

@@ -1,62 +1,67 @@
-// import { Chip, Text } from "react-native-paper";
-// import { SafeAreaView } from "react-native-safe-area-context";
-
-
-// const status = [
-//     { label: "Đang chờ xác nhận" },
-//     { label: "Đã xác nhận" },
-//     { label: "Đã hoàn thành" },
-//     { label: "Đã huỷ" },
-// ];
-
-
-
-// const Appointment = () => {
-
-//     return (
-//         <SafeAreaView>
-
-//             {status.map(s => <Chip mode="outlined">{s.label}</Chip>)}
-
-//             <Text>Đặt lịch hẹn khám bệnh</Text>
-//         </SafeAreaView>
-//     );
-// }
-
-// export default Appointment;
-
-
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { View, StyleSheet, FlatList } from "react-native";
 import { Button, Card, Chip, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MyDispatchContext, MyUserContext } from "../../configs/MyContexts";
 import { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 
 const statusList = [
     { label: "Chưa thanh toán", value: "unpaid" },
     { label: "Đã thanh toán", value: "paid" },
     { label: "Đã khám", value: "completed" },
-    { label: "Đã huỷ", value: "canceled" },
+    { label: "Đã huỷ", value: "cancelled" },
 ];
 
 const Appointment = () => {
     const [selectedStatus, setSelectedStatus] = useState("unpaid");
     const [appointments, setAppointments] = useState([]);
-
+    const [refreshing, setRefreshing] = useState(false);
+    const nav = useNavigation();
+    const [doctors, setDoctors] = useState([]);
     const user = useContext(MyUserContext);
-
-    const loadAppointments = async () => {
-        const token = await AsyncStorage.getItem('token');
-        const res = await authApis(token).get(endpoints['appointments']);
-        console.log(res.data);
-        setAppointments(res.data);
+    const diseaseTypeMap = {
+        HoHap: 'Đường hô hấp',
+        TieuHoa: 'Đường tiêu hoá',
+        TK_TT: 'Thần kinh - Tâm thần',
+        Mat: 'Bệnh về Mắt',
+        ChanThuong: 'Chấn thương - chỉnh hình',
+        DaLieu: 'Da liễu',
+        TaiMuiHong: 'Tai - Mũi - Họng',
+        Khac: 'Khác',
     };
+
+
+    const loadAppointments = async (isRefresh = false) => {
+        try {
+            if (isRefresh) setRefreshing(true);
+            const token = await AsyncStorage.getItem("token");
+
+            const [appointmentsRes, doctorsRes] = await Promise.all([
+                authApis(token).get(endpoints["appointments"]),
+                authApis(token).get(endpoints["doctors"]),
+            ]);
+
+            setAppointments(appointmentsRes.data);
+            setDoctors(doctorsRes.data);
+        } catch (error) {
+            console.error("Lỗi khi tải lịch khám hoặc bác sĩ:", error);
+        } finally {
+            if (isRefresh) setRefreshing(false);
+        }
+    };
+
 
     useEffect(() => {
         loadAppointments();
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadAppointments();
+        }, [])
+    );
 
     const renderStatus = (status) => {
         switch (status) {
@@ -68,28 +73,68 @@ const Appointment = () => {
                 return <Chip style={styles.canceledChip}>Đã khám</Chip>;
             case "cancelled":
                 return <Chip style={styles.completedChip}>Đã huỷ</Chip>;
-            
+
             default:
                 return <Chip>{status}</Chip>;
         }
     };
 
-    const renderAppointment = ({ item }) => (
-        <Card style={styles.card}>
-            <Card.Content>
-                <Text variant="titleMedium">Bệnh lý: {item.disease_type}</Text>
-                <Text>Ngày: {new Date(item.schedule_date).toLocaleDateString()}</Text>
-                <Text>Thời gian: {item.schedule_start.slice(0, 5)} - {item.schedule_end.slice(0, 5)}</Text>
-            </Card.Content>
-            <Card.Content>
-                {renderStatus(item.status)}
-                {item.cancel_reason && (
-                    <Text style={styles.cancelReason}>Lý do huỷ: {item.cancel_reason}</Text>
-                )}
-                <Button mode="contained" style={styles.button}>Chi tiết</Button>
-            </Card.Content>
-        </Card>
-    );
+    const renderAppointment = ({ item }) => {
+        const doctor = doctors.find(d => d.user?.id === item.schedule.doctor_id);
+        console.log(doctor);
+
+        return (
+            <Card style={styles.card}>
+                <Card.Content>
+                    <Text style={styles.m} variant="titleMedium">
+                        Lịch đặt khám bệnh BS {doctor ? doctor.doctor : "Chưa rõ"}
+                    </Text>
+
+                    {doctor && (
+                        <>
+                            <Text style={styles.m}>Bác sĩ: {doctor.doctor}</Text>
+                            <Text style={styles.m}>Bệnh viện: {doctor.hospital_name}</Text>
+                            <Text style={styles.m}>Chuyên khoa: {doctor.specialization_name}</Text>
+                        </>
+                    )}
+
+                    <Text style={styles.m}>
+                        Bệnh lý: {diseaseTypeMap[item.disease_type] || item.disease_type}
+                    </Text>
+                    <Text style={styles.m}>
+                        Ngày khám: {new Date(item.schedule.date).toLocaleDateString()}
+                    </Text>
+                    <Text style={styles.m}>
+                        Thời gian khám: Từ {item.schedule.start_time.slice(0, 5)} đến {item.schedule.end_time.slice(0, 5)}
+                    </Text><Text style={styles.m}>
+                        Phí khám bệnh: {doctor.consultation_fee}
+                    </Text>
+                </Card.Content>
+
+                <Card.Content style={styles.m}>
+                    {renderStatus(item.status)}
+                    {item.reason && (
+                        <Text style={styles.cancelReason}>Lý do huỷ: {item.reason}</Text>
+                    )}
+                    <Button
+                        mode="contained"
+                        style={styles.button}
+                        onPress={() =>
+                            nav.navigate("AppointmentDetails", {
+                                appointment: item,
+                                diseaseList: diseaseTypeMap,
+                                statusList: statusList,
+                                doctor: doctor
+                            })
+                        }
+                    >
+                        Chi tiết
+                    </Button>
+                </Card.Content>
+            </Card>
+        );
+    };
+
 
     const filteredAppointments = appointments.filter(item => item.status === selectedStatus);
 
@@ -117,17 +162,18 @@ const Appointment = () => {
                 ))}
             </View>
 
-            {filteredAppointments.length > 0 ? (
-                <FlatList
-                    data={filteredAppointments}
-                    renderItem={renderAppointment}
-                    keyExtractor={(item) => item.id.toString()}
-                />
-            ) : (
-                <Text style={styles.noAppointmentText}>
-                    Bạn chưa có phiếu khám nào
-                </Text>
-            )}
+            <FlatList
+                data={filteredAppointments}
+                renderItem={renderAppointment}
+                keyExtractor={(item) => item.id.toString()}
+                refreshing={refreshing}
+                onRefresh={() => loadAppointments(true)}
+                ListEmptyComponent={
+                    <Text style={styles.noAppointmentText}>
+                        Bạn chưa có phiếu khám nào
+                    </Text>
+                }
+            />
         </SafeAreaView>
     );
 };
@@ -200,6 +246,9 @@ const styles = StyleSheet.create({
     canceledChip: {
         backgroundColor: "#e74c3c",
         color: "#fff",
+    }, m: {
+        marginBottom: 3,
+        marginTop: 5
     },
 });
 

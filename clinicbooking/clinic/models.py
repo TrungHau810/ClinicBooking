@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
+from rest_framework.exceptions import ValidationError
 
 
 # ---------- BaseModel ---------- #
@@ -112,19 +113,15 @@ class HealthRecord(BaseModel):
 
 class Notification(BaseModel):
     class NotifyType(models.TextChoices):
-        NHAC_NHO = 'nhac_nho', 'Nhắc nhở'
         UU_DAI = 'uu_dai', 'Ưu đãi'
-        HE_THONG = 'he_thong', 'Hệ thống'
+        KHAM_SK = 'kham_sk', 'Khám sức khoẻ định kỳ'
 
-    class NotifyForm(models.TextChoices):
-        EMAIL = 'email', 'Email'
-        PUSH = 'push', 'Push Notification'
-
-    content = models.CharField(max_length=255, null=False)
+    title = models.CharField(max_length=255, blank=False, null=False)
+    content = RichTextField()
+    type = models.CharField(max_length=20, choices=NotifyType, default=NotifyType.UU_DAI)
     send_at = models.DateTimeField(null=False)
-    type = models.CharField(max_length=20, choices=NotifyType, default=NotifyType.NHAC_NHO)
-    form = models.CharField(max_length=20, choices=NotifyForm, default=NotifyForm.EMAIL)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_read = models.BooleanField(default=False)
+    users = models.ManyToManyField('User')
 
 
 class TestResult(BaseModel):
@@ -142,11 +139,14 @@ class Message(BaseModel):
     is_read = models.BooleanField(default=False)
     sender = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='sent_messages', null=True)
     receiver = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='received_messages', null=True)
-    test_result = models.OneToOneField(TestResult, on_delete=models.SET_NULL, null=True)
-    parent_message = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
+    test_result = models.OneToOneField(TestResult, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return (f"{self.sender} - {self.receiver}")
+
+    def clean(self):
+        if self.sender == self.receiver:
+            raise ValidationError("Người gửi và người nhận không được giống nhau.")
 
 
 class Review(BaseModel):
@@ -212,6 +212,7 @@ class Appointment(BaseModel):
     disease_type = models.TextField(max_length=20, choices=DISEASE_TYPE_CHOICES)
     symptoms = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unpaid')
+    reason = models.CharField(max_length=150, blank=True, null=True)
     cancel = models.BooleanField(default=False)
 
     class Meta:

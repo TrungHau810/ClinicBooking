@@ -1,32 +1,64 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, Alert, FlatList } from "react-native";
+import { View, Text, TextInput, StyleSheet, Alert, FlatList, ScrollView, TouchableOpacity } from "react-native";
 import { Button, Card } from "react-native-paper";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import HealthRecordCard from "../../components/HealthRecordCard";
+import Header from "../../components/Header";
+import { Picker } from "@react-native-picker/picker";
 
 const ScheduleBooking = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { schedule, doctor } = route.params;
     const [symptoms, setSymptoms] = useState("");
-    const [diseaseType, setDiseaseType] = useState("");
+    const [selectedDisease, setSelectedDisease] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
     const [records, setRecords] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState(null);
 
-    const info = [{
-        field: "disease_type",
-        label: "Loại bệnh",
-        value: "diseaseType",
-        event: "setDiseaseType"
-    }, {
-        field: "symptoms",
-        label: "Triệu chứng (Nếu có)",
-        value: "symptoms",
-        event: "setSymptoms"
-    }];
 
+    const diseaseType = [
+        { key: 'HoHap', label: 'Đường hô hấp' },
+        { key: 'TieuHoa', label: 'Đường tiêu hoá' },
+        { key: 'TK_TT', label: 'Thần kinh - Tâm thần' },
+        { key: 'Mat', label: 'Bệnh về Mắt' },
+        { key: 'ChanThuong', label: 'Chấn thương - chỉnh hình' },
+        { key: 'DaLieu', label: 'Da liễu' },
+        { key: 'TaiMuiHong', label: 'Tai - Mũi - Họng' },
+        { key: 'Khac', label: 'Khác' },
+    ];
+
+    const DiseaseSelector = ({ selected, setSelected }) => {
+        return (
+            <View style={{ marginBottom: 16 }}>
+                <Text style={styles.title}>Chọn loại bệnh</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {diseaseType.map(item => {
+                        const isSelected = selected === item.key;
+                        return (
+                            <TouchableOpacity
+                                key={item.key}
+                                onPress={() => setSelected(item.key)}
+                                style={[
+                                    styles.option,
+                                    isSelected && styles.optionSelected
+                                ]}
+                            >
+                                <Text style={isSelected ? styles.textSelected : styles.text}>
+                                    {item.label}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
+            </View>
+        );
+    };
+
+    // Loading các hồ sơ sức khoẻ của user đang đăng nhập
     const loadRecords = async () => {
         try {
             const token = await AsyncStorage.getItem("token");
@@ -41,58 +73,87 @@ const ScheduleBooking = () => {
         }
     };
 
+    const renderItem = ({ item }) => (
+        <TouchableOpacity onPress={() => setSelectedRecord(item)}>
+            <HealthRecordCard
+                record={item}
+                isSelected={selectedRecord?.id === item.id} // truyền để highlight
+            />
+        </TouchableOpacity>
+    );
+
+
+    const validate = () => {
+        if (!selectedRecord) {
+            Alert.alert("Lỗi", "Vui lòng chọn hồ sơ sức khoẻ!");
+            return false;
+        }
+        if (selectedDisease === null) {
+            Alert.alert("Lỗi", "Vui lòng chọn loại bệnh!");
+            return false;
+        }
+        return true;
+    };
+
+    // Hàm tạo lịch khám
+    const createAppointment = async () => {
+        try {
+            setLoading(true);
+            if (validate()) {
+                // let form = new FormData();
+                // form.append('');
+                const token = await AsyncStorage.getItem("token");
+                if (symptoms === "") {
+                    setSymptoms("Không");
+                }
+
+
+                const res = await authApis(token).post(endpoints["appointments"], {
+                    schedule_id: schedule.id,
+                    healthrecord: selectedRecord.id,
+                    disease_type: selectedDisease,
+                    symptoms: symptoms,
+                }, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                console.log("-----------");
+                console.info(res.data);
+
+                Alert.alert(
+                    "Thành công",
+                    "Đặt lịch khám thành công!",
+                    [
+                        {
+                            text: "OK",
+                            onPress: () => navigation.navigate("AppointmentTab", { screen: "Appointment" }),
+                        },
+                    ],
+                    { cancelable: false }
+                );
+            }
+        } catch (error) {
+            if (error.response && error.response.data && error.response.data.detail) {
+                Alert.alert("Lỗi", error.response.data.detail);
+            } else {
+                console.log(error);
+                Alert.alert("Lỗi", "Không thể đặt lịch!");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     useEffect(() => {
         loadRecords();
     }, []);
 
-    const renderItem = ({ item }) => <HealthRecordCard record={item} />;
-
-
-    const createAppointment = async () => {
-        if (!diseaseType || !symptoms) {
-            Alert.alert("Thiếu thông tin", "Vui lòng nhập loại bệnh và triệu chứng.");
-            return;
-        }
-        try {
-            let form = new FormData();
-            form.append('')
-            const token = await AsyncStorage.getItem("token");
-            console.log("Access Token:", token);
-
-            const res = await authApis(token).post(endpoints["appointments"], {
-                schedule: schedule.id,
-                healthrecords: 6,
-                disease_type: diseaseType,
-                symptoms: symptoms,
-            });
-            console.log("-----------");
-            console.info(res);
-
-            Alert.alert("Thành công", "Đặt lịch khám thành công!");
-            navigation.navigate("tabs", { screen: "appointment", });
-        } catch (error) {
-            console.error("Appointment error:", error);
-            Alert.alert("Lỗi", "Không thể đặt lịch!");
-        }
-    };
-
-    const renderField = (arrayInfo) => {
-        return arrayInfo.map(item => {
-            return (
-                <TextInput
-                    key={item.field}
-                    placeholder={item.label}
-                    // value={item.value}
-                    onChangeText={item.event}
-                    style={[styles.input, { height: 100 }]}
-                />
-            );
-        });
-    };
-
-
     return (
         <View style={styles.container}>
+            <Header title="Chọn lịch khám" />
             <Text style={styles.title}>Đặt lịch với bác sĩ {doctor.doctor}</Text>
             <Text style={styles.title}>Bệnh viện: {doctor.hospital_name}</Text>
             <Text style={styles.title}>Chuyên khoa: {doctor.specialization_name}</Text>
@@ -105,10 +166,34 @@ const ScheduleBooking = () => {
                 renderItem={renderItem}
             />
 
-            {renderField(info)}
+            <View style={styles.dropdownContainer}>
+                <Text style={styles.title}>Chọn loại bệnh</Text>
+                <View style={styles.pickerWrapper}>
+                    <Picker
+                        selectedValue={selectedDisease}
+                        onValueChange={(itemValue) => setSelectedDisease(itemValue)}
+                        style={styles.picker}
+                    >
+                        <Picker.Item label="-- Chọn loại bệnh --" value={null} />
+                        {diseaseType.map((item) => (
+                            <Picker.Item key={item.key} label={item.label} value={item.key} />
+                        ))}
+                    </Picker>
+                </View>
+            </View>
+
+            <TextInput
+                placeholder="Triệu chứng (nếu có)"
+                value={symptoms}
+                onChangeText={setSymptoms}
+                style={[styles.input, { height: 100 }]}
+                multiline
+            />
 
 
-            <Button mode="contained" onPress={createAppointment}>Xác nhận đặt lịch</Button>
+
+
+            <Button loading={loading} disabled={loading} mode="contained" onPress={createAppointment}>Xác nhận đặt lịch</Button>
         </View>
     );
 };
@@ -130,7 +215,20 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 10,
         marginBottom: 16,
+    }, dropdownContainer: {
+        marginBottom: 16,
+
+    }, pickerWrapper: {
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 8,
+        overflow: "hidden",
     },
+    picker: {
+        height: 50,
+        width: "100%",
+    },
+
 });
 
 export default ScheduleBooking;

@@ -115,6 +115,7 @@ class MyUserAdmin(admin.ModelAdmin):
 class MyScheduleAdmin(admin.ModelAdmin):
     list_display = ['id', 'doctor_id', 'doctor_name', 'date', 'start_time', 'end_time', 'capacity', 'sum_booking',
                     'active']
+    # list_filter = ['doctor.full_name']
     inlines = [AppointmentInline, ]
 
     # Lọc user có role là doctor
@@ -157,8 +158,22 @@ class MySpecializationAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'active']
 
 
+class NotificationForm(forms.ModelForm):
+    content = forms.CharField(widget=CKEditorUploadingWidget)
+
+    class Meta:
+        model = Notification
+        fields = '__all__'
+
+
+class MyMessageAdmin(admin.ModelAdmin):
+    list_display = ['id', 'sender', 'receiver', 'created_date']
+    list_filter = ['sender', 'receiver',]
+
+
 class MyNotificationAdmin(admin.ModelAdmin):
-    list_display = ['id', 'content', 'created_date', 'updated_date']
+    forms = NotificationForm
+    list_display = ['id', 'title', 'content', 'send_at', 'created_date', 'updated_date']
 
 
 class ReviewAdmin(admin.ModelAdmin):
@@ -230,7 +245,7 @@ admin_site.register(Doctor, MyDoctorAdmin)
 admin_site.register(HealthRecord, MyHealthRecordAdmin)
 admin_site.register(Schedule, MyScheduleAdmin)
 admin_site.register(TestResult, MyTestResultAdmin)
-admin_site.register(Message)
+admin_site.register(Message, MyMessageAdmin)
 admin_site.register(Appointment, MyAppointmentAdmin)
 admin_site.register(Review, ReviewAdmin)
 admin_site.register(Payment, MyPaymentAdmin)

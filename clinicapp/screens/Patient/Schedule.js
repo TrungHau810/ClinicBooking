@@ -6,6 +6,7 @@ import { useRoute } from "@react-navigation/native";
 import { Button, Card } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Header from "../../components/Header";
 
 const Schedule = () => {
     const route = useRoute();
@@ -14,11 +15,11 @@ const Schedule = () => {
     const [schedules, setSchedules] = useState([]);
     //const [currentUser, setCurrentUser] = useState(null);
 
+    console.log(doctor);
+
     const loadSchedule = async () => {
         try {
-            console.log(doctor);
-            const res = await Apis.get(`${endpoints["schedules"]}?doctor_id=${doctor.doctor_id}`);
-            console.log(doctor.id);
+            const res = await Apis.get(`${endpoints["schedules"]}?doctor_id=${doctor.user.id}`);
             setSchedules(res.data);
             console.info(res.data);
         } catch (error) {
@@ -32,17 +33,17 @@ const Schedule = () => {
 
 
     const renderSchedule = ({ item }) => (
-        <View style={[styles.scheduleItem, item.active && { opacity: 0.5 }]}>
+        <View style={[styles.scheduleItem, !item.active && { opacity: 0.5 }]}>
             <Text style={styles.date}>Ngày: {new Date(item.date).toLocaleDateString('vi-VN')}</Text>
             <Text>
                 Giờ: {item.start_time.slice(0, 5)} - {item.end_time.slice(0, 5)}
             </Text>
             <Text>Số lượng tối đa: {item.capacity}</Text>
-            <Text style={{ color: item.active ? 'gray' : 'green' }}>
-                Trạng thái: {item.active ? 'Hết chỗ' : 'Còn chỗ'}
+            <Text style={{ color: !item.active ? 'gray' : 'green' }}>
+                Trạng thái: {!item.active ? 'Hết chỗ' : 'Còn chỗ'}
             </Text>
             <Card.Actions>
-                <Button mode="contained" disabled={item.active} onPress={() => navigation.navigate("scheduleBooking", { doctor, schedule: item })}>Chọn</Button>
+                <Button mode="contained" disabled={!item.active} onPress={() => navigation.navigate("ScheduleBooking", { doctor, schedule: item })}>Chọn</Button>
             </Card.Actions>
         </View>
     );
@@ -50,6 +51,7 @@ const Schedule = () => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <Header title="Chọn lịch khám" />
             <Text style={styles.header}>Lịch khám của bác sĩ {doctor.doctor}</Text>
             <FlatList
                 data={schedules}

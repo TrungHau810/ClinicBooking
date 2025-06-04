@@ -22,9 +22,9 @@ const getOccupationLabel = (key) => {
   return occupations[key] || "Không rõ";
 };
 
-const HealthRecordCard = ({ record }) => {
+const HealthRecordCard = ({ record, isSelected }) => {
   return (
-    <View style={styles.recordBox}>
+    <View style={[styles.recordBox, isSelected && styles.selectedCard]}>
       <Card style={styles.card}>
         <Card.Content>
           <Text style={styles.name}>{record.full_name}</Text>
@@ -79,6 +79,10 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     marginTop: 8,
     marginHorizontal: 10,
+  },
+  selectedCard: {
+    borderColor: "#17A2F3",
+    borderWidth: 2,
   },
 });
 
