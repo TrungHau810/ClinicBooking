@@ -11,8 +11,6 @@ import Profile from "../screens/Common/Profile";
 import Home from "../screens/Home"
 import ChatScreen from "../screens/Common/ChatScreen";
 import UserList from "../screens/Common/UserList";
-
-import { Icon } from "react-native-paper";
 import PatientHealthRecordDetail from "../screens/Doctor/PatientHealthRecordDetail";
 
 

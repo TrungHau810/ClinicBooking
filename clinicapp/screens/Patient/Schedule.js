@@ -15,9 +15,11 @@ const Schedule = () => {
     const [schedules, setSchedules] = useState([]);
     //const [currentUser, setCurrentUser] = useState(null);
 
+    console.log(doctor);
+
     const loadSchedule = async () => {
         try {
-            const res = await Apis.get(`${endpoints["schedules"]}?doctor_id=${doctor.doctor_id}`);
+            const res = await Apis.get(`${endpoints["schedules"]}?doctor_id=${doctor.user.id}`);
             setSchedules(res.data);
             console.info(res.data);
         } catch (error) {

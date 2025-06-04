@@ -192,7 +192,7 @@ class Appointment(BaseModel):
         ('unpaid', 'Chưa thanh toán'),
         ('paid', 'Đã thanh toán'),
         ('completed', 'Đã khám'),
-        ('canceled', 'Đã hủy'),
+        ('cancelled', 'Đã hủy'),
     ]
 
     DISEASE_TYPE_CHOICES =[
@@ -212,6 +212,7 @@ class Appointment(BaseModel):
     disease_type = models.TextField(max_length=20, choices=DISEASE_TYPE_CHOICES)
     symptoms = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unpaid')
+    reason = models.CharField(max_length=150, blank=True, null=True)
     cancel = models.BooleanField(default=False)
 
     class Meta:

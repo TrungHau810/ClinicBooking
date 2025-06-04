@@ -4,18 +4,30 @@ import { Text, Card, Button, TextInput } from "react-native-paper";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authApis, endpoints } from "../../configs/Apis";
+import Header from "../../components/Header"
 
 const AppointmentDetails = () => {
     const route = useRoute();
     const navigation = useNavigation();
     const appointment = route?.params?.appointment;
-
+    const doctor = route?.params?.doctor;
+    const diseaseTypeMap = route?.params?.diseaseList;
+    const statusList = route?.params?.statusList;
+    const [refreshing, setRefreshing] = useState(false);
     const [cancelReason, setCancelReason] = useState("");
     const [loading, setLoading] = useState(false);
 
+
+    const getStatusLabel = (statusValue) => {
+        const statusObj = statusList.find(s => s.value === statusValue);
+        return statusObj ? statusObj.label : statusValue;
+    };
+
+    console.log(doctor);
+
     const handleCancel = async () => {
         if (!cancelReason.trim()) {
-            Alert.alert("Vui lòng nhập lý do huỷ");
+            Alert.alert("Thông báo", "Vui lòng nhập lý do huỷ");
             return;
         }
 
@@ -44,7 +56,7 @@ const AppointmentDetails = () => {
             try {
                 await authApis(token).patch(
                     `${endpoints["appointments"]}${appointment.id}/cancel/`,
-                    { cancel_reason: cancelReason }
+                    { reason: cancelReason }
                 );
 
                 Alert.alert("Huỷ thành công");
@@ -58,8 +70,8 @@ const AppointmentDetails = () => {
                         apiError.response.data?.detail ||
                         apiError.response.data?.error ||
                         JSON.stringify(apiError.response.data);
+                    console.log(message);
                 }
-
                 Alert.alert("Không thể huỷ lịch", message);
             }
         } catch (err) {
@@ -74,25 +86,29 @@ const AppointmentDetails = () => {
 
     return (
         <View style={styles.container}>
+            <Header title={"Chi tiết lịch khám"} />
             <Card>
                 <Card.Content>
-                    <Text variant="titleLarge">Chi tiết lịch khám</Text>
-                    <Text>Bệnh lý: {appointment.disease_type}</Text>
+                    <Text variant="titleLarge">Chi tiết lịch khám với BS {}</Text>
+                    <Text>Bác sĩ: {doctor.user.full_name}</Text>
+                    <Text>Bệnh viện: {doctor.hospital_name}</Text>
+                    <Text>Bác sĩ: {doctor.specialization_name}</Text>
+                    <Text>Bệnh lý: {diseaseTypeMap[appointment.disease_type] || appointment.disease_type}</Text>
                     <Text>
-                        Ngày: {new Date(appointment.schedule_date).toLocaleDateString()}
+                        Ngày: {new Date(appointment.schedule.date).toLocaleDateString()}
                     </Text>
                     <Text>
-                        Giờ: {appointment.schedule_start.slice(0, 5)} -{" "}
-                        {appointment.schedule_end.slice(0, 5)}
+                        Giờ: {appointment.schedule.start_time.slice(0, 5)} -{" "}
+                        {appointment.schedule.end_time.slice(0, 5)}
                     </Text>
-                    <Text>Trạng thái: {appointment.status}</Text>
+                    <Text>Trạng thái: {getStatusLabel(appointment.status)}</Text>
                     {appointment.cancel_reason && (
                         <Text style={styles.cancelText}>Lý do huỷ: {appointment.cancel_reason}</Text>
                     )}
                 </Card.Content>
             </Card>
 
-            {appointment.status !== "canceled" && appointment.status !== "completed" && (
+            {appointment.status !== "cancelled" && appointment.status !== "completed" && (
                 <>
                     <TextInput
                         label="Lý do huỷ"
