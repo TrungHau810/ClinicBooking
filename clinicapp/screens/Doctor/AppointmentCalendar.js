@@ -34,7 +34,7 @@ const AppointmentCalendar = () => {
         const marks = {};
 
         appointments.forEach((item) => {
-            const date = item.schedule_date;
+            const date = item.schedule.date;
             const color = statusColors[item.status] || "#999";
             const key = item.status;
 
@@ -62,7 +62,7 @@ const AppointmentCalendar = () => {
         markAppointments(appointments);
     }, [appointments]);
 
-    const filteredAppointments = selectedDate ? appointments.filter((a) => a.schedule_date === selectedDate) : [];
+    const filteredAppointments = selectedDate ? appointments.filter((a) => a.schedule.date === selectedDate) : [];
 
     return (
         <SafeAreaView style={styles.container}>
@@ -112,8 +112,8 @@ const AppointmentCalendar = () => {
                                         <Text>Bệnh nhân: {item.healthrecord.full_name}</Text>
                                         <Text>Bệnh lý: {item.disease_type}</Text>
                                         <Text>
-                                            Thời gian: {item.schedule_start.slice(0, 5)} -{" "}
-                                            {item.schedule_end.slice(0, 5)}
+                                            Thời gian: {item.schedule.start_time.slice(0, 5)} -{" "}
+                                            {item.schedule.end_time.slice(0, 5)}
                                         </Text>
                                     </Card.Content>
                                 </Card>

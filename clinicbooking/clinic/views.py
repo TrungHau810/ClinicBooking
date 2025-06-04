@@ -202,9 +202,16 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
-    queryset = TestResult.objects.filter(active=True)
+class TestResultViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.TestResultSerializer
+
+    def get_queryset(self):
+        queryset = TestResult.objects.filter(active=True)
+        health_record_id = self.request.query_params.get("health_record")
+        if health_record_id:
+            queryset = queryset.filter(health_record_id=health_record_id)
+        return queryset
+
 
 
 def is_more_than_24_hours_ahead(schedule_date, schedule_time):

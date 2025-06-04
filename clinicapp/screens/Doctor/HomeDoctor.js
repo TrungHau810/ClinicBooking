@@ -29,11 +29,43 @@ const DoctorHome = ({ navigation }) => {
         loadDoctor();
     }, []);
 
-    const stats = {
-        todayAppointments: 5,
-        patientsExamined: 3,
-        medicalResultsCreated: 2,
+    const [stats, setStats] = useState({
+        todayAppointments: 0,
+        patientsExamined: 0,
+        medicalResultsCreated: 0,
+    });
+
+    const loadTodayAppointmentsCount = async () => {
+        try {
+            const token = await AsyncStorage.getItem("token");
+            const res = await authApis(token).get(endpoints["appointments"]);
+            const appointments = res.data;
+
+            const today = new Date();
+            const count = appointments.filter(item => {
+                const date = new Date(item.schedule.date);
+                return (
+                    date.getDate() === today.getDate() &&
+                    date.getMonth() === today.getMonth() &&
+                    date.getFullYear() === today.getFullYear() &&
+                    item.status !== 'canceled' &&
+                    item.status !== 'completed'
+                );
+            }).length;
+
+            setStats(prev => ({
+                ...prev,
+                todayAppointments: count,
+            }));
+        } catch (error) {
+            console.error("Lỗi khi lấy số lịch hẹn hôm nay:", error);
+        }
     };
+
+    useEffect(() => {
+        loadDoctor();
+        loadTodayAppointmentsCount();
+    }, []);
 
     return (
         <SafeAreaView>

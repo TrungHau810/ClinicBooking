@@ -56,7 +56,7 @@ const DoctorAppointments = () => {
     };
 
     const todayAppointmentsCount = appointments.filter(
-        (item) => isToday(item.schedule_date) && item.status !== 'canceled' && item.status !== 'completed'
+        (item) => isToday(item.schedule.date) && item.status !== 'canceled' && item.status !== 'completed'
     ).length;
 
 
@@ -80,8 +80,8 @@ const DoctorAppointments = () => {
             <Card.Content>
                 <Text variant="titleMedium">Bệnh nhân: {item.healthrecord.full_name}</Text>
                 <Text>Bệnh lý: {item.disease_type}</Text>
-                <Text>Ngày: {new Date(item.schedule_date).toLocaleDateString()}</Text>
-                <Text>Thời gian: {item.schedule_start.slice(0, 5)} - {item.schedule_end.slice(0, 5)}</Text>
+                <Text>Ngày: {new Date(item.schedule.date).toLocaleDateString()}</Text>
+                <Text>Thời gian: {item.schedule.start_time.slice(0, 5)} - {item.schedule.end_time.slice(0, 5)}</Text>
             </Card.Content>
             <Card.Content>
                 {renderStatus(item.status)}

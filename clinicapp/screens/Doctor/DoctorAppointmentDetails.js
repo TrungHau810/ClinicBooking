@@ -48,10 +48,10 @@ const DoctorAppointmentDetails = () => {
                     <Text>Bệnh lý: {appointment.disease_type}</Text>
                     <Text>Triệu chứng: {appointment.symptoms}</Text>
                     <Text>
-                        Ngày: {new Date(appointment.schedule_date).toLocaleDateString()}
+                        Ngày: {new Date(appointment.schedule.date).toLocaleDateString()}
                     </Text>
                     <Text>
-                        Giờ: {appointment.schedule_start?.slice(0, 5)} - {appointment.schedule_end?.slice(0, 5)}
+                        Giờ: {appointment.schedule.start_time?.slice(0, 5)} - {appointment.schedule.end_time?.slice(0, 5)}
                     </Text>
                     {renderStatus(appointment.status)}
                     {appointment.cancel_reason && (

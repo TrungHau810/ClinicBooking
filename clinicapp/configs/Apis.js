@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://192.168.1.7:8000/";
+const BASE_URL = "http://192.168.1.105:8000/";
 
 export const endpoints = {
     'hospitals': '/hospitals/',
@@ -9,7 +9,6 @@ export const endpoints = {
     'user-patients': '/users/patients/',
     'user-doctors': '/users/doctors/',
     'doctors': '/doctors/',
-    // 'doctorinfos': '/doctorinfos/',
     'login': '/o/token/',
     'register': '/users/',
     'reset-password-otp': "/api/password-reset/otp/",

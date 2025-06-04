@@ -100,22 +100,18 @@ const ScheduleBooking = () => {
         try {
             setLoading(true);
             if (validate()) {
-                // let form = new FormData();
-                // form.append('');
                 const token = await AsyncStorage.getItem("token");
                 if (symptoms === "") {
                     setSymptoms("Không");
                 }
 
-
                 const res = await authApis(token).post(endpoints["appointments"], {
                     schedule_id: schedule.id,
-                    healthrecord: selectedRecord.id,
+                    healthrecord_id: selectedRecord.id,
                     disease_type: selectedDisease,
                     symptoms: symptoms,
                 }, {
                     headers: {
-                        Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });

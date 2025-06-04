@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { endpoints } from "../../configs/Apis";
-import TestResultCard from "../../components/TestResultCard"; // Bạn cần tạo component này
+import TestResultCard from "../../components/TestResultCard"; 
 
 const PatientHealthRecordDetail = ({ route }) => {
   const { record } = route.params;
