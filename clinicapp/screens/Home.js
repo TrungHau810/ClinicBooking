@@ -93,6 +93,11 @@ const Home = () => {
           <ImageSlider />
         </View>
 
+        <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
+        <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
+        <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
+        <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
+       
         <Card.Actions>
           <View style={styles.button}>
             <Button
