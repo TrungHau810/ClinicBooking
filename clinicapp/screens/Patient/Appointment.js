@@ -19,25 +19,42 @@ const Appointment = () => {
     const [appointments, setAppointments] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
     const nav = useNavigation();
-
+    const [doctors, setDoctors] = useState([]);
     const user = useContext(MyUserContext);
+    const diseaseTypeMap = {
+        HoHap: 'Đường hô hấp',
+        TieuHoa: 'Đường tiêu hoá',
+        TK_TT: 'Thần kinh - Tâm thần',
+        Mat: 'Bệnh về Mắt',
+        ChanThuong: 'Chấn thương - chỉnh hình',
+        DaLieu: 'Da liễu',
+        TaiMuiHong: 'Tai - Mũi - Họng',
+        Khac: 'Khác',
+    };
+
 
     const loadAppointments = async (isRefresh = false) => {
         try {
             if (isRefresh) setRefreshing(true);
-            const token = await AsyncStorage.getItem('token');
-            const res = await authApis(token).get(endpoints['appointments']);
-            setAppointments(res.data);
-        } catch (err) {
-            console.error("Lỗi khi tải lịch khám:", error);
+            const token = await AsyncStorage.getItem("token");
+
+            const [appointmentsRes, doctorsRes] = await Promise.all([
+                authApis(token).get(endpoints["appointments"]),
+                authApis(token).get(endpoints["doctors"]),
+            ]);
+
+            setAppointments(appointmentsRes.data);
+            setDoctors(doctorsRes.data);
+        } catch (error) {
+            console.error("Lỗi khi tải lịch khám hoặc bác sĩ:", error);
         } finally {
             if (isRefresh) setRefreshing(false);
         }
     };
 
+
     useEffect(() => {
         loadAppointments();
-        console.log(selectedStatus);
     }, []);
 
     useFocusEffect(
@@ -62,22 +79,62 @@ const Appointment = () => {
         }
     };
 
-    const renderAppointment = ({ item }) => (
-        <Card style={styles.card}>
-            <Card.Content>
-                <Text variant="titleMedium">Bệnh lý: {item.disease_type}</Text>
-                <Text>Ngày: {new Date(item.schedule_date).toLocaleDateString()}</Text>
-                <Text>Thời gian: {item.schedule_start.slice(0, 5)} - {item.schedule_end.slice(0, 5)}</Text>
-            </Card.Content>
-            <Card.Content>
-                {renderStatus(item.status)}
-                {item.cancel_reason && (
-                    <Text style={styles.cancelReason}>Lý do huỷ: {item.cancel_reason}</Text>
-                )}
-                <Button mode="contained" style={styles.button} onPress={() => nav.navigate('AppointmentDetails', { appointment: item })}>Chi tiết</Button>
-            </Card.Content>
-        </Card>
-    );
+    const renderAppointment = ({ item }) => {
+        const doctor = doctors.find(d => d.user?.id === item.schedule.doctor_id);
+        console.log(doctor);
+
+        return (
+            <Card style={styles.card}>
+                <Card.Content>
+                    <Text style={styles.m} variant="titleMedium">
+                        Lịch đặt khám bệnh BS {doctor ? doctor.doctor : "Chưa rõ"}
+                    </Text>
+
+                    {doctor && (
+                        <>
+                            <Text style={styles.m}>Bác sĩ: {doctor.doctor}</Text>
+                            <Text style={styles.m}>Bệnh viện: {doctor.hospital_name}</Text>
+                            <Text style={styles.m}>Chuyên khoa: {doctor.specialization_name}</Text>
+                        </>
+                    )}
+
+                    <Text style={styles.m}>
+                        Bệnh lý: {diseaseTypeMap[item.disease_type] || item.disease_type}
+                    </Text>
+                    <Text style={styles.m}>
+                        Ngày khám: {new Date(item.schedule.date).toLocaleDateString()}
+                    </Text>
+                    <Text style={styles.m}>
+                        Thời gian khám: Từ {item.schedule.start_time.slice(0, 5)} đến {item.schedule.end_time.slice(0, 5)}
+                    </Text><Text style={styles.m}>
+                        Phí khám bệnh: {doctor.consultation_fee}
+                    </Text>
+                </Card.Content>
+
+                <Card.Content style={styles.m}>
+                    {renderStatus(item.status)}
+                    {item.reason && (
+                        <Text style={styles.cancelReason}>Lý do huỷ: {item.reason}</Text>
+                    )}
+                    <Button
+                        mode="contained"
+                        style={styles.button}
+                        onPress={() =>
+                            nav.navigate("AppointmentDetails", {
+                                appointment: item,
+                                diseaseList: diseaseTypeMap,
+                                statusList: statusList,
+                                doctor: doctor
+                            })
+                        }
+                    >
+                        Chi tiết
+                    </Button>
+                </Card.Content>
+            </Card>
+        );
+    };
+
 
     const filteredAppointments = appointments.filter(item => item.status === selectedStatus);
 
@@ -189,6 +246,9 @@ const styles = StyleSheet.create({
     canceledChip: {
         backgroundColor: "#e74c3c",
         color: "#fff",
+    }, m: {
+        marginBottom: 3,
+        marginTop: 5
     },
 });
 

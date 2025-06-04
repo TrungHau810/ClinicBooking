@@ -84,16 +84,16 @@ const ScheduleBooking = () => {
 
 
     const validate = () => {
-    if (!selectedRecord) {
-        Alert.alert("Lỗi", "Vui lòng chọn hồ sơ sức khoẻ!");
-        return false;
-    }
-    if (selectedDisease === null) {
-        Alert.alert("Lỗi", "Vui lòng chọn loại bệnh!");
-        return false;
-    }
-    return true;
-};
+        if (!selectedRecord) {
+            Alert.alert("Lỗi", "Vui lòng chọn hồ sơ sức khoẻ!");
+            return false;
+        }
+        if (selectedDisease === null) {
+            Alert.alert("Lỗi", "Vui lòng chọn loại bệnh!");
+            return false;
+        }
+        return true;
+    };
 
     // Hàm tạo lịch khám
     const createAppointment = async () => {
@@ -106,6 +106,7 @@ const ScheduleBooking = () => {
                 if (symptoms === "") {
                     setSymptoms("Không");
                 }
+
 
                 const res = await authApis(token).post(endpoints["appointments"], {
                     schedule_id: schedule.id,
@@ -137,6 +138,7 @@ const ScheduleBooking = () => {
             if (error.response && error.response.data && error.response.data.detail) {
                 Alert.alert("Lỗi", error.response.data.detail);
             } else {
+                console.log(error);
                 Alert.alert("Lỗi", "Không thể đặt lịch!");
             }
         } finally {

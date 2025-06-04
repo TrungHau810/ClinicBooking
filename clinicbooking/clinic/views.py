@@ -221,94 +221,10 @@ def is_more_than_24_hours_ahead(schedule_date, schedule_time):
     return schedule_datetime - now >= timedelta(hours=24)
 
 
-class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView, generics.UpdateAPIView):
+class AppointmentViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView, generics.UpdateAPIView):
     queryset = Appointment.objects.filter().all()
     serializer_class = serializers.AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
-
-    def send_appointment_successfull_email(self, appointment):
-        """
-        Gửi email xác nhận đặt lịch khám thành công
-        :param appointment: Lịch khám
-        :return:
-        """
-        healthrecord = appointment.healthrecord
-        schedule = appointment.schedule
-        doctor = schedule.doctor
-        infodr = doctor.doctor
-        subject = "Đặt lịch khám bệnh thành công - Clinic Booking"
-        from_email = settings.DEFAULT_FROM_EMAIL
-        to_email = [healthrecord.email]
-
-        text_content = f"""
-        Chào {healthrecord.full_name},
-
-        Bạn đã đặt lịch khám thành công (Mã: #{appointment.id}).
-        Vui lòng thanh toán trong vòng 30 phút kể từ lúc đặt.
-        Nếu đã thanh toán, vui lòng bỏ qua email này.
-
-        Trân trọng,
-        Clinic Booking App
-        """
-
-        html_content = f"""
-        <p>Chào <strong>{healthrecord.full_name}</strong>,</p>
-
-        <p>Bạn đã đặt lịch khám bệnh thành công tại <strong>Clinic Booking</strong>.</p>
-
-        <p><strong>Thông tin lịch khám:</strong></p>
-        <ul>
-            <li><strong>Mã lịch hẹn:</strong> #{appointment.id}</li>
-            <li><strong>Mã hồ sơ sức khoẻ:</strong> #{healthrecord.id}</li>
-            <li><strong>Ngày khám:</strong> {schedule.date.strftime('%d/%m/%Y')}</li>
-            <li><strong>Thời gian:</strong> {schedule.start_time} - {schedule.end_time}</li>
-            <li><strong>Bác sĩ:</strong> {doctor.full_name}</li>
-            <li><strong>Bệnh viện:</strong> {infodr.hospital}</li>
-            <li><strong>Chuyên khoa:</strong> {infodr.specialization}</li>
-        </ul>
-
-        <p><em style="color:red;"><strong>Lưu ý:</strong> Vui lòng thanh toán trong vòng <strong>30 phút</strong> kể từ khi đặt lịch.<br>
-        Nếu đã thanh toán, vui lòng bỏ qua email này.</em></p>
-
-        <p style="margin-top:20px;">Trân trọng,<br><em>Đội ngũ Clinic Booking</em></p>
-        """
-
-        msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
-        msg.attach_alternative(html_content, "text/html")
-        msg.send()
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        schedule_id = request.data.get('schedule_id')
-        healthrecord_id = request.data.get('healthrecord')
-        print(schedule_id, healthrecord_id)
-
-        try:
-            schedule = Schedule.objects.get(id=schedule_id)
-            healthrecord = HealthRecord.objects.get(pk=healthrecord_id)
-            print(schedule, healthrecord)
-        except (Schedule.DoesNotExist, HealthRecord.DoesNotExist):
-            return Response({"detail": "Dữ liệu không hợp lệ"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Kiểm tra xem bệnh nhân đã có lịch với lịch này chưa (nếu cần)
-        if Appointment.objects.filter(healthrecord=healthrecord, schedule=schedule).exists():
-            return Response({"detail": "Bạn đã có lịch khám này rồi!"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Tạo appointment
-        appointment = Appointment.objects.create(
-            healthrecord=healthrecord,
-            schedule=schedule,
-            disease_type=serializer.validated_data['disease_type'],
-            symptoms=serializer.validated_data.get('symptoms', ''),
-            status='unpaid'
-        )
-        schedule.sum_booking += 1
-        schedule.save()
-        output_serializer = self.get_serializer(appointment)
-        self.send_appointment_successfull_email(appointment)
-        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
@@ -333,7 +249,7 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
         if appointment.cancel:
             return Response({'detail': 'Lịch khám này đã bị huỷ'}, status=status.HTTP_400_BAD_REQUEST)
         if not is_more_than_24_hours_ahead(schedule_date, schedule_time):
-            return Response({'erorr': 'Bạn chỉ được huỷ lịch trước 24 tiếng'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Bạn chỉ được huỷ lịch trước 24 tiếng'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Huỷ lịch
         appointment.cancel = True
@@ -411,7 +327,7 @@ def get_payment(self, request, pk):
 
 
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
-                      generics.CreateAPIView, generics.UpdateAPIView):
+                      generics.CreateAPIView, generics.UpdateAPIView, generics.RetrieveAPIView):
     queryset = Schedule.objects.all()
     serializer_class = serializers.ScheduleSerializer
     parser_classes = [parsers.MultiPartParser]
@@ -423,6 +339,8 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
         # Lọc theo bác sĩ (user_id)
         if (doctor_id := params.get('doctor_id')):
             queryset = queryset.filter(doctor_id=int(doctor_id))
+            print(queryset)
+            print(doctor_id)
 
         # Lọc theo ngày cụ thể
         if (date := params.get('date')):
@@ -445,6 +363,7 @@ class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
         participant_id = self.request.query_params.get('participant_id')
         print(participant_id)
         if not participant_id:
+            return Message.objects.none()
             raise ValidationError("participant_id is required")
 
         try:
@@ -452,8 +371,8 @@ class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
 
         except User.DoesNotExist:
             raise ValidationError("Người dùng không tồn tại")
-        messages = Message.objects.filter(Q(sender=user, receiver=participant) | Q(sender=participant, receiver=user)).order_by('created_date')
-        print(messages)
+        messages = Message.objects.filter(
+            Q(sender=user, receiver=participant) | Q(sender=participant, receiver=user)).order_by('created_date')
 
         return messages
 
@@ -480,31 +399,6 @@ class MessageViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
         serializer.save(sender=sender, receiver=receiver)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    # def perform_create(self, serializer):
-    #     user = self.request.user
-    #     receiver = serializer.validated_data.get('receiver')
-    #     print(receiver)
-    #
-    #     if not receiver:
-    #         raise PermissionDenied("Bạn phải chọn người nhận tin nhắn.")
-    #
-    #     if not hasattr(user, 'role') or user.role not in ['patient', 'doctor']:
-    #         raise PermissionDenied("Bạn không có quyền gửi tin nhắn.")
-    #
-    #     if not hasattr(receiver, 'role') or receiver.role not in ['patient', 'doctor']:
-    #         raise PermissionDenied("Người nhận phải là bệnh nhân hoặc bác sĩ.")
-    #
-    #     # Bệnh nhân chỉ được phép nhắn với bác sĩ
-    #     if user.role == 'patient' and receiver.role != 'doctor':
-    #         raise PermissionDenied("Bệnh nhân chỉ được phép nhắn tin cho bác sĩ.")
-    #
-    #     # Bác sĩ chỉ được phép nhắn với bệnh nhân
-    #     if user.role == 'doctor' and receiver.role != 'patient':
-    #         raise PermissionDenied("Bác sĩ chỉ được phép nhắn tin cho bệnh nhân.")
-    #
-    #     # Nếu đúng thì lưu tin nhắn
-    #     serializer.save(sender=user)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

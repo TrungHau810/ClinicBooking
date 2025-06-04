@@ -5,7 +5,6 @@ import Apis, { endpoints } from "../../configs/Apis";
 import { Button, Card, Searchbar, List, Icon } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../../components/Header";
-import StepIndicator from "../../components/StepIndicator";
 
 
 const DoctorList = () => {
