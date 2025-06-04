@@ -243,6 +243,7 @@ class AppointmentViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.List
         appointment = Appointment.objects.get(pk=pk)
         schedule_date = appointment.schedule.date
         schedule_time = appointment.schedule.start_time
+        reason_cancel = request.data.get('reason')
         if not appointment:
             return Response({'detail': 'Không tìm thấy lịch khám!'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -254,6 +255,7 @@ class AppointmentViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.List
         # Huỷ lịch
         appointment.cancel = True
         appointment.status = "cancelled"
+        appointment.reason = reason_cancel
         appointment.save()
 
         # Giảm số lượng đặt lịch khám của bác sĩ

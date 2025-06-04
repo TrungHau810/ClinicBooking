@@ -74,7 +74,7 @@ const DoctorList = () => {
           <Text>Cơ sở: {dr.hospital_name}</Text>
           <Text style={{ paddingTop: 5 }}>Kinh nghiệm: {dr.biography}</Text>
           <Text style={{ paddingTop: 5 }}>Giá khám bệnh: {dr.consultation_fee}</Text>
-          <Text style={{ paddingTop: 5 }}>
+          <Text onPress={() => navigation.navigate("Review", { doctor: dr })} style={{ paddingTop: 5 }}>
             {dr.total_reviews === 0
               ? 'Chưa có lượt đánh giá'
               : `Đánh giá: ${dr.average_rating}⭐ (${dr.total_reviews} lượt đánh giá)`
