@@ -9,7 +9,8 @@ const DoctorAppointmentDetails = () => {
     const { params } = useRoute();
     const navigation = useNavigation();
     const [appointment, setAppointment] = useState(params.appointment);
-
+    const [diseaseTypeMap] = useState(params.diseaseTypeMap);
+    
     const markAsCompleted = async () => {
         try {
             const token = await AsyncStorage.getItem("token");
@@ -45,13 +46,13 @@ const DoctorAppointmentDetails = () => {
             <Card style={styles.card}>
                 <Card.Content>
                     <Text variant="titleMedium">Bệnh nhân: {appointment.healthrecord.full_name}</Text>
-                    <Text>Bệnh lý: {appointment.disease_type}</Text>
-                    <Text>Triệu chứng: {appointment.symptoms}</Text>
+                    <Text> Bệnh lý: {diseaseTypeMap[appointment.disease_type] || appointment.disease_type}</Text>
+                    <Text>Triệu chứng: {appointment.symptoms === "" ? "Không" : appointment.symptoms}</Text>
                     <Text>
-                        Ngày: {new Date(appointment.schedule_date).toLocaleDateString()}
+                        Ngày: {new Date(appointment.schedule.date).toLocaleDateString()}
                     </Text>
                     <Text>
-                        Giờ: {appointment.schedule_start?.slice(0, 5)} - {appointment.schedule_end?.slice(0, 5)}
+                        Giờ: {appointment.schedule.start_time?.slice(0, 5)} - {appointment.schedule.end_time?.slice(0, 5)}
                     </Text>
                     {renderStatus(appointment.status)}
                     {appointment.cancel_reason && (
@@ -78,7 +79,7 @@ const DoctorAppointmentDetails = () => {
                         navigation.navigate("CreateMedicalResult", {
                             appointmentId: appointment.id,
                             patientName: appointment.healthrecord.full_name,
-                            healthRecordId: appointment.healthrecord.id, 
+                            healthRecordId: appointment.healthrecord.id,
                         })
                     }
                 >

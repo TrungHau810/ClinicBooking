@@ -14,6 +14,17 @@ const statusList = [
     { label: "Đã huỷ", value: "canceled" },
 ];
 
+const diseaseTypeMap = {
+    HoHap: 'Đường hô hấp',
+    TieuHoa: 'Đường tiêu hoá',
+    TK_TT: 'Thần kinh - Tâm thần',
+    Mat: 'Bệnh về Mắt',
+    ChanThuong: 'Chấn thương - chỉnh hình',
+    DaLieu: 'Da liễu',
+    TaiMuiHong: 'Tai - Mũi - Họng',
+    Khac: 'Khác',
+};
+
 const DoctorAppointments = () => {
     const [selectedStatus, setSelectedStatus] = useState("unpaid");
     const [appointments, setAppointments] = useState([]);
@@ -79,9 +90,9 @@ const DoctorAppointments = () => {
         <Card style={styles.card}>
             <Card.Content>
                 <Text variant="titleMedium">Bệnh nhân: {item.healthrecord.full_name}</Text>
-                <Text>Bệnh lý: {item.disease_type}</Text>
-                <Text>Ngày: {new Date(item.schedule_date).toLocaleDateString()}</Text>
-                <Text>Thời gian: {item.schedule_start.slice(0, 5)} - {item.schedule_end.slice(0, 5)}</Text>
+                <Text>Bệnh lý: {diseaseTypeMap[item.disease_type] || item.disease_type}</Text>
+                <Text>Ngày: {new Date(item.schedule.date).toLocaleDateString()}</Text>
+                <Text>Thời gian: {item.schedule.start_time.slice(0, 5)} - {item.schedule.end_time.slice(0, 5)}</Text>
             </Card.Content>
             <Card.Content>
                 {renderStatus(item.status)}
@@ -91,9 +102,9 @@ const DoctorAppointments = () => {
                 <Button
                     mode="outlined"
                     style={styles.button}
-                    onPress={() => nav.navigate("DoctorAppointmentDetails", { appointment: item })}
+                    onPress={() => nav.navigate("DoctorAppointmentDetails", { appointment: item, diseaseTypeMap: diseaseTypeMap })}
                 >
-                    Chi tiết
+                    Xem chi tiết
                 </Button>
             </Card.Content>
         </Card>

@@ -115,8 +115,6 @@ const ScheduleBooking = () => {
                         'Content-Type': 'application/json'
                     }
                 });
-                console.log("-----------");
-                console.info(res);
 
                 Alert.alert(
                     "Thành công",
@@ -131,12 +129,7 @@ const ScheduleBooking = () => {
                 );
             }
         } catch (error) {
-            if (error.response && error.response.data && error.response.data.detail) {
-                Alert.alert("Lỗi", error.response.data.detail);
-            } else {
-                console.log(error);
-                Alert.alert("Lỗi", "Không thể đặt lịch!");
-            }
+            Alert.alert("Lỗi", error.response.data.non_field_errors[0]);
         } finally {
             setLoading(false);
         }

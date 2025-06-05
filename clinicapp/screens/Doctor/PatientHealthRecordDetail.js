@@ -3,11 +3,16 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator } from "react-nativ
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { endpoints } from "../../configs/Apis";
 import TestResultCard from "../../components/TestResultCard"; // Bạn cần tạo component này
+import { Button } from "react-native-paper";
+import { useNavigation } from "@react-navigation/native";
 
 const PatientHealthRecordDetail = ({ route }) => {
   const { record } = route.params;
   const [testResults, setTestResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const nav = useNavigation();
+
+  console.log(record);
 
   const loadTestResults = async () => {
     try {
@@ -29,7 +34,8 @@ const PatientHealthRecordDetail = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🩺 Hồ sơ: {record.name}</Text>
+      <Text style={styles.title}>🩺 Hồ sơ: {record.full_name} </Text>
+      <Button onPress={()=>nav.navigate("EditHealthRecord", {healthrecord: record})}>Cập nhật</Button>
       <Text style={styles.subtitle}>📋 Kết quả xét nghiệm</Text>
 
       {loading ? (

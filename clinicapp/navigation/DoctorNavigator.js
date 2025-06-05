@@ -8,10 +8,10 @@ import AppointmentCalendar from "../screens/Doctor/AppointmentCalendar";
 import DoctorAppointmentDetails from "../screens/Doctor/DoctorAppointmentDetails";
 import CreateMedicalResult from "../screens/Doctor/CreateMedicalResult";
 import Profile from "../screens/Common/Profile";
-import Home from "../screens/Home"
 import ChatScreen from "../screens/Common/ChatScreen";
 import UserList from "../screens/Common/UserList";
 import PatientHealthRecordDetail from "../screens/Doctor/PatientHealthRecordDetail";
+import EditHealthRecord from "../screens/Doctor/EditHealthRecord";
 
 
 const Stack = createNativeStackNavigator();
@@ -57,6 +57,7 @@ const DoctorNavigator = () => {
             <Stack.Screen name="DoctorAppointmentDetails" component={DoctorAppointmentDetails} />
             <Stack.Screen name="CreateMedicalResult" component={CreateMedicalResult} />
             <Stack.Screen name="PatientHealthRecordDetail" component={PatientHealthRecordDetail} />
+            <Stack.Screen name="EditHealthRecord" component={EditHealthRecord} />
         </Stack.Navigator>
     );
 };

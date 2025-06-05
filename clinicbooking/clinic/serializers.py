@@ -259,9 +259,19 @@ class MessageSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(ModelSerializer):
+    patient_name = serializers.CharField(source='patient.full_name', read_only=True)
+    avatar_patient = serializers.CharField(source='patient.avatar.url', read_only=True)
+    doctor_name = serializers.CharField(source='doctor.full_name', read_only=True)
+    doctor = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), write_only=True)
+
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = ['id', 'rating', 'comment', 'reply', 'patient_name', 'avatar_patient', 'doctor', 'doctor_name']
+
+    def create(self, validated_data):
+        request = self.context['request']
+        validated_data['patient'] = request.user
+        return super().create(validated_data)
 
 
 class PaymentSerializer(ModelSerializer):

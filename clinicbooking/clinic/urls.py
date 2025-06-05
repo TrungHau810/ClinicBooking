@@ -24,11 +24,13 @@ router.register('payments', views.PaymentViewSet, basename='payment')
 # # router.register('admin-report', views.AdminReportViewSet, basename='adminreport')
 router.register('notifications', views.NotificationViewSet, basename='notification')
 
-
 urlpatterns = [
     path('', include(router.urls)),
     path('api/password-reset/otp/', PasswordResetSendOTPViewSet.as_view(), name='send_otp'),
     path('api/password-reset/otp/confirm/', PasswordResetConfirmOTPViewSet.as_view(), name='confirm_otp'),
     path('reportsdoctor/', DoctorReportViewSet.as_view(), name='doctorreport'),
     path('reportsadmin/', AdminReportViewSet.as_view(), name='adminreport'),
+    # Tạo url cho create-payment-url
+    path('create-payment-url/', views.create_payment_url, name='create_payment_url'),
+    path('api/vnpay_return/', views.vnpay_return, name='vnpay_return'),
 ]

@@ -81,7 +81,6 @@ const Appointment = () => {
 
     const renderAppointment = ({ item }) => {
         const doctor = doctors.find(d => d.user?.id === item.schedule.doctor_id);
-        console.log(doctor);
 
         return (
             <Card style={styles.card}>
