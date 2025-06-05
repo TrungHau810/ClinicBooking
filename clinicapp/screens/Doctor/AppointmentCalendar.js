@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MyUserContext } from "../../configs/MyContexts";
+import Header from "../../components/Header";
 
 const AppointmentCalendar = () => {
     const [appointments, setAppointments] = useState([]);
@@ -29,6 +30,21 @@ const AppointmentCalendar = () => {
         completed: "#3498db",
         canceled: "#e74c3c",
     };
+
+    const renderStatus = (status) => {
+            switch (status) {
+                case "unpaid":
+                    return <Chip style={styles.pendingChip}>Chưa thanh toán</Chip>;
+                case "paid":
+                    return <Chip style={styles.confirmedChip}>Đã thanh toán</Chip>;
+                case "completed":
+                    return <Chip style={styles.completedChip}>Đã khám</Chip>;
+                case "canceled":
+                    return <Chip style={styles.canceledChip}>Đã huỷ</Chip>;
+                default:
+                    return <Chip>{status}</Chip>;
+            }
+        };
 
     const markAppointments = (appointments) => {
         const marks = {};
@@ -64,6 +80,7 @@ const AppointmentCalendar = () => {
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
+            <Header title={"Lịch hẹn khám bệnh"} />
             <FlatList
                 data={selectedDate ? filteredAppointments : []}
                 keyExtractor={(item) => item.id.toString()}
@@ -109,11 +126,12 @@ const AppointmentCalendar = () => {
                     <View style={styles.recordBox}>
                         <Card style={styles.card}>
                             <Card.Content>
-                                <Text>Bệnh nhân: {item.healthrecord.full_name}</Text>
-                                <Text>Bệnh lý: {item.disease_type}</Text>
-                                <Text>
+                                <Text style={styles.itemText}>Bệnh nhân: {item.healthrecord.full_name}</Text>
+                                <Text style={styles.itemText}>Bệnh lý: {item.disease_type}</Text>
+                                <Text style={styles.itemText}>
                                     Thời gian: {item.schedule.start_time.slice(0, 5)} - {item.schedule.end_time.slice(0, 5)}
                                 </Text>
+                                {renderStatus(item.status)}
                             </Card.Content>
                         </Card>
                     </View>
@@ -143,7 +161,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     card: {
-        padding: 8,
+       padding: 3,
         borderRadius: 8,
         elevation: 3,
     },
@@ -161,6 +179,9 @@ const styles = StyleSheet.create({
         marginBottom: 1,
         marginTop: 7,
         marginHorizontal: 10,
+    },
+    itemText: {
+        marginBottom: 8, 
     },
 });
 

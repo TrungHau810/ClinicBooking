@@ -13,6 +13,7 @@ import HomeDoctor from "../screens/Doctor/HomeDoctor";
 import ChatScreen from "../screens/Common/ChatScreen";
 import UserList from "../screens/Common/UserList";
 import PatientHealthRecordDetail from "../screens/Doctor/PatientHealthRecordDetail";
+import DoctorReport from "../screens/Doctor/DoctorReport";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -71,6 +72,20 @@ const TabNavigator = () => {
           ),
         }}
       />
+      <Tab.Screen
+        name="DoctorReport"
+        component={DoctorReport}
+        options={{
+          tabBarLabel: "Báo cáo",
+          tabBarIcon: ({ focused }) => (
+            <Icon
+              size={30}
+              source="chart-bar"
+              color={focused ? theme.colors.primary : "black"}
+            />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 };
@@ -79,11 +94,11 @@ const DoctorNavigator = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen name="MainDoctor" component={TabNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="ChatStack" component={ChatStack} options={{ headerShown: false }}/>
-      <Stack.Screen name="AppointmentCalendar" component={AppointmentCalendar} />
-      <Stack.Screen name="DoctorAppointmentDetails" component={DoctorAppointmentDetails} />
+      <Stack.Screen name="ChatStack" component={ChatStack} options={{ headerShown: false }} />
+      <Stack.Screen name="AppointmentCalendar" component={AppointmentCalendar} options={{ headerShown: false }} />
+      <Stack.Screen name="DoctorAppointmentDetails" component={DoctorAppointmentDetails} options={{ headerShown: false }} />
       <Stack.Screen name="CreateMedicalResult" component={CreateMedicalResult} />
-      <Stack.Screen name="PatientHealthRecordDetail" component={PatientHealthRecordDetail} />
+      <Stack.Screen name="PatientHealthRecordDetail" component={PatientHealthRecordDetail} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };

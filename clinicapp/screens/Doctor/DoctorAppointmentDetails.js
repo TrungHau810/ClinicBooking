@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Alert } from "react-native";
+import { View, StyleSheet, Alert, SafeAreaView } from "react-native";
 import { Button, Card, Chip, Text } from "react-native-paper";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authApis, endpoints } from "../../configs/Apis";
+import Header from "../../components/Header";
 
 const DoctorAppointmentDetails = () => {
     const { params } = useRoute();
@@ -41,21 +42,26 @@ const DoctorAppointmentDetails = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
+            <Header title={"Tạo kết quả xét nghiệm"} />
             <Card style={styles.card}>
                 <Card.Content>
-                    <Text variant="titleMedium">Bệnh nhân: {appointment.healthrecord.full_name}</Text>
-                    <Text>Bệnh lý: {appointment.disease_type}</Text>
-                    <Text>Triệu chứng: {appointment.symptoms}</Text>
-                    <Text>
+                    <Text variant="titleMedium" style={styles.itemText}>
+                        Bệnh nhân: {appointment.healthrecord.full_name}
+                    </Text>
+                    <Text style={styles.itemText}>Bệnh lý: {appointment.disease_type}</Text>
+                    <Text style={styles.itemText}>Triệu chứng: {appointment.symptoms}</Text>
+                    <Text style={styles.itemText}>
                         Ngày: {new Date(appointment.schedule.date).toLocaleDateString()}
                     </Text>
-                    <Text>
+                    <Text style={styles.itemText}>
                         Giờ: {appointment.schedule.start_time?.slice(0, 5)} - {appointment.schedule.end_time?.slice(0, 5)}
                     </Text>
                     {renderStatus(appointment.status)}
                     {appointment.cancel_reason && (
-                        <Text style={styles.cancelReason}>Lý do huỷ: {appointment.cancel_reason}</Text>
+                        <Text style={[styles.itemText, styles.cancelReason]}>
+                            Lý do huỷ: {appointment.cancel_reason}
+                        </Text>
                     )}
                 </Card.Content>
             </Card>
@@ -78,7 +84,7 @@ const DoctorAppointmentDetails = () => {
                         navigation.navigate("CreateMedicalResult", {
                             appointmentId: appointment.id,
                             patientName: appointment.healthrecord.full_name,
-                            healthRecordId: appointment.healthrecord.id, 
+                            healthRecordId: appointment.healthrecord.id,
                         })
                     }
                 >
@@ -93,7 +99,7 @@ const DoctorAppointmentDetails = () => {
             >
                 Quay lại
             </Button>
-        </View>
+        </SafeAreaView>
     );
 };
 
@@ -140,6 +146,9 @@ const styles = StyleSheet.create({
     resultButton: {
         marginTop: 12,
         backgroundColor: "#27ae60",
+    },
+    itemText: {
+        marginBottom: 8,
     },
 });
 

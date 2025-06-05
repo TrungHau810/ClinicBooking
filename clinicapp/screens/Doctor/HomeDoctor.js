@@ -24,8 +24,6 @@ const DoctorHome = ({ navigation }) => {
         }
     };
 
-
-
     useEffect(() => {
         loadDoctor();
     }, []);
@@ -90,9 +88,12 @@ const DoctorHome = ({ navigation }) => {
         <SafeAreaView>
             <ScrollView contentContainerStyle={styles.container}>
                 {user?.payload?.full_name && (
-                    <Text style={styles.header}>
-                        Chào mừng bác sĩ {user.payload.full_name}
-                    </Text>
+                    <View style={styles.greetingRow}>
+                        <Icon source="hand-wave" size={24} color="#f9a825" style={{ marginRight: 8 }} />
+                        <Text style={styles.header}>
+                            Chào mừng bác sĩ {user.payload.full_name}
+                        </Text>
+                    </View>
                 )}
                 <View style={styles.statsRow}>
                     <Card style={styles.statCard}>
@@ -152,9 +153,10 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
     },
     header: {
-        fontSize: 22,
-        fontWeight: "bold",
-        marginBottom: 20,
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#1565C0',
+        marginLeft: 8,
     },
     statsRow: {
         flexDirection: "row",
@@ -194,6 +196,11 @@ const styles = StyleSheet.create({
         borderRadius: 30,
         padding: 10,
         marginBottom: 8,
+    },
+    greetingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
     },
 });
 

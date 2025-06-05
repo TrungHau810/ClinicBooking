@@ -42,7 +42,7 @@ const HealthRecorStack = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HealthRecordList" component={HealthRecordList} />
       <Stack.Screen name="CreateHealthRecord" component={CreateHealthRecord} />
-      <Stack.Screen name="TestResult" component={TestResult} options={{ title: "Kết quả xét nghiệm", headerShown: true}}/>
+      <Stack.Screen name="TestResult" component={TestResult} />
     </Stack.Navigator>
   );
 };

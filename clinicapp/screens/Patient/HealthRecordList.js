@@ -41,6 +41,7 @@ const HealthRecordList = ({ navigation }) => {
         navigation.navigate("TestResult", {
           healthRecordId: item.id,
           patientName: item.full_name || "Bệnh nhân",
+          record: item,
         })
       }
     >

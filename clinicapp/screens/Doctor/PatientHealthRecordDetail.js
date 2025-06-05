@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput, Button, Alert, ScrollView } from "react-native";
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput, Button, Alert, ScrollView, SafeAreaView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { endpoints } from "../../configs/Apis";
 import TestResultCard from "../../components/TestResultCard";
 import he from "he";
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Header from "../../components/Header";
 
 const PatientHealthRecordDetail = ({ route }) => {
   const { record } = route.params;
@@ -74,16 +76,23 @@ const PatientHealthRecordDetail = ({ route }) => {
 
   const renderHeader = () => (
     <View>
-      <Text style={styles.title}>🩺 Hồ sơ: {record.name}</Text>
+      <Text style={styles.title}>
+        <MaterialCommunityIcons name="file-document-outline" size={25} color="#1E90FF" /> Hồ sơ của: {record.full_name}
+      </Text>
 
-      <Text style={styles.subtitle}>🕘 Tiền sử bệnh đã lưu</Text>
+      <Text style={styles.subtitle}>
+        <MaterialCommunityIcons name="history" size={22} color="#1E90FF" /> Tiền sử bệnh đã lưu
+      </Text>
       <View style={styles.historyBox}>
         <Text style={styles.historyText}>
           {savedHistory?.trim() !== "" ? savedHistory : "Chưa có thông tin"}
         </Text>
       </View>
 
-      <Text style={styles.subtitle}>✍️ Chỉnh sửa tiền sử bệnh lý</Text>
+      <Text style={styles.subtitle}>
+        <MaterialCommunityIcons name="pencil-outline" size={22} color="#1E90FF" /> Chỉnh sửa tiền sử bệnh lý
+      </Text>
+
       <TextInput
         onChangeText={setHistory}
         placeholder="Nhập tiền sử bệnh..."
@@ -92,19 +101,24 @@ const PatientHealthRecordDetail = ({ route }) => {
         value={history}
         style={styles.input}
       />
-      <Button
-        title={saving ? "Đang lưu..." : "Lưu tiền sử bệnh"}
-        onPress={updateMedicalHistory}
-        color="#1E90FF"
-        disabled={saving}
-      />
+      <View style={styles.buttonContainer}>
+        <Button
+          title={saving ? "Đang lưu..." : "Lưu tiền sử bệnh"}
+          onPress={updateMedicalHistory}
+          color="#1E90FF"
+          disabled={saving}
+        />
+      </View>
 
-      <Text style={styles.subtitle}>📋 Kết quả xét nghiệm</Text>
+      <Text style={styles.subtitle}>
+        <MaterialCommunityIcons name="clipboard-text-outline" size={22} color="#1E90FF" /> Kết quả xét nghiệm
+      </Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <Header title={"Hồ sơ bệnh án"} />
       {loading ? (
         <ActivityIndicator size="large" color="#1E90FF" style={{ marginTop: 20 }} />
       ) : (
@@ -118,7 +132,7 @@ const PatientHealthRecordDetail = ({ route }) => {
           }
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -131,7 +145,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginHorizontal: 5,
+    justifyContent: 'center',
+    textAlign: 'center'
   },
   subtitle: {
     fontSize: 18,
@@ -164,6 +180,11 @@ const styles = StyleSheet.create({
   historyText: {
     fontSize: 16,
     color: "#333",
+  },
+  buttonContainer: {
+    borderRadius: 20,
+    overflow: 'hidden', // cần để borderRadius có hiệu lực
+    elevation: 2, // tạo hiệu ứng đổ bóng nếu cần
   },
 });
 
