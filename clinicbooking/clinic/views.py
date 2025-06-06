@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import urllib
 from datetime import datetime, timedelta
 from django.contrib.auth.tokens import default_token_generator
 import random
@@ -6,14 +9,14 @@ from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from oauthlib.uri_validate import query
 from pyexpat.errors import messages
 from requests_toolbelt.multipart.encoder import total_len
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action, permission_classes, api_view
 from rest_framework.exceptions import PermissionDenied, AuthenticationFailed, ValidationError
 from rest_framework.views import APIView
 from clinic import serializers, paginators
@@ -202,9 +205,16 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
-    queryset = TestResult.objects.filter(active=True)
+class TestResultViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.TestResultSerializer
+
+    def get_queryset(self):
+        queryset = TestResult.objects.filter(active=True)
+        health_record_id = self.request.query_params.get("health_record")
+        if health_record_id:
+            queryset = queryset.filter(health_record_id=health_record_id)
+        return queryset
+
 
 
 def is_more_than_24_hours_ahead(schedule_date, schedule_time):
@@ -237,6 +247,12 @@ class AppointmentViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.List
         # user là bác sĩ: Lấy các lịch khám các user đặt bác sĩ đó
         if user.role == 'doctor':
             return Appointment.objects.filter(schedule__doctor=user)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        appointment = serializer.save()
+        return Response(self.get_serializer(appointment).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["patch"], permission_classes=[permissions.IsAuthenticated])
     def cancel(self, request, pk=None):
@@ -280,7 +296,7 @@ class AppointmentViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.List
             return Response("Lịch khám đã bị huỷ", status=status.HTTP_404_NOT_FOUND)
 
         if not is_more_than_24_hours_ahead(schedule_date, schedule_time):
-            return Response({'erorr': 'Bạn chỉ được đổi lịch trước 24 tiếng'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Bạn chỉ được đổi lịch trước 24 tiếng'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Lấy id của lịch mới
         new_schedule_id = request.data.get('new_schedule_id')
@@ -290,13 +306,12 @@ class AppointmentViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.List
         print(new_schedule)
         # Kiểm tra lịch mới còn chỗ không
         if new_schedule.sum_booking >= new_schedule.capacity:
-            return Response({'Lịch khám mới đã đầy.'}, status=status.HTTP_400_BAD_REQUEST)
-            # Kiểm tra trùng lịch (bệnh nhân đã có lịch với new_schedule chưa)
-        print(Appointment.objects.filter(healthrecord=appointment.healthrecord, schedule=new_schedule,
-                                         cancel=False))
+            return Response({"error": 'Lịch khám mới đã đầy.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Kiểm tra trùng lịch (bệnh nhân đã có lịch với new_schedule chưa)
         if Appointment.objects.filter(healthrecord=appointment.healthrecord, schedule=new_schedule,
                                       cancel=False).exists():
-            return Response({'detail': 'Bạn đã có lịch khám trong khoảng thời gian này.'},
+            return Response({'error': 'Bạn đã có lịch khám trong khoảng thời gian này.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # Giảm số lượng booking của lịch cũ
@@ -314,18 +329,17 @@ class AppointmentViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.List
 
         return Response({'detail': 'Đổi lịch khám thành công.'}, status=status.HTTP_200_OK)
 
+    @action(methods=['get'], detail=True, url_path="payment")
+    def get_payment(self, request, pk):
+        appointment = get_object_or_404(Appointment, pk=pk)
+        if appointment:
+            payment = appointment.payment
+            return Response(serializers.PaymentSerializer(payment).data, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': f'Không tim tìm thấy hoá đơn thanh toán cho lịch khám này'},
+                            status=status.HTTP_404_NOT_FOUND)
 
-@action(methods=['get'], detail=True, url_path="payment")
-def get_payment(self, request, pk):
-    appointment = get_object_or_404(Appointment, pk=pk)
-    if appointment:
-        payment = appointment.payment
-        return Response(serializers.PaymentSerializer(payment).data, status=status.HTTP_200_OK)
-    else:
-        return Response({'error': f'Không tim tìm thấy hoá đơn thanh toán cho lịch khám này'},
-                        status=status.HTTP_404_NOT_FOUND)
-
-    return Response({"error": "Không tìm thấy lịch khám!"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Không tìm thấy lịch khám!"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView,
@@ -413,6 +427,11 @@ class ReviewViewSet(viewsets.ModelViewSet):
             return self.queryset.filter(doctor_id=doctor_id)
         return self.queryset
 
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
     @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAuthenticated])
     def reply(self, request, pk=None):
         review = self.get_object()
@@ -425,10 +444,130 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
         if not reply_text:
             return Response({"detail": "Thiếu nội dung phản hồi"}, status=status.HTTP_400_BAD_REQUEST)
-
         review.reply = reply_text
         review.save()
         return Response(self.get_serializer(review).data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def create_payment_url(request):
+    # Lấy thông tin từ request
+    appointment_id = request.data.get('appointment_id')
+    appointment = Appointment.objects.get(pk=appointment_id)
+    doctor_user = appointment.schedule.doctor
+    doctor = Doctor.objects.get(user=doctor_user)
+    amount = doctor.consultation_fee
+    print(amount)
+    order_info = request.data.get('order_info', 'Thanh toan lich kham')
+
+    if not appointment_id or not amount:
+        return JsonResponse({'error': 'Thiếu appointment_id hoặc amount'}, status=400)
+
+    try:
+        appointment = Appointment.objects.get(id=appointment_id)
+    except Appointment.DoesNotExist:
+        return JsonResponse({'error': 'Lịch hẹn không tồn tại'}, status=404)
+
+    # Tạo payment object
+    payment = Payment.objects.create(
+        appointment=appointment,
+        method='vnpay',
+        amount=amount,
+        status='pending'
+    )
+
+    # Tạo các tham số cho VNPay
+    vnpay_params = {
+        'vnp_Version': '2.1.0',
+        'vnp_Command': 'pay',
+        'vnp_TmnCode': settings.VNPAY_TMN_CODE,
+        'vnp_Amount': int(float(amount) * 100),  # VNPay yêu cầu số tiền * 100
+        'vnp_CurrCode': 'VND',
+        'vnp_TxnRef': str(payment.id),  # Mã giao dịch, dùng payment.id làm duy nhất
+        'vnp_OrderInfo': order_info,
+        'vnp_OrderType': '250000',  # Mã loại hàng hóa
+        'vnp_Locale': 'vn',
+        'vnp_ReturnUrl': settings.VNPAY_RETURN_URL,
+        'vnp_IpAddr': request.META.get('REMOTE_ADDR', '127.0.0.1'),
+        'vnp_CreateDate': datetime.now().strftime('%Y%m%d%H%M%S'),
+    }
+
+    # Sắp xếp các tham số theo thứ tự alphabet
+    sorted_params = sorted(vnpay_params.items())
+    query_string = urllib.parse.urlencode(sorted_params)
+
+    # Tạo chữ ký (secure hash)
+    secret_key = settings.VNPAY_HASH_SECRET_KEY.encode('utf-8')
+    query_string_bytes = query_string.encode('utf-8')
+    secure_hash = hmac.new(secret_key, query_string_bytes, hashlib.sha512).hexdigest()
+    vnpay_params['vnp_SecureHash'] = secure_hash
+
+    # Tạo URL thanh toán
+    vnpay_url = f"{settings.VNPAY_PAYMENT_URL}?{urllib.parse.urlencode(vnpay_params)}"
+
+    return JsonResponse({'payment_url': vnpay_url, 'payment_id': payment.id})
+
+
+@api_view(['GET'])
+def vnpay_return(request):
+    # Lấy tất cả tham số từ VNPay
+    vnpay_params = request.GET.dict()
+    secure_hash = vnpay_params.pop('vnp_SecureHash', None)
+
+    if not secure_hash:
+        return JsonResponse({'error': 'Thiếu chữ ký bảo mật'}, status=400)
+
+    # Tạo chuỗi để kiểm tra chữ ký
+    sorted_params = sorted(vnpay_params.items())
+    query_string = urllib.parse.urlencode(sorted_params)
+    query_string_bytes = query_string.encode('utf-8')
+    secret_key = settings.VNPAY_HASH_SECRET_KEY.encode('utf-8')
+    calculated_hash = hmac.new(secret_key, query_string_bytes, hashlib.sha512).hexdigest()
+
+    if calculated_hash != secure_hash:
+        return JsonResponse({'error': 'Chữ ký không hợp lệ'}, status=400)
+
+    # Lấy thông tin giao dịch
+    payment_id = vnpay_params.get('vnp_TxnRef')
+    response_code = vnpay_params.get('vnp_ResponseCode')
+
+    try:
+        payment = Payment.objects.get(id=payment_id)
+    except Payment.DoesNotExist:
+        return JsonResponse({'error': 'Giao dịch không tồn tại'}, status=404)
+
+    # Cập nhật trạng thái thanh toán
+    if response_code == '00':
+        payment.status = Payment.PaymentStatus.PAID
+        payment.transaction_id = vnpay_params.get('vnp_TransactionNo')
+        payment.appointment.status = 'paid'
+        payment.appointment.save()
+        payment.save()
+
+        # Gửi email xác nhận
+        send_payment_success_email(payment)
+        return JsonResponse({'message': 'Thanh toán thành công'}, status=200)
+    else:
+        payment.status = Payment.PaymentStatus.FAILED
+        payment.save()
+        return JsonResponse({'error': 'Thanh toán thất bại', 'response_code': response_code}, status=400)
+
+
+def send_payment_success_email(payment):
+    subject = 'Xác nhận thanh toán thành công'
+    message = f"""
+    Kính gửi {payment.appointment.healthrecord.full_name},
+
+    Thanh toán của bạn cho lịch hẹn #{payment.appointment.id} đã được thực hiện thành công.
+    - Số tiền: {payment.amount} VND
+    - Mã giao dịch: {payment.transaction_id}
+    - Thời gian: {payment.created_date.strftime('%d/%m/%Y %H:%M:%S')}
+
+    Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!
+    """
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [payment.appointment.healthrecord.email]
+    send_mail(subject, message, from_email, recipient_list)
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
@@ -460,15 +599,16 @@ class DoctorReportViewSet(APIView):
 
     def get(self, request):
         user = request.user
-        print(user)
         doctor = getattr(user, 'doctor', None)
-        print(doctor)
         if not doctor:
             return Response({'detail': 'Không phải bác sĩ.'}, status=403)
 
-        month = request.query_params.get('month')
-        year = request.query_params.get('year')
-        quarter = request.query_params.get('quarter')
+        try:
+            month = int(request.query_params.get('month')) if request.query_params.get('month') else None
+            year = int(request.query_params.get('year')) if request.query_params.get('year') else None
+            quarter = int(request.query_params.get('quarter')) if request.query_params.get('quarter') else None
+        except ValueError:
+            return Response({'detail': 'Tham số tháng/năm không hợp lệ.'}, status=400)
 
         total_appointment = Appointment.objects.filter(schedule__doctor=doctor.user).count()
         queryset = Appointment.objects.filter(schedule__doctor=doctor.user, status='completed')
@@ -476,20 +616,28 @@ class DoctorReportViewSet(APIView):
         if month and year:
             queryset = queryset.filter(schedule__date__year=year, schedule__date__month=month)
         elif quarter and year:
-            start_month = (int(quarter) - 1) * 3 + 1
+            start_month = (quarter - 1) * 3 + 1
             end_month = start_month + 2
             queryset = queryset.filter(schedule__date__year=year,
                                        schedule__date__month__range=(start_month, end_month))
 
         examined = queryset.count()
         top_diseases = queryset.values('disease_type').annotate(count=Count('disease_type')).order_by('-count')[:5]
-        unexamined = Appointment.objects.filter(status='paid').count()
-        print(f'Đã khám: {examined}')
+
+        # 👉 Sửa ở đây: doctor → doctor.user
+        unexamined = Appointment.objects.filter(schedule__doctor=doctor.user, status='paid')
+        if month and year:
+            unexamined = unexamined.filter(schedule__date__year=year, schedule__date__month=month)
+        elif quarter and year:
+            unexamined = unexamined.filter(schedule__date__year=year,
+                                           schedule__date__month__range=(start_month, end_month))
+
+        unexamined_count = unexamined.count()
 
         return Response({
-            'total_appoitment': total_appointment,
+            'total_appointment': total_appointment,
             'examined_count': examined,
-            'unexamined_count': unexamined,
+            'unexamined_count': unexamined_count,
             'top_disease': top_diseases,
         })
 

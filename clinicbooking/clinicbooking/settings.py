@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+
 load_dotenv()
 from django.conf.global_settings import AUTH_USER_MODEL
 
@@ -30,6 +31,12 @@ DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')  # Email gửi đi mặc đị
 # Cấu hình celery giúp gửi email và push notification theo lich hẹn
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+# Secret key VNPAY
+VNPAY_TMN_CODE = os.getenv('VNPAY_TMNCODE')
+VNPAY_HASH_SECRET_KEY = os.getenv('VNPAY_HASH_SECRET_KEY')
+VNPAY_PAYMENT_URL = os.getenv('VNPAY_PAYMENT_URL')
+VNPAY_RETURN_URL = os.getenv('VNPAY_RETURN_URL')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -65,13 +72,12 @@ OAUTH2_PROVIDER = {'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSON
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        ),
+    ),
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 USE_TZ = True  # vẫn bật timezone
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
-
 
 CKEDITOR_UPLOAD_PATH = "ckeditors/lessons/"
 
@@ -108,7 +114,7 @@ ROOT_URLCONF = 'clinicbooking.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR /'clinic'/ 'templates'],
+        'DIRS': [BASE_DIR / 'clinic' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

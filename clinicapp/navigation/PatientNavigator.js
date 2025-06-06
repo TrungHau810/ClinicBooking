@@ -9,16 +9,17 @@ import Notification from "../screens/Patient/Notification";
 import HealthRecordList from "../screens/Patient/HealthRecordList";
 import Appointment from "../screens/Patient/Appointment";
 import HospitalDetail from "../screens/Patient/HospitalDetail";
-import Home from "../screens/Home";
-import Schedule from "../screens/Patient/Schedule";
-import ScheduleBooking from "../screens/Patient/ScheduleBooking";
 import CreateHealthRecord from "../screens/Patient/CreateHealthRecord";
 import DoctorList from "../screens/Patient/DoctorList";
 import ProfileStack from "./ProfileStack";
 import AppointmentDetails from "../screens/Patient/AppointmentDetails";
 import ChatScreen from "../screens/Common/ChatScreen";
-import UserList from "../screens/Common/UserList";
+import UserList from "../screens/Common/UserList"; 
 import Review from "../screens/Patient/Review";
+import Home from "../screens/Patient/Home";
+import Booking from "../screens/Patient/Booking";
+import Payment from "../screens/Patient/Payment"; 
+import TestResult from "../screens/Patient/TestResult"; 
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -29,11 +30,12 @@ const HomeStack = () => {
       <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="HospitalDetail" component={HospitalDetail} options={{ title: "Giới thiệu", headerShown: true }} />
       <Stack.Screen name="DoctorList" component={DoctorList} />
-      <Stack.Screen name="Schedule" component={Schedule} />
-      <Stack.Screen name="ScheduleBooking" component={ScheduleBooking} />
+      <Stack.Screen name="Booking" component={Booking} />
+      <Stack.Screen name="Payment" component={Payment} />
       <Stack.Screen name="UserList" component={UserList} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
       <Stack.Screen name="Review" component={Review} />
+      <Stack.Screen name="TestResult" component={TestResult} />
     </Stack.Navigator>
   );
 };
@@ -43,6 +45,7 @@ const HealthRecorStack = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HealthRecordList" component={HealthRecordList} />
       <Stack.Screen name="CreateHealthRecord" component={CreateHealthRecord} />
+      <Stack.Screen name="TestResult" component={TestResult} />
     </Stack.Navigator>
   );
 };

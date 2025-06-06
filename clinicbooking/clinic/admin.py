@@ -115,7 +115,7 @@ class MyUserAdmin(admin.ModelAdmin):
 class MyScheduleAdmin(admin.ModelAdmin):
     list_display = ['id', 'doctor_id', 'doctor_name', 'date', 'start_time', 'end_time', 'capacity', 'sum_booking',
                     'active']
-    # list_filter = ['doctor.full_name']
+    list_filter = ['doctor__full_name']
     inlines = [AppointmentInline, ]
 
     # Lọc user có role là doctor
@@ -177,14 +177,9 @@ class MyNotificationAdmin(admin.ModelAdmin):
 
 
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ['id', 'patient_id', 'patient_name', 'doctor_id', 'doctor_name', 'rating', 'comment', 'reply',
+    list_display = ['id', 'patient', 'doctor', 'rating', 'comment', 'reply',
                     'created_date']
-
-    def patient_name(self, patient):
-        return patient.patient.username
-
-    def doctor_name(self, doctor):
-        return doctor.doctor.full_name
+    list_filter = ['doctor']
 
 
 class MonthYearForm(forms.Form):

@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { View, FlatList, StyleSheet, Text, TouchableOpacity, StatusBar, Platform, RefreshControl, } from "react-native";
 import { FAB } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Apis, { endpoints } from "../../configs/Apis";
+import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import HealthRecordCard from "../../components/HealthRecordCard";
@@ -16,9 +16,7 @@ const HealthRecordList = ({ navigation }) => {
   const loadRecords = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const res = await Apis.get(endpoints["healthrecords"], {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await authApis(token).get(endpoints["healthrecords"]);
       setRecords(res.data);
     } catch (error) {
       console.error("Lỗi khi tải hồ sơ:", error);
@@ -35,7 +33,19 @@ const HealthRecordList = ({ navigation }) => {
     loadRecords();
   }, []);
 
-  const renderItem = ({ item }) => <HealthRecordCard record={item} />;
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate("TestResult", {
+          healthRecordId: item.id,
+          patientName: item.full_name || "Bệnh nhân",
+          record: item,
+        })
+      }
+    >
+      <HealthRecordCard record={item} />
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container}>

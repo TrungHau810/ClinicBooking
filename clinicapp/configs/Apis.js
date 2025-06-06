@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://192.168.1.6:8000/";
+const BASE_URL = "http://192.168.1.5:8000/";
 
 export const endpoints = {
     'hospitals': '/hospitals/',
@@ -9,7 +9,6 @@ export const endpoints = {
     'user-patients': '/users/patients/',
     'user-doctors': '/users/doctors/',
     'doctors': '/doctors/',
-    // 'doctorinfos': '/doctorinfos/',
     'login': '/o/token/',
     'register': '/users/',
     'reset-password-otp': "/api/password-reset/otp/",
@@ -17,11 +16,17 @@ export const endpoints = {
     'current-user': '/users/current-user/',
     'appointments': "/appointments/",
     'healthrecords': '/healthrecords/me/',
+    'healthrecords-update': '/healthrecords/',
     'schedules': '/schedules/',
     'notifications': '/notifications/',
     'messages': '/messages/',
     'testresults': '/testresults/',
-    'reviews-details': (doctorId)=>`/reviews/${doc}`,
+    'reviews': '/reviews/',
+    // VNPay
+    'create-vnpay-url': '/create-payment-url/',
+    'vnpay-return': '/vnpay-return/',
+    // Report
+    'reportsdoctor': '/reportsdoctor/'
 }
 
 export const authApis = (token) => {

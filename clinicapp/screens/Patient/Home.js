@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View, StyleSheet, Dimensions, ScrollView, StatusBar } from "react-native";
 import { Button, Card, List, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Apis, { endpoints } from "../configs/Apis";
+import Apis, { endpoints } from "../../configs/Apis";
 import Carousel from 'react-native-reanimated-carousel';
-import MyStyles from "../styles/MyStyles";
+import MyStyles from "../../styles/MyStyles";
 import { useNavigation } from "@react-navigation/native";
 
 const Home = () => {
@@ -14,9 +14,9 @@ const Home = () => {
   const nav = useNavigation();
 
   const imageList = [
-    require('../assets/home1.jpg'),
-    require('../assets/home2.jpg'),
-    require('../assets/home3.jpg'),
+    require('../../assets/home1.jpg'),
+    require('../../assets/home2.jpg'),
+    require('../../assets/home3.jpg'),
   ];
 
   const ImageSlider = () => {
@@ -93,7 +93,7 @@ const Home = () => {
           <ImageSlider />
         </View>
 
-        <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
+        <List.Item onPress={() => nav.navigate("TestResult")} title='Xem các kết quả xét nghiệm' left={() => <List.Icon icon={'flask-outline'} />} />
         <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
         <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
         <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />

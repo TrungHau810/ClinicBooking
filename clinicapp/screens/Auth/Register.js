@@ -1,7 +1,7 @@
 import { Button, Card, RadioButton, Text, TextInput, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MyStyles from "../../styles/MyStyles";
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
+import { Image, ScrollView, StyleSheet, TouchableOpacity, View, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { useEffect, useState } from "react";
 import * as ImagePicker from 'expo-image-picker'
 import Apis, { endpoints } from "../../configs/Apis";
@@ -103,35 +103,67 @@ const Register = ({ navigation }) => {
     const register = async () => {
         try {
             setLoading(true);
+            setState(userType, 'role');
             console.log(user);
             let form = new FormData();
             for (let key in user) {
-                console.log(key)
                 if (key !== 'confirm_password')
                     if (key === 'avatar') {
                         form.append(key, {
                             uri: user.avatar.uri,
                             name: user.avatar.fileName,
-                            type: user.avatar.type
+                            type: user.avatar.mimeType || 'image/jpeg'
                         })
                     } else {
                         form.append(key, user[key]);
                     }
             }
-            console.log("Dữ liệu người dùng:", form);
-            let res = await Apis.post(endpoints['register'], form, {
+            form.append("role", userType);
+
+            await Apis.post(endpoints['register'], form, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
 
-            if (res.status === 201)
-                console.info("Đăng ký thành công");
+            Alert.alert("Thành công", "Đăng ký tài khoản thành công");
 
         } catch (error) {
-            console.info(error);
-        } finally {
-            setLoading(false)
+            console.info("ERROR INFO:", error.response?.data || error.message);
+
+            const errorData = error.response?.data;
+
+            const translateErrorMessage = (key, message) => {
+                if (key === "email") return "Email đã được sử dụng.";
+                if (key === "username") return "Tên đăng nhập đã tồn tại.";
+                if (key === "number_phone") return "Số điện thoại đã được sử dụng.";
+                if (key === "full_name") return "Họ tên không hợp lệ.";
+                if (key === "password") return "Mật khẩu không hợp lệ.";
+                if (key === "confirm_password") return "Xác nhận mật khẩu không khớp.";
+                if (key === "avatar") return "Ảnh đại diện không hợp lệ.";
+                return message; // fallback nếu không map được
+            };
+
+            if (errorData && typeof errorData === 'object') {
+                let messages = [];
+
+                for (const key in errorData) {
+                    const fieldErrors = errorData[key];
+                    if (Array.isArray(fieldErrors)) {
+                        fieldErrors.forEach(err => {
+                            messages.push(translateErrorMessage(key, err));
+                        });
+                    }
+                }
+
+                Alert.alert("Lỗi đăng ký", messages.join("\n"));
+            } else {
+                Alert.alert("Lỗi", "Đã có lỗi xảy ra. Vui lòng thử lại sau.");
+            }
+        }
+
+        finally {
+            setLoading(false);
         }
     };
 
@@ -160,7 +192,7 @@ const Register = ({ navigation }) => {
                 </View>
 
 
-                <TouchableOpacity onPress={register}><Button mode="contained" style={styles.button}>Đăng ký</Button></TouchableOpacity>
+                <TouchableOpacity onPress={register}><Button loading={loading} disabled={loading} mode="contained" style={styles.button}>Đăng ký</Button></TouchableOpacity>
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -205,6 +237,6 @@ const styles = StyleSheet.create({
         borderRadius: 60,
     },
     button: {
-    backgroundColor: '#17A2F3'
-  },
+        backgroundColor: '#17A2F3'
+    },
 });

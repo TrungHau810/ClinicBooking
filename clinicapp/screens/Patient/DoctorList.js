@@ -66,6 +66,7 @@ const DoctorList = () => {
 
   const renderDoctor = useCallback((dr) => (
     <Card style={styles.cards} key={dr.id}>
+
       <Card.Title titleStyle={{ fontWeight: 'bold' }} title={`Bác sĩ ${dr.doctor}`} />
       <Card.Content style={styles.cardContent}>
         <Image style={styles.avatar} source={{ uri: dr.avatar }} />
@@ -86,10 +87,11 @@ const DoctorList = () => {
         </View>
       </Card.Content>
       <Card.Actions>
-        <Button mode="contained" onPress={() => navigation.navigate('Schedule', { doctor: dr })}>
+        <Button mode="contained" onPress={() => navigation.navigate('Booking', { doctor: dr })}>
           Đặt lịch khám
         </Button>
       </Card.Actions>
+
     </Card>
   ), [navigation]);
 

@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import MessageBubble from "../../components/MessageBubble";
 import Header from "../../components/Header";
 import { useEffect, useState } from "react";
-import Apis, { endpoints } from "../../configs/Apis";
+import Apis, { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TextInput } from "react-native-paper";
 import { useRoute } from "@react-navigation/native";
@@ -23,9 +23,7 @@ const ChatScreen = () => {
     user = JSON.parse(user);
     setCurrentUserId(user.id);
 
-    let res = await Apis.get(`${endpoints['messages']}?participant_id=${selectedUser.id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    let res = await authApis(token).get(`${endpoints['messages']}?participant_id=${selectedUser.id}`);
     setMessages(res.data);
   };
 
@@ -34,9 +32,8 @@ const ChatScreen = () => {
     form.append("content", message);
     form.append('receiver', selectedUser.id);
     console.log(form);
-    let res = await Apis.post(endpoints['messages'], form, {
+    let res = await authApis(token).post(endpoints['messages'], form, {
       headers: {
-        Authorization: `Bearer ${token}`,
         'Content-Type': 'multipart/form-data'
       }
     });

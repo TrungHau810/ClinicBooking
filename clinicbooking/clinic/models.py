@@ -217,7 +217,7 @@ class Appointment(BaseModel):
 
     class Meta:
         ordering = ['-id']
-        unique_together = ('healthrecord', 'schedule')
+        # unique_together = ('healthrecord', 'schedule')
 
     def __str__(self):
         return f"{self.healthrecord} - {self.schedule}"
