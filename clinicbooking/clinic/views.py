@@ -205,9 +205,16 @@ class HealthRecordViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TestResultViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
-    queryset = TestResult.objects.filter(active=True)
+class TestResultViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.TestResultSerializer
+
+    def get_queryset(self):
+        queryset = TestResult.objects.filter(active=True)
+        health_record_id = self.request.query_params.get("health_record")
+        if health_record_id:
+            queryset = queryset.filter(health_record_id=health_record_id)
+        return queryset
+
 
 
 def is_more_than_24_hours_ahead(schedule_date, schedule_time):
@@ -592,15 +599,16 @@ class DoctorReportViewSet(APIView):
 
     def get(self, request):
         user = request.user
-        print(user)
         doctor = getattr(user, 'doctor', None)
-        print(doctor)
         if not doctor:
             return Response({'detail': 'Không phải bác sĩ.'}, status=403)
 
-        month = request.query_params.get('month')
-        year = request.query_params.get('year')
-        quarter = request.query_params.get('quarter')
+        try:
+            month = int(request.query_params.get('month')) if request.query_params.get('month') else None
+            year = int(request.query_params.get('year')) if request.query_params.get('year') else None
+            quarter = int(request.query_params.get('quarter')) if request.query_params.get('quarter') else None
+        except ValueError:
+            return Response({'detail': 'Tham số tháng/năm không hợp lệ.'}, status=400)
 
         total_appointment = Appointment.objects.filter(schedule__doctor=doctor.user).count()
         queryset = Appointment.objects.filter(schedule__doctor=doctor.user, status='completed')
@@ -608,20 +616,28 @@ class DoctorReportViewSet(APIView):
         if month and year:
             queryset = queryset.filter(schedule__date__year=year, schedule__date__month=month)
         elif quarter and year:
-            start_month = (int(quarter) - 1) * 3 + 1
+            start_month = (quarter - 1) * 3 + 1
             end_month = start_month + 2
             queryset = queryset.filter(schedule__date__year=year,
                                        schedule__date__month__range=(start_month, end_month))
 
         examined = queryset.count()
         top_diseases = queryset.values('disease_type').annotate(count=Count('disease_type')).order_by('-count')[:5]
-        unexamined = Appointment.objects.filter(status='paid').count()
-        print(f'Đã khám: {examined}')
+
+        # 👉 Sửa ở đây: doctor → doctor.user
+        unexamined = Appointment.objects.filter(schedule__doctor=doctor.user, status='paid')
+        if month and year:
+            unexamined = unexamined.filter(schedule__date__year=year, schedule__date__month=month)
+        elif quarter and year:
+            unexamined = unexamined.filter(schedule__date__year=year,
+                                           schedule__date__month__range=(start_month, end_month))
+
+        unexamined_count = unexamined.count()
 
         return Response({
-            'total_appoitment': total_appointment,
+            'total_appointment': total_appointment,
             'examined_count': examined,
-            'unexamined_count': unexamined,
+            'unexamined_count': unexamined_count,
             'top_disease': top_diseases,
         })
 

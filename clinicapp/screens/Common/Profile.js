@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Button, Text, Divider } from "react-native-paper";
+import { Button, Text, Divider, Icon } from "react-native-paper";
 import { MyDispatchContext, MyUserContext } from "../../configs/MyContexts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image, StyleSheet, View, TouchableOpacity } from "react-native";
@@ -55,11 +55,18 @@ const Profile = ({ navigation }) => {
         );
     } else {
         content = (
-            <SafeAreaView>
-                <Text style={styles.title}>Vui lòng đăng nhập để sử dụng</Text>
-                <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-                    <Button mode="contained-tonal" style={styles.button} labelStyle={{ color: "#fff", fontSize: 16 }}>Đăng nhập</Button>
-                </TouchableOpacity>
+            <SafeAreaView style={styles.loginContainer}>
+                <Icon source="account-lock-outline" size={80} color="#1565C0" />
+                <Text style={styles.loginTitle}>Vui lòng đăng nhập để sử dụng</Text>
+                <Button
+                    mode="contained"
+                    onPress={() => navigation.navigate("Login")}
+                    style={styles.loginButton}
+                    labelStyle={styles.loginButtonLabel}
+                    icon="login"
+                >
+                    Đăng nhập
+                </Button>
             </SafeAreaView>
         );
     }
@@ -129,6 +136,32 @@ const styles = StyleSheet.create({
     },
     button: {
         backgroundColor: '#17A2F3',
+    },
+    loginContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 24,
+        backgroundColor: "transparent", // không màu nền
+    },
+    loginTitle: {
+        fontSize: 20,
+        fontWeight: "600",
+        color: "#333",
+        marginVertical: 24,
+        textAlign: "center",
+    },
+    loginButton: {
+        backgroundColor: "#1976D2",
+        borderRadius: 12,
+        paddingHorizontal: 32,
+        paddingVertical: 6,
+        elevation: 2,
+    },
+    loginButtonLabel: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
     },
 });
 

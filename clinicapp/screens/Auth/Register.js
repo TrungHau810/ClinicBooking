@@ -118,6 +118,7 @@ const Register = ({ navigation }) => {
                         form.append(key, user[key]);
                     }
             }
+            form.append("role", userType);
 
             await Apis.post(endpoints['register'], form, {
                 headers: {

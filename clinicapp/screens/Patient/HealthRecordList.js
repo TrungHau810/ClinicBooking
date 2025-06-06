@@ -33,7 +33,19 @@ const HealthRecordList = ({ navigation }) => {
     loadRecords();
   }, []);
 
-  const renderItem = ({ item }) => <HealthRecordCard record={item} />;
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate("TestResult", {
+          healthRecordId: item.id,
+          patientName: item.full_name || "Bệnh nhân",
+          record: item,
+        })
+      }
+    >
+      <HealthRecordCard record={item} />
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
