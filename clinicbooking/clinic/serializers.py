@@ -135,7 +135,7 @@ class DoctorSerializer(ModelSerializer):
         model = Doctor
         fields = ['id', 'user', 'doctor', 'avatar', 'biography', 'license_number', 'license_image', 'active',
                   'hospital_id', 'hospital_name',
-                  'specialization', 'specialization_name', 'consultation_fee', 'total_reviews', 'average_rating']
+                  'specialization', 'specialization_name', 'consultation_fee', 'total_reviews', 'average_rating', 'is_verified']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

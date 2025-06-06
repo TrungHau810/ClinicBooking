@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput, Button, Alert, ScrollView, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet, TextInput, Button, Alert, ScrollView, SafeAreaView, RefreshControl } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { endpoints } from "../../configs/Apis";
 import { useNavigation } from "@react-navigation/native";
@@ -12,13 +12,11 @@ const PatientHealthRecordDetail = ({ route }) => {
   const { record } = route.params;
   const [testResults, setTestResults] = useState([]);
   const [loading, setLoading] = useState(true);
-  const nav = useNavigation();
   const [history, setHistory] = useState(record.medical_history ? he.decode(record.medical_history.replace(/<\/?[^>]+(>|$)/g, "")) : "");
   const [savedHistory, setSavedHistory] = useState(record.medical_history || "");
   const [saving, setSaving] = useState(false);
 
-  console.log(record);
-
+  const nav = useNavigation();
 
   const loadTestResults = async () => {
     try {
@@ -31,8 +29,6 @@ const PatientHealthRecordDetail = ({ route }) => {
       setTestResults(res.data);
     } catch (err) {
       console.error("Lỗi khi tải kết quả xét nghiệm:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -40,16 +36,19 @@ const PatientHealthRecordDetail = ({ route }) => {
     try {
       const token = await AsyncStorage.getItem("token");
       const res = await Apis.get(
-        `${endpoints["healthrecords"]}${record.id}/`,
+        `${endpoints["healthrecords-update"]}${record.id}/`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        });
+        }
+      );
       const newMedicalHistory = res.data.medical_history || "";
-      setSavedHistory(
+      setSavedHistory(newMedicalHistory);
+      setHistory(
         he.decode(newMedicalHistory.replace(/<\/?[^>]+(>|$)/g, ""))
       );
     } catch (error) {
       console.error("Lỗi khi tải lại hồ sơ:", error);
+      Alert.alert("Lỗi", "Không thể tải lại hồ sơ.");
     }
   };
 
@@ -64,8 +63,6 @@ const PatientHealthRecordDetail = ({ route }) => {
         {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-      await reloadRecord(); // Đồng bộ lại từ server
       Alert.alert("Thông báo", "Cập nhật thành công");
     } catch (err) {
       console.error("Lỗi khi cập nhật tiền sử bệnh:", err);
@@ -76,9 +73,20 @@ const PatientHealthRecordDetail = ({ route }) => {
   };
 
   useEffect(() => {
-    loadTestResults();
+    const init = async () => {
+      await reloadRecord();
+      await loadTestResults();
+      setLoading(false);
+    };
+    init();
   }, []);
 
+  const onPullToRefresh = async () => {
+    setLoading(true);
+    await reloadRecord();
+    await loadTestResults();
+    setLoading(false);
+  };
 
   const renderHeader = () => (
     <View>
@@ -91,7 +99,9 @@ const PatientHealthRecordDetail = ({ route }) => {
       </Text>
       <View style={styles.historyBox}>
         <Text style={styles.historyText}>
-          {savedHistory?.trim() !== "" ? savedHistory : "Chưa có thông tin"}
+          {savedHistory?.trim() !== ""
+            ? he.decode(savedHistory.replace(/<\/?[^>]+(>|$)/g, ""))
+            : "Chưa có thông tin"}
         </Text>
       </View>
 
@@ -125,19 +135,20 @@ const PatientHealthRecordDetail = ({ route }) => {
   return (
     <SafeAreaView style={styles.container}>
       <Header title={"Hồ sơ bệnh án"} />
-      {loading ? (
-        <ActivityIndicator size="large" color="#1E90FF" style={{ marginTop: 20 }} />
-      ) : (
-        <FlatList
-          data={testResults}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => <TestResultCard result={item} />}
-          ListHeaderComponent={renderHeader}
-          ListEmptyComponent={
-            <Text style={styles.empty}>Không có kết quả xét nghiệm nào</Text>
-          }
-        />
-      )}
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={onPullToRefresh} />
+        }
+      >
+        {renderHeader()}
+        {testResults.length === 0 ? (
+          <Text style={styles.empty}>Không có kết quả xét nghiệm nào</Text>
+        ) : (
+          testResults.map((item) => (
+            <TestResultCard key={item.id.toString()} result={item} />
+          ))
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -152,8 +163,8 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     marginHorizontal: 5,
-    justifyContent: 'center',
-    textAlign: 'center'
+    justifyContent: "center",
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 18,
@@ -189,8 +200,8 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     borderRadius: 20,
-    overflow: 'hidden', // cần để borderRadius có hiệu lực
-    elevation: 2, // tạo hiệu ứng đổ bóng nếu cần
+    overflow: "hidden",
+    elevation: 2,
   },
 });
 
