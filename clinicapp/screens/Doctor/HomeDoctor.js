@@ -12,21 +12,32 @@ const DoctorHome = ({ navigation }) => {
     const user = useContext(MyUserContext);
     const nav = useNavigation();
     const [doctor, setDoctor] = useState([null]);
+    const [isVerified, setIsVerified] = useState(true);
+
 
     const loadDoctor = async () => {
         try {
             const token = await AsyncStorage.getItem("token");
             const res = await authApis(token).get(endpoints["current-user"]);
-            setDoctor(res.data);
             console.log(res.data);
+            setDoctor(res.data);
         } catch (error) {
             console.error("Lỗi khi lấy thông tin bác sĩ:", error);
         }
     };
 
+    const loadInfo = async () => {
+        let res = await Apis.get(`${endpoints['doctor-detail']}?user_id=${user.payload.id}`);
+        setIsVerified(res.data.is_verified);
+    };
+
     useEffect(() => {
         loadDoctor();
     }, []);
+
+    useEffect(() => {
+        loadInfo();
+    }, [user])
 
     const [stats, setStats] = useState({
         todayAppointments: 0,

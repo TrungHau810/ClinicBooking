@@ -54,14 +54,9 @@ const Login = ({ navigation }) => {
       if (userRes.data.role === 'patient') {
         navigation.navigate("Patient");
       } else if (userRes.data.role === 'doctor') {
-        const isVerified = userRes.data.doctor?.is_verified;
-        console.log("Kiem tra true false:", isVerified)
-        if (isVerified) {
-          navigation.navigate("Doctor");
-        } else {
-          //navigation.navigate(""); // Màn hình upload giấy phép
-        }
-      } else if (userRes.data.role === 'admin') {
+        navigation.navigate("Doctor");
+      }
+      else if (userRes.data.role === 'admin') {
         navigation.navigate("Admin");
       }
       console.log("Đăng nhập role:", userRes.data.role);

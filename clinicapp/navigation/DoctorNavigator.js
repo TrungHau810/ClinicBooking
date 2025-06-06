@@ -14,6 +14,9 @@ import ChatScreen from "../screens/Common/ChatScreen";
 import UserList from "../screens/Common/UserList";
 import PatientHealthRecordDetail from "../screens/Doctor/PatientHealthRecordDetail";
 import DoctorReport from "../screens/Doctor/DoctorReport";
+import ProfileStack from "./ProfileStack";
+import EditProfile from "../screens/Common/EditProfile";
+import UploadLicense from "../screens/Doctor/UploadLicense";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -64,7 +67,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={Profile}
+        component={ProfileStack}
         options={{
           tabBarLabel: "Tài khoản",
           tabBarIcon: ({ focused }) => (

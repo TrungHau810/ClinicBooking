@@ -32,7 +32,7 @@ from django.db.models.functions import Coalesce
 from rest_framework.response import Response
 from clinic.permissions import IsDoctorOrSelf
 from clinic.serializers import AppointmentSerializer, PaymentSerializer, NotificationSerializer, UserSerializer, \
-    OTPRequestSerializer, OTPConfirmResetSerializer, MessageSerializer
+    OTPRequestSerializer, OTPConfirmResetSerializer, MessageSerializer, DoctorSerializer
 
 
 class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -129,6 +129,19 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIVi
         queryset = super().get_queryset()
         return self.filter_doctors(queryset)
 
+    @action(methods=['get'], detail=False, url_path='by-user')
+    def get_doctor_by_user(self, request):
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response({'error': 'Missing user_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            doctor = Doctor.objects.select_related('user').get(user__id=user_id)
+            serializer = self.get_serializer(doctor)
+            return Response(serializer.data)
+        except Doctor.DoesNotExist:
+            return Response({'error': 'Doctor not found'}, status=status.HTTP_404_NOT_FOUND)
+
     # Tìm kiếm bác sĩ theo tên, bệnh viện, chuyên khoa
     def filter_doctors(self, queryset):
         params = self.request.query_params
@@ -224,7 +237,6 @@ class TestResultViewSet(viewsets.ModelViewSet):
         if health_record_id:
             queryset = queryset.filter(health_record_id=health_record_id)
         return queryset
-
 
 
 def is_more_than_24_hours_ahead(schedule_date, schedule_time):
@@ -731,6 +743,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
 
+
 class UploadLicenseViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
@@ -748,14 +761,17 @@ class UploadLicenseViewSet(APIView):
             doctor.is_verified = False  # Khi upload mới, phải chờ xác minh lại
             doctor.save()
 
-            return Response({"message": "Đã gửi giấy phép thành công. Vui lòng chờ quản trị viên xác minh."}, status=200)
+            return Response({"message": "Đã gửi giấy phép thành công. Vui lòng chờ quản trị viên xác minh."},
+                            status=200)
         except:
             return Response({"error": "Bạn không phải là bác sĩ."}, status=400)
+
 
 class PendingDoctorsViewSet(generics.ListAPIView):
     queryset = Doctor.objects.filter(is_verified=False, license_image__isnull=False)
     serializer_class = serializers.DoctorSerializer
     permission_classes = [IsAdminUser]
+
 
 class ApproveDoctorView(APIView):
     permission_classes = [IsAdminUser]

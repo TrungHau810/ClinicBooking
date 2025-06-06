@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Text } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Apis, { endpoints } from "../../configs/Apis";
+import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { Picker } from "@react-native-picker/picker";
 import { BarChart } from "react-native-chart-kit";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
@@ -35,11 +35,7 @@ const AdminReport = () => {
             if (month) url += `&month=${month}`;
             if (!month && quarter) url += `&quarter=${quarter}`;
 
-            const res = await Apis.get(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const res = await authApis(token).get(url);
             setData(res.data);
         } catch (err) {
             console.error("Lỗi khi tải báo cáo admin:", err?.response?.data || err.message);
