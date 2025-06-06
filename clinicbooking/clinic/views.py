@@ -24,11 +24,15 @@ from rest_framework import viewsets, generics, status, parsers, permissions
 from clinic.models import (User, Doctor, Payment, Appointment, Review,
                            Schedule, Notification, HealthRecord, Message, TestResult,
                            Hospital, Specialization, PasswordResetOTP)
-from django.db.models import Q, Count, Sum
+from rest_framework.permissions import IsAdminUser
+from rest_framework.parsers import MultiPartParser, FormParser
+from decimal import Decimal
+from django.db.models import Q, Count, Sum, F, DecimalField
+from django.db.models.functions import Coalesce
 from rest_framework.response import Response
 from clinic.permissions import IsDoctorOrSelf
 from clinic.serializers import AppointmentSerializer, PaymentSerializer, NotificationSerializer, UserSerializer, \
-    OTPRequestSerializer, OTPConfirmResetSerializer, MessageSerializer
+    OTPRequestSerializer, OTPConfirmResetSerializer, MessageSerializer, DoctorSerializer
 
 
 class HospitalViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -80,6 +84,12 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView
         serializer = self.get_serializer(patients, many=True)
         return Response(serializer.data)
 
+    @action(methods=['get'], detail=False, url_path='admin')
+    def get_admin(self, request):
+        admin = User.objects.filter(role='admin')
+        serializer = self.get_serializer(admin, many=True)
+        return Response(serializer.data)
+
 
 class PasswordResetSendOTPViewSet(APIView):
     permission_classes = []
@@ -118,6 +128,19 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIVi
     def get_queryset(self):
         queryset = super().get_queryset()
         return self.filter_doctors(queryset)
+
+    @action(methods=['get'], detail=False, url_path='by-user')
+    def get_doctor_by_user(self, request):
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response({'error': 'Missing user_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            doctor = Doctor.objects.select_related('user').get(user__id=user_id)
+            serializer = self.get_serializer(doctor)
+            return Response(serializer.data)
+        except Doctor.DoesNotExist:
+            return Response({'error': 'Doctor not found'}, status=status.HTTP_404_NOT_FOUND)
 
     # Tìm kiếm bác sĩ theo tên, bệnh viện, chuyên khoa
     def filter_doctors(self, queryset):
@@ -214,7 +237,6 @@ class TestResultViewSet(viewsets.ModelViewSet):
         if health_record_id:
             queryset = queryset.filter(health_record_id=health_record_id)
         return queryset
-
 
 
 def is_more_than_24_hours_ahead(schedule_date, schedule_time):
@@ -649,14 +671,14 @@ class AdminReportViewSet(APIView):
         if not request.user.is_staff:
             return Response({'detail': 'Không phải quản trị viên.'}, status=403)
 
-        # Lấy params và ép kiểu
+        # Parse params
         month = request.query_params.get('month')
         year = request.query_params.get('year')
         quarter = request.query_params.get('quarter')
 
         try:
             month = int(month) if month else None
-            year = int(year) if year else None
+            year = int(year) if year else datetime.now().year
             quarter = int(quarter) if quarter else None
         except ValueError:
             return Response({'detail': 'Tham số month, year, quarter phải là số.'}, status=400)
@@ -667,35 +689,36 @@ class AdminReportViewSet(APIView):
         if quarter and (quarter < 1 or quarter > 4):
             return Response({'detail': 'Quý không hợp lệ (1-4).'}, status=400)
 
+        # Filter các cuộc hẹn đã hoàn tất
         appt_queryset = Appointment.objects.filter(status='completed')
-        payment_queryset = Payment.objects.filter(status='paid')
 
-        if month and year:
+        if month:
             appt_queryset = appt_queryset.filter(schedule__date__year=year, schedule__date__month=month)
-            payment_queryset = payment_queryset.filter(
-                appointment__schedule__date__year=year,
-                appointment__schedule__date__month=month
-            )
-
-        elif quarter and year:
+        elif quarter:
             start_month = (quarter - 1) * 3 + 1
             end_month = start_month + 2
             appt_queryset = appt_queryset.filter(
                 schedule__date__year=year,
                 schedule__date__month__range=(start_month, end_month)
             )
-            payment_queryset = payment_queryset.filter(
-                appointment__schedule__date__year=year,
-                appointment__schedule__date__month__range=(start_month, end_month)
-            )
-
-        elif year:
+        else:
             appt_queryset = appt_queryset.filter(schedule__date__year=year)
-            payment_queryset = payment_queryset.filter(appointment__schedule__date__year=year)
+
+        # annotate consultation_fee từ Doctor -> User -> Schedule
+        appt_queryset = appt_queryset.select_related(
+            'schedule__doctor__doctor'
+        ).annotate(
+            fee=F('schedule__doctor__doctor__consultation_fee')
+        )
+
+        # tính tổng doanh thu
+        total_revenue = appt_queryset.aggregate(
+            total=Coalesce(Sum('fee', output_field=DecimalField()), Decimal('0.00'))
+        )['total']
 
         return Response({
             'appointment_count': appt_queryset.count(),
-            'revenue': payment_queryset.aggregate(total=Sum('amount'))['total'] or 0
+            'revenue': total_revenue
         })
 
 
@@ -719,3 +742,45 @@ class ScheduleAvailableDatesView(APIView):
 class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
+
+
+class UploadLicenseViewSet(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        try:
+            doctor = request.user.doctor
+            license_number = request.data.get('license_number')
+            license_image = request.data.get('license_image')
+
+            if license_number:
+                doctor.license_number = license_number
+            if license_image:
+                doctor.license_image = license_image
+            doctor.is_verified = False  # Khi upload mới, phải chờ xác minh lại
+            doctor.save()
+
+            return Response({"message": "Đã gửi giấy phép thành công. Vui lòng chờ quản trị viên xác minh."},
+                            status=200)
+        except:
+            return Response({"error": "Bạn không phải là bác sĩ."}, status=400)
+
+
+class PendingDoctorsViewSet(generics.ListAPIView):
+    queryset = Doctor.objects.filter(is_verified=False, license_image__isnull=False)
+    serializer_class = serializers.DoctorSerializer
+    permission_classes = [IsAdminUser]
+
+
+class ApproveDoctorView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, doctor_id):
+        try:
+            doctor = Doctor.objects.get(id=doctor_id)
+            doctor.is_verified = True
+            doctor.save()
+            return Response({"message": "Bác sĩ đã được xác minh."})
+        except Doctor.DoesNotExist:
+            return Response({"error": "Không tìm thấy bác sĩ."}, status=404)

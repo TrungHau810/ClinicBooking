@@ -53,9 +53,13 @@ const Login = ({ navigation }) => {
       });
       if (userRes.data.role === 'patient') {
         navigation.navigate("Patient");
-      } else {
+      } else if (userRes.data.role === 'doctor') {
         navigation.navigate("Doctor");
       }
+      else if (userRes.data.role === 'admin') {
+        navigation.navigate("Admin");
+      }
+      console.log("Đăng nhập role:", userRes.data.role);
 
     } catch (ex) {
       console.error(ex);
@@ -106,13 +110,13 @@ const Login = ({ navigation }) => {
                   mode="flat"
                   left={<TextInput.Icon icon="account" />}
                   style={styles.input}
-                  // theme={{
-                  //   colors: {
-                  //     primary: colors.accent, // màu khi focus
-                  //     text: colors.text,       // màu chữ nhập
-                  //     placeholder: "#333",     // màu label khi chưa focus
-                  //   },
-                  // }}
+                // theme={{
+                //   colors: {
+                //     primary: colors.accent, // màu khi focus
+                //     text: colors.text,       // màu chữ nhập
+                //     placeholder: "#333",     // màu label khi chưa focus
+                //   },
+                // }}
                 />
 
                 <TextInput
@@ -130,13 +134,13 @@ const Login = ({ navigation }) => {
                     />
                   }
                   style={styles.input}
-                  // theme={{
-                  //   colors: {
-                  //     primary: colors.accent, // màu khi focus
-                  //     text: colors.text,       // màu chữ nhập
-                  //     placeholder: "#333",     // màu label khi chưa focus
-                  //   },
-                  // }}
+                // theme={{
+                //   colors: {
+                //     primary: colors.accent, // màu khi focus
+                //     text: colors.text,       // màu chữ nhập
+                //     placeholder: "#333",     // màu label khi chưa focus
+                //   },
+                // }}
                 />
 
                 <Button

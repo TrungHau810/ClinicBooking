@@ -61,14 +61,15 @@ class Specialization(BaseModel):
 
 class Doctor(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    license_number = models.CharField(max_length=20, unique=True, null=False)
-    license_image = CloudinaryField(null=False)
+    license_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    license_image = CloudinaryField(null=True, blank=True)
     biography = models.CharField(max_length=255, null=True)
     hospital = models.ForeignKey(Hospital, on_delete=models.PROTECT)
     specialization = models.ForeignKey(Specialization, on_delete=models.PROTECT)
     consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=100000,
                                            help_text="Giá khám bệnh (VND)"
                                            )
+    is_verified = models.BooleanField(default=False)
 
     def __str__(self):
         return (f"BS {self.user.full_name} - BV {self.hospital.name} - {self.specialization.name}")

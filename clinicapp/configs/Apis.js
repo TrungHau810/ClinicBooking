@@ -8,6 +8,7 @@ export const endpoints = {
     'specializations': '/specializations/',
     'user-patients': '/users/patients/',
     'user-doctors': '/users/doctors/',
+    'doctor-detail': "/doctors/by-user/",
     'doctors': '/doctors/',
     'login': '/o/token/',
     'register': '/users/',
@@ -26,7 +27,8 @@ export const endpoints = {
     'create-vnpay-url': '/create-payment-url/',
     'vnpay-return': '/vnpay-return/',
     // Report
-    'reportsdoctor': '/reportsdoctor/'
+    'reportsdoctor': '/reportsdoctor/',
+    'reportsadmin': '/reportsadmin/'
 }
 
 export const authApis = (token) => {

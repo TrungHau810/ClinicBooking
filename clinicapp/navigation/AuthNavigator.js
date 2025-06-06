@@ -6,6 +6,7 @@ import PatientNavigator from "./PatientNavigator";
 import DoctorNavigator from "./DoctorNavigator";
 import ResetPassword from "../screens/Auth/ResetPassword";
 import EditProfile from "../screens/Common/EditProfile";
+import AdminNavigator from "./AdminNavigator";
 
 
 const Stack = createNativeStackNavigator();
@@ -17,6 +18,7 @@ const StackNavigator = () => {
             <Stack.Screen name="ResetPassword" component={ResetPassword} options={{ title: "Đặt lại mật khẩu", headerShown: true }} />
             <Stack.Screen name="Patient" component={PatientNavigator} options={{ headerShown: false }} />
             <Stack.Screen name="Doctor" component={DoctorNavigator} options={{ headerShown: false }} />
+            <Stack.Screen name="Admin" component={AdminNavigator} options={{ headerShown: false }} />
         </Stack.Navigator>
     );
 };
