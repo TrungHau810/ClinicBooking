@@ -225,7 +225,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         schedule = data.get('schedule_id')
         healthrecord = data.get('healthrecord_id')
 
-        if Appointment.objects.filter(healthrecord=healthrecord, schedule=schedule).exists():
+        if Appointment.objects.filter(healthrecord=healthrecord, schedule=schedule, cancel=False).exists():
             raise serializers.ValidationError("Bạn đã có lịch khám này rồi!")
 
         return data

@@ -1,10 +1,10 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../../components/Header";
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import Apis, { endpoints } from "../../configs/Apis";
 import WebView from "react-native-webview";
 import { ActivityIndicator, Text } from "react-native-paper";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useState } from "react";
 
 const Payment = () => {
@@ -12,6 +12,8 @@ const Payment = () => {
     const { appointmentId } = useRoute().params;
     const [paymentUrl, setPaymentUrl] = useState(null);
     const [loading, setLoading] = useState(false);
+    const nav = useNavigation();
+    const [shouldCloseWebView, setShouldCloseWebView] = useState(false);
 
     console.log(appointmentId);
 
@@ -34,7 +36,7 @@ const Payment = () => {
     };
 
 
-    if (paymentUrl) {
+    if (paymentUrl && !shouldCloseWebView) {
         // Hiển thị WebView để thanh toán VNPay
         return (
             <SafeAreaView style={{ flex: 1 }}>
@@ -44,9 +46,30 @@ const Payment = () => {
                     startInLoadingState={true}
                     renderLoading={() => <ActivityIndicator style={{ flex: 1 }} size="large" />}
                     onNavigationStateChange={(navState) => {
-                        // Ví dụ: xử lý redirect vnpay-return ở đây nếu muốn
-                        // console.log('NavState URL:', navState.url);
+                        const url = navState.url;
+                        console.log(url);
+                        if (url.startsWith("http://localhost:8000/api/vnpay_return/?")) {
+                            const params = new URLSearchParams(url.split("?")[1]);
+                            console.log(params);
+                            const responseCode = params.get("vnp_ResponseCode");
+                            console.log(responseCode);
+                            if (responseCode === "00") {
+                                setShouldCloseWebView(true);
+                                Alert.alert("Thanh toán thành công", "Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi", [
+                                    {
+                                        text: "OK",
+                                        onPress: () => nav.navigate("Appointment")
+                                    }
+                                ]);
+
+                            } else {
+                                setShouldCloseWebView(true);
+                                Alert.alert("Thất bại","Thanh toán thất bại");
+                            }
+                            // Tắt WebView, quay về màn hình trước
+                        }
                     }}
+
                 />
             </SafeAreaView>
         );

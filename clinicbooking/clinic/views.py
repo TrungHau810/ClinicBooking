@@ -437,7 +437,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
         if not reply_text:
             return Response({"detail": "Thiếu nội dung phản hồi"}, status=status.HTTP_400_BAD_REQUEST)
-
         review.reply = reply_text
         review.save()
         return Response(self.get_serializer(review).data, status=status.HTTP_200_OK)
