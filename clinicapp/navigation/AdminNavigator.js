@@ -4,6 +4,7 @@ import { Icon, useTheme } from "react-native-paper";
 
 import Profile from "../screens/Common/Profile";
 import AdminReport from "../screens/Admin/AdminReport";
+import PendingDoctor from "../screens/Admin/PendingDoctor";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -36,6 +37,20 @@ const TabNavigator = () => {
                         <Icon
                             size={30}
                             source="chart-bar"
+                            color={focused ? theme.colors.primary : "black"}
+                        />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="PendingDoctor"
+                component={PendingDoctor}
+                options={{
+                    tabBarLabel: "Chờ duyệt",
+                    tabBarIcon: ({ focused }) => (
+                        <Icon
+                            size={30}
+                            source="account-check-outline"
                             color={focused ? theme.colors.primary : "black"}
                         />
                     ),

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://192.168.1.5:8000/";
+const BASE_URL = "http://192.168.1.9:8000/";
 
 export const endpoints = {
     'hospitals': '/hospitals/',
@@ -28,7 +28,11 @@ export const endpoints = {
     'vnpay-return': '/vnpay-return/',
     // Report
     'reportsdoctor': '/reportsdoctor/',
-    'reportsadmin': '/reportsadmin/'
+    'reportsadmin': '/reportsadmin/',
+    //Upload license - Pending - Accept
+    'upload-license': '/doctor/upload-license/',
+    "pending-doctors": "/admin/doctors/pending/",
+    "approve-doctor": (doctorId) => `/admin/doctors/${doctorId}/approve/`,
 }
 
 export const authApis = (token) => {

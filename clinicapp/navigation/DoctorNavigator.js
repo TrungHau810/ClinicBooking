@@ -1,34 +1,35 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Icon, useTheme } from "react-native-paper";
-import { View, StyleSheet } from "react-native";
+import { Icon, useTheme, ActivityIndicator } from "react-native-paper";
+import { View } from "react-native";
+import { useContext, useEffect, useState } from "react";
+import { MyUserContext } from "../configs/MyContexts";
 
 import AppointmentDoctor from "../screens/Doctor/AppointmentDoctor";
 import PatientHealthRecords from "../screens/Doctor/PatientHealthRecords";
 import AppointmentCalendar from "../screens/Doctor/AppointmentCalendar";
 import DoctorAppointmentDetails from "../screens/Doctor/DoctorAppointmentDetails";
 import CreateMedicalResult from "../screens/Doctor/CreateMedicalResult";
-import Profile from "../screens/Common/Profile";
+import ProfileStack from "./ProfileStack";
 import HomeDoctor from "../screens/Doctor/HomeDoctor";
 import ChatScreen from "../screens/Common/ChatScreen";
 import UserList from "../screens/Common/UserList";
 import PatientHealthRecordDetail from "../screens/Doctor/PatientHealthRecordDetail";
 import DoctorReport from "../screens/Doctor/DoctorReport";
-import ProfileStack from "./ProfileStack";
-import EditProfile from "../screens/Common/EditProfile";
+import BlockedScreen from "../screens/Doctor/BlockedScreen";
+
+import Apis, { endpoints } from "../configs/Apis";
 import UploadLicense from "../screens/Doctor/UploadLicense";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const ChatStack = () => {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="UserList" component={UserList} />
-      <Stack.Screen name="ChatScreen" component={ChatScreen} />
-    </Stack.Navigator>
-  );
-};
+const ChatStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="UserList" component={UserList} />
+    <Stack.Screen name="ChatScreen" component={ChatScreen} />
+  </Stack.Navigator>
+);
 
 const TabNavigator = () => {
   const theme = useTheme();
@@ -81,11 +82,7 @@ const TabNavigator = () => {
         options={{
           tabBarLabel: "Báo cáo",
           tabBarIcon: ({ focused }) => (
-            <Icon
-              size={30}
-              source="chart-bar"
-              color={focused ? theme.colors.primary : "black"}
-            />
+            <Icon size={30} source="chart-bar" color={focused ? theme.colors.primary : "black"} />
           ),
         }}
       />
@@ -94,15 +91,55 @@ const TabNavigator = () => {
 };
 
 const DoctorNavigator = () => {
+  const user = useContext(MyUserContext);
+  const [isVerified, setIsVerified] = useState(null); // null = loading, true/false = loaded
+
+  useEffect(() => {
+    const fetchDoctorStatus = async () => {
+      try {
+        const res = await Apis.get(`${endpoints["doctor-detail"]}?user_id=${user?.payload?.id}`);
+        setIsVerified(res.data.is_verified);
+      } catch (error) {
+        console.error("Lỗi khi load is_verified:", error);
+        setIsVerified(true); // fallback để không chặn nếu lỗi
+      }
+    };
+
+    if (user?.payload?.role === "doctor") {
+      fetchDoctorStatus();
+    } else {
+      setIsVerified(true); // không phải bác sĩ thì cho qua
+    }
+  }, [user]);
+
+  // Nếu đang loading thì hiện loading hoặc null
+  if (isVerified === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator animating size="large" />
+      </View>
+    );
+  }
+
+  const isBlockedDoctor = user?.payload?.role === "doctor" && isVerified === false;
 
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="MainDoctor" component={TabNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="ChatStack" component={ChatStack} options={{ headerShown: false }} />
-      <Stack.Screen name="AppointmentCalendar" component={AppointmentCalendar} options={{ headerShown: false }} />
-      <Stack.Screen name="DoctorAppointmentDetails" component={DoctorAppointmentDetails} options={{ headerShown: false }} />
-      <Stack.Screen name="CreateMedicalResult" component={CreateMedicalResult} />
-      <Stack.Screen name="PatientHealthRecordDetail" component={PatientHealthRecordDetail} options={{ headerShown: false }} />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {isBlockedDoctor ? (
+        <>
+          <Stack.Screen name="BlockedScreen" component={BlockedScreen} />
+          <Stack.Screen name="UploadLicense" component={UploadLicense} />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name="MainDoctor" component={TabNavigator} />
+          <Stack.Screen name="ChatStack" component={ChatStack} />
+          <Stack.Screen name="AppointmentCalendar" component={AppointmentCalendar} />
+          <Stack.Screen name="DoctorAppointmentDetails" component={DoctorAppointmentDetails} />
+          <Stack.Screen name="CreateMedicalResult" component={CreateMedicalResult} />
+          <Stack.Screen name="PatientHealthRecordDetail" component={PatientHealthRecordDetail} />
+        </>
+      )}
     </Stack.Navigator>
   );
 };
