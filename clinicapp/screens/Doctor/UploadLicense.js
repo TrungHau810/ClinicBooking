@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { endpoints } from "../../configs/Apis";
+import Header from "../../components/Header";
 
 const UploadLicense = ({ navigation }) => {
     const [licenseData, setLicenseData] = useState({
@@ -75,6 +76,7 @@ const UploadLicense = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <Header title={"Upload giấy phép hành nghề"} />
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <Text style={styles.sectionTitle}>Tải lên giấy phép hành nghề</Text>
 
@@ -157,6 +159,6 @@ const styles = StyleSheet.create({
     },
     uploadButton: {
         marginTop: 10,
-        borderRadius: 8,
+        borderRadius: 50,
     },
 });

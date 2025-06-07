@@ -70,7 +70,7 @@ const NotificationStack = () => {
 const PatientNavigator = () => {
   const { count } = useNotification();
   const theme = useTheme();
-
+  console.log("Notification count:", count);
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="HomeTab" component={HomeStack} options={{ tabBarLabel: "Trang chủ", tabBarIcon: ({ focused }) => <Icon size={30} source="home-outline" color={focused ? theme.colors.primary : 'black'} /> }} />

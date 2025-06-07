@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import MyStyles from "../../styles/MyStyles";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { MyDispatchContext } from "../../configs/MyContexts";
+import { useNotification } from "../../configs/NotificationContext";
 
 const Login = ({ navigation }) => {
   const [user, setUser] = useState({ username: "", password: "" });
@@ -14,6 +15,7 @@ const Login = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { colors } = useTheme();
+  const { loadNotificationCount } = useNotification();
 
   const dispatch = useContext(MyDispatchContext);
 
@@ -45,13 +47,19 @@ const Login = ({ navigation }) => {
       await AsyncStorage.setItem("token", res.data.access_token);
 
       const userRes = await authApis(res.data.access_token).get(endpoints["current-user"]);
-      await AsyncStorage.setItem("currentUser", JSON.stringify(userRes.data));
+      const currentUser = {
+        ...userRes.data,
+        token: res.data.access_token,
+      };
+      await AsyncStorage.setItem("currentUser", JSON.stringify(currentUser));
+
 
       dispatch({
         type: "login",
         payload: userRes.data,
       });
       if (userRes.data.role === 'patient') {
+        await loadNotificationCount();
         navigation.navigate("Patient");
       } else if (userRes.data.role === 'doctor') {
         navigation.navigate("Doctor");

@@ -19,16 +19,22 @@ const UserList = () => {
         let res;
         currentUser = JSON.parse(currentUser);
 
+        const headers = {
+            Authorization: `Bearer ${currentUser.token}`,
+        };
+
         if (currentUser.role === 'patient') {
-            res = await Apis.get(endpoints['user-doctors']);
-        } else {
-            res = await Apis.get(endpoints['user-patients']);
+            res = await Apis.get(endpoints['user-doctors'], { headers });
+        } else if (currentUser.role === 'doctor') {
+            res = await Apis.get(endpoints['user-patients'], { headers });
         }
-        setUser(res.data);
+        console.log("Kiểu dữ liệu:", typeof res.data, "Độ dài:", res.data.length);
         console.log(res.data);
+        setUser(res.data);
     };
 
     useEffect(() => {
+        console.log("useEffect chạy");
         loadUser();
     }, []);
 

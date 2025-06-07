@@ -20,7 +20,6 @@ const Notification = () => {
 
             const res = await Apis.get(endpoints["notifications"]);
             setNotifications(res.data);
-            setCount(res.data.length);
         } catch (err) {
             console.error("Lỗi khi load thông báo: ", err);
         } finally {

@@ -2,6 +2,8 @@ import hashlib
 import hmac
 import urllib
 from datetime import datetime, timedelta
+
+from cloudinary.provisioning import users
 from django.contrib.auth.tokens import default_token_generator
 import random
 
@@ -72,16 +74,26 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView
             u.save()
         return Response(serializers.UserSerializer(u).data)
 
-    @action(methods=['get'], detail=False, url_path='doctors')
+    @action(methods=['get'], detail=False, url_path='doctors', permission_classes=[permissions.IsAuthenticated])
     def get_doctors(self, request):
-        doctors = User.objects.filter(role='doctor')
-        serializer = self.get_serializer(doctors, many=True)
+        user = request.user
+        if user.role != 'patient':
+            return Response({"detail": "Chỉ bệnh nhân có quyền."}, status=status.HTTP_403_FORBIDDEN)
+        doctor_ids = Appointment.objects.filter(healthrecord__user=user) \
+            .values_list('schedule__doctor', flat=True).distinct()
+        doctors = User.objects.filter(id__in=doctor_ids, role='doctor')
+        serializer = UserSerializer(doctors, many=True)
         return Response(serializer.data)
 
-    @action(methods=['get'], detail=False, url_path='patients')
+    @action(methods=['get'], detail=False, url_path='patients', permission_classes=[permissions.IsAuthenticated])
     def get_patients(self, request):
-        patients = User.objects.filter(role='patient')
-        serializer = self.get_serializer(patients, many=True)
+        user = request.user
+        if user.role != 'doctor':
+            return Response({"detail": "Chỉ bác sĩ có quyền."}, status=status.HTTP_403_FORBIDDEN)
+        patient_ids = Appointment.objects.filter(schedule__doctor=user) \
+            .values_list('healthrecord__user', flat=True).distinct()
+        patients = User.objects.filter(id__in=patient_ids, role='patient')
+        serializer = UserSerializer(patients, many=True)
         return Response(serializer.data)
 
     @action(methods=['get'], detail=False, url_path='admin')
