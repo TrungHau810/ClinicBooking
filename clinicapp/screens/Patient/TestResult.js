@@ -82,7 +82,9 @@ const TestResult = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 12,
+    paddingTop: 30,
+    paddingLeft: 12,
+    paddingRight: 12,
     backgroundColor: "#f9f9f9"
   },
   header: {

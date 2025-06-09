@@ -1,12 +1,13 @@
-import { FlatList, StyleSheet, View, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native";
+import { FlatList, StyleSheet, View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MessageBubble from "../../components/MessageBubble";
 import Header from "../../components/Header";
 import { useEffect, useState } from "react";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { TextInput } from "react-native-paper";
+import { Icon, TextInput } from "react-native-paper";
 import { useRoute } from "@react-navigation/native";
+import * as ImagePicker from 'expo-image-picker';
 
 const ChatScreen = () => {
   const route = useRoute();
@@ -14,6 +15,7 @@ const ChatScreen = () => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [message, setMessage] = useState('');
   const [token, setToken] = useState("");
+  const [imageToSend, setImageToSend] = useState(null);
   const { selectedUser } = route.params;
 
   const loadMessage = async () => {
@@ -29,16 +31,48 @@ const ChatScreen = () => {
 
   const sendMessage = async () => {
     let form = new FormData();
-    form.append("content", message);
-    form.append('receiver', selectedUser.id);
-    console.log(form);
-    let res = await authApis(token).post(endpoints['messages'], form, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+    if (message.trim()) form.append("content", message);
+    form.append("receiver", selectedUser.id);
+
+    if (imageToSend) {
+      form.append("image", {
+        uri: Platform.OS === "android" ? imageToSend.uri : imageToSend.uri.replace("file://", ""),
+        name: imageToSend.fileName || "photo.jpg",
+        type: imageToSend.mimeType || "image/jpeg",
+      });
+    }
+
+    try {
+      await authApis(token).post(endpoints['messages'], form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setMessage("");
+      setImageToSend(null);
+      loadMessage();
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Lỗi", "Không thể gửi tin nhắn.");
+    }
+  };
+
+  const pickImageAndSend = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Lỗi", "Cần cấp quyền để chọn ảnh");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      base64: false,
     });
-    setMessage("");
-    loadMessage();
+
+    if (!result.canceled) {
+      const selectedAsset = result.assets[0];
+      console.log(selectedAsset);
+      setImageToSend(selectedAsset); // Chỉ chọn ảnh, chưa gửi
+    }
   };
 
   useEffect(() => {
@@ -74,9 +108,21 @@ const ChatScreen = () => {
           )}
         />
 
+        {imageToSend && (
+          <View style={styles.previewContainer}>
+            <Image
+              source={{ uri: imageToSend.uri }}
+              style={styles.previewImage}
+            />
+            <TouchableOpacity onPress={() => setImageToSend(null)}>
+              <Text style={{ color: 'red', marginTop: 5 }}>Xoá ảnh</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.fileButton}>
-            <Text style={styles.buttonText}>📎</Text>
+          <TouchableOpacity style={styles.fileButton} onPress={pickImageAndSend}>
+            <Icon source="paperclip" size={22} color="#000" />
           </TouchableOpacity>
 
           <TextInput
@@ -88,7 +134,9 @@ const ChatScreen = () => {
           />
 
           <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-            <Text style={styles.buttonText}>📤</Text>
+            <Text style={styles.buttonText}>
+              <Icon source="send" size={25} color="#000" />
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -124,6 +172,15 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 20,
+  },
+  previewContainer: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  previewImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
   },
 });
 

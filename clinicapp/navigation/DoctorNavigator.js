@@ -17,6 +17,7 @@ import UserList from "../screens/Common/UserList";
 import PatientHealthRecordDetail from "../screens/Doctor/PatientHealthRecordDetail";
 import DoctorReport from "../screens/Doctor/DoctorReport";
 import BlockedScreen from "../screens/Doctor/BlockedScreen";
+import DoctorReviews from "../screens/Doctor/DoctorReviews";
 
 import Apis, { endpoints } from "../configs/Apis";
 import UploadLicense from "../screens/Doctor/UploadLicense";
@@ -138,6 +139,7 @@ const DoctorNavigator = () => {
           <Stack.Screen name="DoctorAppointmentDetails" component={DoctorAppointmentDetails} />
           <Stack.Screen name="CreateMedicalResult" component={CreateMedicalResult} />
           <Stack.Screen name="PatientHealthRecordDetail" component={PatientHealthRecordDetail} />
+          <Stack.Screen name="DoctorReviews" component={DoctorReviews} />
         </>
       )}
     </Stack.Navigator>

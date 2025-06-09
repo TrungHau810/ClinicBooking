@@ -145,12 +145,12 @@ const DoctorHome = ({ navigation }) => {
                         </View>
                         <Text>Hồ sơ</Text>
                     </TouchableOpacity>
-                    {/* <TouchableOpacity style={styles.quickButton} onPress={() => navigation.navigate("PatientHealthRecords")}>
+                    <TouchableOpacity style={styles.quickButton} onPress={() => navigation.navigate("DoctorReviews")}>
                         <View style={styles.iconContainer}>
-                            <Icon source="file-document-edit-outline" size={28} color={theme.colors.primary} />
+                            <Icon source="message-reply-text" size={28} color={theme.colors.primary} />
                         </View>
-                        <Text>Kết quả khám</Text>
-                    </TouchableOpacity> */}
+                        <Text>Đánh giá</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
             <Button mode="contained" onPress={() => nav.navigate("ChatStack")}>Nhắn tin</Button>

@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { View, FlatList, StyleSheet, Text, TouchableOpacity, StatusBar, Platform, RefreshControl, } from "react-native";
-import { FAB } from "react-native-paper";
+import { FAB, Icon } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -51,7 +51,8 @@ const HealthRecordList = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1E90FF" />
       <View style={styles.header}>
-        <Text style={styles.title}>📋 Hồ sơ sức khỏe</Text>
+        <Icon source="clipboard-text-outline" size={24} color="#fff" />
+        <Text style={styles.title}>Hồ sơ sức khỏe</Text>
       </View>
 
       {user?.type !== "logout" ? (
@@ -94,17 +95,17 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: "#1E90FF",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 10 : 44,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 44,
     paddingBottom: 15,
     alignItems: "center",
     justifyContent: "center",
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+    flexDirection: 'row',
   },
   title: {
     color: "#fff",
     fontSize: 22,
     fontWeight: "bold",
+    marginLeft: 10
   },
   emptyListContainer: {
     flex: 1,

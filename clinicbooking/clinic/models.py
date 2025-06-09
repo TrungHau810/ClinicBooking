@@ -141,6 +141,7 @@ class Message(BaseModel):
     sender = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='sent_messages', null=True)
     receiver = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='received_messages', null=True)
     test_result = models.OneToOneField(TestResult, on_delete=models.SET_NULL, null=True, blank=True)
+    image = CloudinaryField(null=True, blank=True)
 
     def __str__(self):
         return (f"{self.sender} - {self.receiver}")
@@ -156,6 +157,7 @@ class Review(BaseModel):
     reply = models.TextField(blank=True, null=True)
     patient = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='reviews', null=True)
     doctor = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='reviews_received', null=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"Review by {self.patient} for {self.doctor}: {self.rating}⭐ - {self.comment} - {self.reply if self.reply else 'None'}"

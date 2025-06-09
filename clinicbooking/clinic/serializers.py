@@ -255,7 +255,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = ['id', 'content', 'is_read', 'sender', 'receiver', 'test_result', 'created_date']
+        fields = ['id', 'content', 'is_read', 'sender', 'receiver', 'test_result', 'created_date', 'image']
 
 
 class ReviewSerializer(ModelSerializer):
@@ -266,7 +266,7 @@ class ReviewSerializer(ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ['id', 'rating', 'comment', 'reply', 'patient_name', 'avatar_patient', 'doctor', 'doctor_name']
+        fields = ['id', 'rating', 'comment', 'reply', 'patient_name', 'avatar_patient', 'doctor', 'doctor_name', 'created_at']
 
     def create(self, validated_data):
         request = self.context['request']

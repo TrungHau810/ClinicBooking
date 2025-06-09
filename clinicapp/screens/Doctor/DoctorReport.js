@@ -6,6 +6,7 @@ import {
     ActivityIndicator,
     Dimensions,
     TouchableOpacity,
+    SafeAreaView,
 } from "react-native";
 import { Text } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -65,86 +66,86 @@ const DoctorReport = () => {
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.title}>Báo cáo bác sĩ</Text>
+            <ScrollView contentContainerStyle={styles.container}>
+                <Text style={styles.title}>Báo cáo bác sĩ</Text>
 
-            <View style={styles.filterSection}>
-                <View style={styles.pickerWrapper}>
-                    <Text style={styles.label}>Tháng</Text>
-                    <Picker
-                        selectedValue={month}
-                        onValueChange={(value) => {
-                            setMonth(value);
-                            setQuarter(null); // nếu chọn tháng thì bỏ quý
-                        }}
-                        style={styles.picker}
-                    >
-                        <Picker.Item label="-- Chọn tháng --" value={null} />
-                        {Array.from({ length: 12 }, (_, i) => (
-                            <Picker.Item key={i + 1} label={`Tháng ${i + 1}`} value={i + 1} />
-                        ))}
-                    </Picker>
+                <View style={styles.filterSection}>
+                    <View style={styles.pickerWrapper}>
+                        <Text style={styles.label}>Tháng</Text>
+                        <Picker
+                            selectedValue={month}
+                            onValueChange={(value) => {
+                                setMonth(value);
+                                setQuarter(null); // nếu chọn tháng thì bỏ quý
+                            }}
+                            style={styles.picker}
+                        >
+                            <Picker.Item label="-- Chọn tháng --" value={null} />
+                            {Array.from({ length: 12 }, (_, i) => (
+                                <Picker.Item key={i + 1} label={`Tháng ${i + 1}`} value={i + 1} />
+                            ))}
+                        </Picker>
 
-                    <Text style={styles.label}>Quý</Text>
-                    <Picker
-                        selectedValue={quarter}
-                        onValueChange={(value) => {
-                            setQuarter(value);
-                            setMonth(null); // nếu chọn quý thì bỏ tháng
-                        }}
-                        style={styles.picker}
-                    >
-                        <Picker.Item label="-- Chọn quý --" value={null} />
-                        {[1, 2, 3, 4].map((q) => (
-                            <Picker.Item key={q} label={`Quý ${q}`} value={q} />
-                        ))}
-                    </Picker>
+                        <Text style={styles.label}>Quý</Text>
+                        <Picker
+                            selectedValue={quarter}
+                            onValueChange={(value) => {
+                                setQuarter(value);
+                                setMonth(null); // nếu chọn quý thì bỏ tháng
+                            }}
+                            style={styles.picker}
+                        >
+                            <Picker.Item label="-- Chọn quý --" value={null} />
+                            {[1, 2, 3, 4].map((q) => (
+                                <Picker.Item key={q} label={`Quý ${q}`} value={q} />
+                            ))}
+                        </Picker>
 
-                    <Text style={styles.label}>Năm</Text>
-                    <Picker
-                        selectedValue={year}
-                        onValueChange={(value) => setYear(value)}
-                        style={styles.picker}
-                    >
-                        {[2023, 2024, 2025].map((y) => (
-                            <Picker.Item key={y} label={`Năm ${y}`} value={y} />
-                        ))}
-                    </Picker>
+                        <Text style={styles.label}>Năm</Text>
+                        <Picker
+                            selectedValue={year}
+                            onValueChange={(value) => setYear(value)}
+                            style={styles.picker}
+                        >
+                            {[2023, 2024, 2025].map((y) => (
+                                <Picker.Item key={y} label={`Năm ${y}`} value={y} />
+                            ))}
+                        </Picker>
 
-                    <TouchableOpacity onPress={handleClear} style={styles.clearBtn}>
-                        <Text style={styles.clearText}>Xóa bộ lọc</Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity onPress={handleClear} style={styles.clearBtn}>
+                            <Text style={styles.clearText}>Xóa bộ lọc</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
 
-            <View style={styles.card}>
-                <Text style={styles.stat}>Tổng cuộc hẹn: {data.total_appointment}</Text>
-                <Text style={styles.stat}>Đã khám: {data.examined_count}</Text>
-                <Text style={styles.stat}>Chưa khám: {data.unexamined_count}</Text>
-            </View>
+                <View style={styles.card}>
+                    <Text style={styles.stat}>Tổng cuộc hẹn: {data.total_appointment}</Text>
+                    <Text style={styles.stat}>Đã khám: {data.examined_count}</Text>
+                    <Text style={styles.stat}>Chưa khám: {data.unexamined_count}</Text>
+                </View>
 
-            <Text style={styles.label}>Top 5 bệnh thường gặp</Text>
-            {data.top_disease?.length > 0 ? (
-                <BarChart
-                    data={{
-                        labels: data.top_disease.map((item) => item.disease_type || "Không rõ"),
-                        datasets: [{ data: data.top_disease.map((item) => item.count) }],
-                    }}
-                    width={screenWidth - 32}
-                    height={220}
-                    chartConfig={{
-                        backgroundGradientFrom: "#fff",
-                        backgroundGradientTo: "#fff",
-                        decimalPlaces: 0,
-                        color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
-                        labelColor: () => "#444",
-                    }}
-                    style={{ borderRadius: 12, marginTop: 12 }}
-                />
-            ) : (
-                <Text style={{ color: "#888" }}>Không có dữ liệu bệnh</Text>
-            )}
-        </ScrollView>
+                <Text style={styles.label}>Top 5 bệnh thường gặp</Text>
+                {data.top_disease?.length > 0 ? (
+                    <BarChart
+                        data={{
+                            labels: data.top_disease.map((item) => item.disease_type || "Không rõ"),
+                            datasets: [{ data: data.top_disease.map((item) => item.count) }],
+                        }}
+                        width={screenWidth - 32}
+                        height={220}
+                        chartConfig={{
+                            backgroundGradientFrom: "#fff",
+                            backgroundGradientTo: "#fff",
+                            decimalPlaces: 0,
+                            color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
+                            labelColor: () => "#444",
+                        }}
+                        style={{ borderRadius: 12, marginTop: 12 }}
+                    />
+                ) : (
+                    <Text style={{ color: "#888" }}>Không có dữ liệu bệnh</Text>
+                )}
+            </ScrollView>
     );
 };
 
@@ -160,6 +161,7 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginBottom: 20,
         color: "#007bff",
+        marginTop: 30
     },
     card: {
         backgroundColor: "#eef7ff",
