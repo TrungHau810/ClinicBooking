@@ -127,10 +127,40 @@ const Home = () => {
           <ImageSlider />
         </View>
 
-        <List.Item onPress={() => nav.navigate("TestResult")} title='Xem các kết quả xét nghiệm' left={() => <List.Icon icon={'flask-outline'} />} />
-        <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
-        <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
-        <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
+        <Text style={styles.quickTitle}>Chức năng nhanh</Text>
+
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={styles.quickButton}
+            onPress={() => nav.navigate("Appointment")}
+          >
+            <View style={styles.iconContainer}>
+              <Ionicons name="calendar-outline" size={28} color="#1565C0" />
+            </View>
+            <Text>Lịch khám</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickButton}
+            onPress={() => nav.navigate("TestResult")}
+          >
+            <View style={styles.iconContainer}>
+              <Ionicons name="flask-outline" size={28} color="#1565C0" />
+            </View>
+            <Text>Xét nghiệm</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickButton}
+            onPress={() => nav.navigate("HealthRecords")}
+          >
+            <View style={styles.iconContainer}>
+              <Ionicons name="document-text-outline" size={28} color="#1565C0" />
+            </View>
+            <Text>Hồ sơ</Text>
+          </TouchableOpacity>
+        </View>
+
 
         <Card.Actions>
           <View style={styles.button}>
@@ -258,6 +288,31 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
+  },
+  quickTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 12,
+    marginLeft: 16,
+    color: '#1E90FF',
+  },
+
+  quickActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 20,
+  },
+
+  quickButton: {
+    alignItems: "center",
+    width: 90,
+  },
+
+  iconContainer: {
+    backgroundColor: "#e6f0ff",
+    borderRadius: 30,
+    padding: 10,
+    marginBottom: 6,
   },
 });
 

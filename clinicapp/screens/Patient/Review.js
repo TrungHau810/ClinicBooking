@@ -154,6 +154,7 @@ const styles = StyleSheet.create({
     },
     doctorCard: {
         marginBottom: 16,
+        backgroundColor: '#f0f8ff'
     },
     cardContent: {
         flexDirection: "row",
