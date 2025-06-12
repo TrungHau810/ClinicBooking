@@ -61,7 +61,7 @@ const UploadLicense = ({ navigation }) => {
                     "Content-Type": "multipart/form-data",
                 },
             });
-            if (res.status === 200) {
+            if (res.status === 201) {
                 Alert.alert("Thành công", res.data.message, [
                     { text: "OK", onPress: () => navigation.goBack() },
                 ]);

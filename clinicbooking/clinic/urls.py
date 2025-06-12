@@ -24,6 +24,7 @@ router.register('reviews', views.ReviewViewSet, basename='review')
 router.register('payments', views.PaymentViewSet, basename='payment')
 # # router.register('admin-report', views.AdminReportViewSet, basename='adminreport')
 router.register('notifications', views.NotificationViewSet, basename='notification')
+router.register('doctor/upload-license', views.UploadLicenseViewSet, basename='upload_license')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -32,7 +33,6 @@ urlpatterns = [
     path('reportsdoctor/', DoctorReportViewSet.as_view(), name='doctorreport'),
     path('reportsadmin/', AdminReportViewSet.as_view(), name='adminreport'),
     # Tạo url cho upload license, duyệt bác sĩ
-    path('doctor/upload-license/', UploadLicenseViewSet.as_view(), name='upload_license'),
     path('admin/doctors/pending/', PendingDoctorsViewSet.as_view(), name='pending_doctors'),
     path('admin/doctors/<int:doctor_id>/approve/', ApproveDoctorView.as_view(), name='approve_doctor'),
     # Tạo url cho create-payment-url

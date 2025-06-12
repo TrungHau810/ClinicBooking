@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View, StyleSheet, Dimensions, ScrollView, StatusBar } from "react-native";
 import { Button, Card, List, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -6,6 +6,8 @@ import Apis, { endpoints } from "../../configs/Apis";
 import Carousel from 'react-native-reanimated-carousel';
 import MyStyles from "../../styles/MyStyles";
 import { useNavigation } from "@react-navigation/native";
+import { Animated } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 const Home = () => {
   const [hospital, setHospital] = useState([]);
@@ -39,6 +41,38 @@ const Home = () => {
       </View>
     );
   };
+
+  const FloatingChatButton = () => {
+    const nav = useNavigation();
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulse.start();
+    }, []);
+
+    return (
+      <Animated.View style={[styles.floatingButton, { transform: [{ scale: scaleAnim }] }]}>
+        <TouchableOpacity onPress={() => nav.navigate('UserList')}>
+          <Ionicons name="chatbubbles" size={28} color="#fff" />
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
 
 
   const loadSpecialization = async () => {
@@ -82,8 +116,8 @@ const Home = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-        <StatusBar barStyle="light-content" backgroundColor="#1E90FF" />
         <View style={styles.headerContainer}>
           <Text style={{ fontSize: 22, color: '#fff', fontWeight: 'bold', textAlign: 'center' }}>
             Chào mừng đến Open Care
@@ -97,7 +131,7 @@ const Home = () => {
         <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
         <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
         <List.Item onPress={() => { console.log("Hiện") }} title='Test' description="Không biết" left={() => <List.Icon icon={'folder'} />} />
-       
+
         <Card.Actions>
           <View style={styles.button}>
             <Button
@@ -117,7 +151,7 @@ const Home = () => {
           </View>
         ))}
       </ScrollView>
-      <Button mode="contained" onPress={() => nav.navigate("UserList")}>Nhắn tin</Button>
+      <FloatingChatButton />
     </SafeAreaView >
   );
 };
@@ -208,6 +242,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E90FF',
     paddingVertical: 20,
     //paddingHorizontal: 16,
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: '#1E90FF',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
 });
 

@@ -167,6 +167,23 @@ class DoctorSerializer(ModelSerializer):
         doctor = Doctor.objects.create(**validated_data)
         return doctor
 
+class UploadLicenseSerializer(serializers.Serializer):
+    license_number = serializers.CharField(required=False)
+    license_image = serializers.ImageField(required=False)
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        doctor = user.doctor
+
+        if 'license_number' in validated_data:
+            doctor.license_number = validated_data['license_number']
+        if 'license_image' in validated_data:
+            doctor.license_image = validated_data['license_image']
+        doctor.is_verified = False
+        doctor.save()
+        return doctor
+
+
 
 class TestResultSerializer(ModelSerializer):
     class Meta:

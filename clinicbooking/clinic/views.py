@@ -659,7 +659,6 @@ class DoctorReportViewSet(APIView):
         examined = queryset.count()
         top_diseases = queryset.values('disease_type').annotate(count=Count('disease_type')).order_by('-count')[:5]
 
-        # 👉 Sửa ở đây: doctor → doctor.user
         unexamined = Appointment.objects.filter(schedule__doctor=doctor.user, status='paid')
         if month and year:
             unexamined = unexamined.filter(schedule__date__year=year, schedule__date__month=month)
@@ -757,27 +756,26 @@ class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
 
 
-class UploadLicenseViewSet(APIView):
+class UploadLicenseViewSet(viewsets.ModelViewSet, generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+    serializer_class = serializers.UploadLicenseSerializer
 
-    def post(self, request):
+    def create(self, request, *args, **kwargs):
         try:
             doctor = request.user.doctor
-            license_number = request.data.get('license_number')
-            license_image = request.data.get('license_image')
-
-            if license_number:
-                doctor.license_number = license_number
-            if license_image:
-                doctor.license_image = license_image
-            doctor.is_verified = False  # Khi upload mới, phải chờ xác minh lại
-            doctor.save()
-
-            return Response({"message": "Đã gửi giấy phép thành công. Vui lòng chờ quản trị viên xác minh."},
-                            status=200)
         except:
             return Response({"error": "Bạn không phải là bác sĩ."}, status=400)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        doctor.license_number = serializer.validated_data.get('license_number', doctor.license_number)
+        doctor.license_image = serializer.validated_data.get('license_image', doctor.license_image)
+        doctor.is_verified = False
+        doctor.save()
+
+        return Response({"message": "Đã gửi giấy phép. Vui lòng chờ xác minh."}, status=201)
 
 
 class PendingDoctorsViewSet(generics.ListAPIView):
