@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Alert,
     Image,
@@ -11,15 +11,38 @@ import { Button, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Picker } from "@react-native-picker/picker";
 import Apis, { endpoints } from "../../configs/Apis";
 import Header from "../../components/Header";
 
 const UploadLicense = ({ navigation }) => {
     const [licenseData, setLicenseData] = useState({
         license_number: "",
+        hospital: "",
+        specialization: "",
+        biography: "",
     });
     const [licenseImage, setLicenseImage] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [hospitals, setHospitals] = useState([]);
+    const [specializations, setSpecializations] = useState([]);
+
+    const fetchData = async () => {
+        try {
+            const [hosRes, speRes] = await Promise.all([
+                Apis.get(endpoints["hospitals"]),
+                Apis.get(endpoints["specializations"]),
+            ]);
+            setHospitals(hosRes.data);
+            setSpecializations(speRes.data);
+        } catch (err) {
+            console.error("Lỗi tải bệnh viện hoặc chuyên khoa:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     const setState = (value, field) => {
         setLicenseData({ ...licenseData, [field]: value });
@@ -38,8 +61,13 @@ const UploadLicense = ({ navigation }) => {
     };
 
     const handleUpload = async () => {
-        if (!licenseData.license_number || !licenseImage) {
-            Alert.alert("Thiếu thông tin", "Vui lòng nhập số giấy phép và chọn ảnh.");
+        const { license_number, hospital, specialization, biography } = licenseData;
+
+        if (!license_number || !hospital || !specialization || !biography || !licenseImage) {
+            Alert.alert(
+                "Thiếu thông tin",
+                "Vui lòng điền đầy đủ các trường: Số giấy phép, Bệnh viện, Chuyên khoa, Tiểu sử và chọn ảnh."
+            );
             return;
         }
 
@@ -48,7 +76,10 @@ const UploadLicense = ({ navigation }) => {
             const token = await AsyncStorage.getItem("token");
 
             const form = new FormData();
-            form.append("license_number", licenseData.license_number);
+            form.append("license_number", license_number);
+            form.append("hospital", hospital);
+            form.append("specialization", specialization);
+            form.append("biography", biography);
             form.append("license_image", {
                 uri: licenseImage.uri,
                 name: "license.jpg",
@@ -61,6 +92,7 @@ const UploadLicense = ({ navigation }) => {
                     "Content-Type": "multipart/form-data",
                 },
             });
+
             if (res.status === 201) {
                 Alert.alert("Thành công", res.data.message, [
                     { text: "OK", onPress: () => navigation.goBack() },
@@ -74,11 +106,48 @@ const UploadLicense = ({ navigation }) => {
         }
     };
 
+
     return (
         <SafeAreaView style={styles.container}>
             <Header title={"Upload giấy phép hành nghề"} />
             <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <Text style={styles.sectionTitle}>Tải lên giấy phép hành nghề</Text>
+                <Text style={styles.sectionTitle}>Điền thông tin & tải giấy phép</Text>
+
+                <Text style={styles.label}>Bệnh viện</Text>
+                <View style={styles.pickerWrapper}>
+                    <Picker
+                        selectedValue={licenseData.hospital}
+                        onValueChange={(value) => setState(value, "hospital")}
+                    >
+                        <Picker.Item label="-- Chọn bệnh viện --" value="" />
+                        {hospitals.map((h) => (
+                            <Picker.Item key={h.id} label={h.name} value={h.id} />
+                        ))}
+                    </Picker>
+                </View>
+
+                <Text style={styles.label}>Chuyên khoa</Text>
+                <View style={styles.pickerWrapper}>
+                    <Picker
+                        selectedValue={licenseData.specialization}
+                        onValueChange={(value) => setState(value, "specialization")}
+                    >
+                        <Picker.Item label="-- Chọn chuyên khoa --" value="" />
+                        {specializations.map((s) => (
+                            <Picker.Item key={s.id} label={s.name} value={s.id} />
+                        ))}
+                    </Picker>
+                </View>
+
+                <TextInput
+                    label="Tiểu sử"
+                    mode="outlined"
+                    multiline
+                    numberOfLines={4}
+                    style={styles.input}
+                    value={licenseData.biography}
+                    onChangeText={(text) => setState(text, "biography")}
+                />
 
                 <TextInput
                     label="Số giấy phép hành nghề"
@@ -97,17 +166,15 @@ const UploadLicense = ({ navigation }) => {
                     )}
                 </TouchableOpacity>
 
-                <TouchableOpacity disabled={loading}>
-                    <Button
-                        mode="contained"
-                        onPress={handleUpload}
-                        loading={loading}
-                        disabled={loading}
-                        style={styles.uploadButton}
-                    >
-                        {loading ? "Đang gửi..." : "Gửi giấy phép"}
-                    </Button>
-                </TouchableOpacity>
+                <Button
+                    mode="contained"
+                    onPress={handleUpload}
+                    loading={loading}
+                    disabled={loading}
+                    style={styles.uploadButton}
+                >
+                    {loading ? "Đang gửi..." : "Gửi giấy phép"}
+                </Button>
             </ScrollView>
         </SafeAreaView>
     );
@@ -125,19 +192,29 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     sectionTitle: {
-        fontSize: 18,
-        fontWeight: "600",
-        marginBottom: 16,
-        color: "#333",
-    },
-    input: {
-        marginBottom: 16,
+        fontSize: 20,
+        fontWeight: "bold",
+        marginBottom: 20,
+        textAlign: "center",
+        color: "#0A84FF",
     },
     label: {
         fontSize: 16,
-        marginBottom: 8,
-        marginTop: 8,
-        color: "#555",
+        marginBottom: 6,
+        color: "#333",
+        fontWeight: "600",
+    },
+    input: {
+        backgroundColor: "#f5f5f5",
+        marginBottom: 16,
+        borderRadius: 8,
+    },
+    pickerWrapper: {
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 8,
+        marginBottom: 16,
+        backgroundColor: "#f9f9f9",
     },
     imagePicker: {
         height: 200,
@@ -148,6 +225,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         overflow: "hidden",
         marginBottom: 20,
+        backgroundColor: "#f0f0f0",
     },
     image: {
         width: "100%",
@@ -156,9 +234,11 @@ const styles = StyleSheet.create({
     },
     imageText: {
         color: "#888",
+        fontSize: 16,
     },
     uploadButton: {
         marginTop: 10,
-        borderRadius: 50,
+        borderRadius: 30,
+        paddingVertical: 8,
     },
 });

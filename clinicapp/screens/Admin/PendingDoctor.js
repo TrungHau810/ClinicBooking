@@ -56,6 +56,9 @@ const PendingDoctor = () => {
       <Card style={styles.card} mode="outlined">
         <Card.Content>
           <Text style={styles.title}><Text style={styles.label}>Tên bác sĩ:</Text> {user?.full_name}</Text>
+          <Text style={styles.text}><Text style={styles.label}>Bệnh viện: </Text> {item?.hospital_name}</Text>
+          <Text style={styles.text}><Text style={styles.label}>Chuyên khoa:</Text> {item?.specialization_name}</Text>
+          <Text style={styles.text}><Text style={styles.label}>Tiểu sử:</Text> {item?.biography}</Text>
           <Text style={styles.text}><Text style={styles.label}>Tên đăng nhập:</Text> {user?.username}</Text>
           <Text style={styles.text}><Text style={styles.label}>Email:</Text> {user?.email}</Text>
           <Text style={styles.text}><Text style={styles.label}>SĐT:</Text> {user?.number_phone}</Text>

@@ -762,16 +762,24 @@ class UploadLicenseViewSet(viewsets.ModelViewSet, generics.CreateAPIView):
     serializer_class = serializers.UploadLicenseSerializer
 
     def create(self, request, *args, **kwargs):
-        try:
-            doctor = request.user.doctor
-        except:
+        user = request.user
+        if user.role != "doctor":
             return Response({"error": "Bạn không phải là bác sĩ."}, status=400)
+
+        # Kiểm tra xem đã có hồ sơ Doctor chưa
+        try:
+            doctor = user.doctor
+        except:
+            # Nếu chưa có, tạo mới
+            doctor = Doctor(user=user)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        doctor.license_number = serializer.validated_data.get('license_number', doctor.license_number)
-        doctor.license_image = serializer.validated_data.get('license_image', doctor.license_image)
+        for field in ['license_number', 'license_image', 'hospital', 'specialization', 'biography']:
+            if field in serializer.validated_data:
+                setattr(doctor, field, serializer.validated_data[field])
+
         doctor.is_verified = False
         doctor.save()
 

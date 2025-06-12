@@ -132,7 +132,7 @@ const Home = () => {
         <View style={styles.quickActions}>
           <TouchableOpacity
             style={styles.quickButton}
-            onPress={() => nav.navigate("Appointment")}
+            // onPress={() => nav.navigate("Appointment")}
           >
             <View style={styles.iconContainer}>
               <Ionicons name="calendar-outline" size={28} color="#1565C0" />
@@ -142,7 +142,7 @@ const Home = () => {
 
           <TouchableOpacity
             style={styles.quickButton}
-            onPress={() => nav.navigate("TestResult")}
+            // onPress={() => nav.navigate("TestResult")}
           >
             <View style={styles.iconContainer}>
               <Ionicons name="flask-outline" size={28} color="#1565C0" />
@@ -152,7 +152,7 @@ const Home = () => {
 
           <TouchableOpacity
             style={styles.quickButton}
-            onPress={() => nav.navigate("HealthRecords")}
+            // onPress={() => nav.navigate("HealthRecords")}
           >
             <View style={styles.iconContainer}>
               <Ionicons name="document-text-outline" size={28} color="#1565C0" />

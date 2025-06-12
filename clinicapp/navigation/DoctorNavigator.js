@@ -99,17 +99,22 @@ const DoctorNavigator = () => {
     const fetchDoctorStatus = async () => {
       try {
         const res = await Apis.get(`${endpoints["doctor-detail"]}?user_id=${user?.payload?.id}`);
-        setIsVerified(res.data.is_verified);
+        setIsVerified(res.data.is_verified); // Đã là bác sĩ thật, check is_verified
       } catch (error) {
-        console.error("Lỗi khi load is_verified:", error);
-        setIsVerified(true); // fallback để không chặn nếu lỗi
+        if (error?.response?.status === 404) {
+          // Chưa tạo bản ghi Doctor (mới chỉ có role "doctor")
+          setIsVerified(false);
+        } else {
+          console.error("Lỗi khi load is_verified:", error);
+          setIsVerified(true); // fallback: nếu lỗi server thì không chặn
+        }
       }
     };
 
     if (user?.payload?.role === "doctor") {
       fetchDoctorStatus();
     } else {
-      setIsVerified(true); // không phải bác sĩ thì cho qua
+      setIsVerified(true); // Các role khác không bị chặn
     }
   }, [user]);
 
