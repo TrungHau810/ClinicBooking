@@ -1,26 +1,22 @@
-// Import the functions you need from the SDKs you need
+// firebase.js
 import { initializeApp } from "firebase/app";
-import { getDatabase } from "firebase/database";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase config
 const firebaseConfig = {
-    apiKey: "AIzaSyCPSOM22-EctirxNSBmd01fYB9dmGcrR9I",
-    authDomain: "clinicbookingapp-59336.firebaseapp.com",
-    projectId: "clinicbookingapp-59336",
-    storageBucket: "clinicbookingapp-59336.firebasestorage.app",
-    messagingSenderId: "789754143152",
-    appId: "1:789754143152:web:3cf89260010fdc8985f675",
-    measurementId: "G-JH2ET8JFSN"
+    apiKey: "AIzaSyAx7ARUIShKvkcLVD5GSlD12Eu8HA0ZZDo",
+    authDomain: "clinicbookingapp-5dc96.firebaseapp.com",
+    projectId: "clinicbookingapp-5dc96",
+    storageBucket: "clinicbookingapp-5dc96.firebasestorage.app",
+    messagingSenderId: "651158333634",
+    appId: "1:651158333634:web:68731bda352a870a18b35b",
+    measurementId: "G-EYBJNG0GBB"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-// Initialize database
-const database = getDatabase(app);
-
-// Export database
-export { database };
+export { db, auth };

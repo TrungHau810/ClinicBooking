@@ -8,6 +8,7 @@ import MyStyles from "../../styles/MyStyles";
 import { useNavigation } from "@react-navigation/native";
 import { Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import ChatTestScreen from "../Common/ChatScreenFireBase";
 
 const Home = () => {
   const [hospital, setHospital] = useState([]);
@@ -132,7 +133,7 @@ const Home = () => {
         <View style={styles.quickActions}>
           <TouchableOpacity
             style={styles.quickButton}
-            // onPress={() => nav.navigate("Appointment")}
+            onPress={() => nav.navigate("AppointmentScreen")}
           >
             <View style={styles.iconContainer}>
               <Ionicons name="calendar-outline" size={28} color="#1565C0" />
@@ -142,7 +143,7 @@ const Home = () => {
 
           <TouchableOpacity
             style={styles.quickButton}
-            // onPress={() => nav.navigate("TestResult")}
+            onPress={() => nav.navigate("TestResult")}
           >
             <View style={styles.iconContainer}>
               <Ionicons name="flask-outline" size={28} color="#1565C0" />

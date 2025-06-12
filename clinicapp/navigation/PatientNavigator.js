@@ -14,12 +14,12 @@ import DoctorList from "../screens/Patient/DoctorList";
 import ProfileStack from "./ProfileStack";
 import AppointmentDetails from "../screens/Patient/AppointmentDetails";
 import ChatScreen from "../screens/Common/ChatScreen";
-import UserList from "../screens/Common/UserList"; 
+import UserList from "../screens/Common/UserList";
 import Review from "../screens/Patient/Review";
 import Home from "../screens/Patient/Home";
 import Booking from "../screens/Patient/Booking";
-import Payment from "../screens/Patient/Payment"; 
-import TestResult from "../screens/Patient/TestResult"; 
+import Payment from "../screens/Patient/Payment";
+import TestResult from "../screens/Patient/TestResult";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();

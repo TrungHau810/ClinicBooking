@@ -25,7 +25,7 @@ export const endpoints = {
     'reviews': '/reviews/',
     // VNPay
     'create-vnpay-url': '/create-payment-url/',
-    'vnpay-return': '/vnpay-return/',
+    'vnpay-return': '/api/vnpay_return/',
     // Report
     'reportsdoctor': '/reportsdoctor/',
     'reportsadmin': '/reportsadmin/',
