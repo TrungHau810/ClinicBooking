@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Button, Card, Icon, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -6,6 +6,8 @@ import Apis, { authApis, endpoints } from "../../configs/Apis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MyUserContext } from "../../configs/MyContexts";
 import { useNavigation } from "@react-navigation/native";
+import { Animated } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 const DoctorHome = ({ navigation }) => {
     const theme = useTheme();
@@ -38,6 +40,37 @@ const DoctorHome = ({ navigation }) => {
     useEffect(() => {
         loadInfo();
     }, [user])
+
+    const FloatingChatButton = () => {
+        const nav = useNavigation();
+        const scaleAnim = useRef(new Animated.Value(1)).current;
+        const pulse = Animated.loop(
+            Animated.sequence([
+                Animated.timing(scaleAnim, {
+                    toValue: 1.1,
+                    duration: 600,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(scaleAnim, {
+                    toValue: 1,
+                    duration: 600,
+                    useNativeDriver: true,
+                }),
+            ])
+        );
+
+        useEffect(() => {
+            pulse.start();
+        }, []);
+
+        return (
+            <Animated.View style={[styles.floatingButton, { transform: [{ scale: scaleAnim }] }]}>
+                <TouchableOpacity onPress={() => nav.navigate('ChatStack')}>
+                    <Ionicons name="chatbubbles" size={28} color="#fff" />
+                </TouchableOpacity>
+            </Animated.View>
+        );
+    };
 
     const [stats, setStats] = useState({
         todayAppointments: 0,
@@ -152,8 +185,9 @@ const DoctorHome = ({ navigation }) => {
                         <Text>Đánh giá</Text>
                     </TouchableOpacity>
                 </View>
+                <View style={{ height: 60 }} />
             </ScrollView>
-            <Button mode="contained" onPress={() => nav.navigate("ChatStack")}>Nhắn tin</Button>
+            <FloatingChatButton />
         </SafeAreaView>
     );
 };
@@ -212,6 +246,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 16,
+    },
+    floatingButton: {
+        position: 'absolute',
+        bottom: 30,
+        right: 20,
+        backgroundColor: '#1E90FF',
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
     },
 });
 
